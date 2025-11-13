@@ -1,4 +1,4 @@
-// En: src/app/components/ChatCalculadora.tsx (¡CORREGIDO!)
+// En: src/app/components/ChatCalculadora.tsx (¡CORREGIDoO!)
 
 "use client"; 
 import { useState, useEffect, useRef } from 'react';

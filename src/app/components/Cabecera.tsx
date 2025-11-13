@@ -1,4 +1,4 @@
-// En: src/components/Cabecera.tsx (¡VERSIÓN LIMPIA, SIN IDIOMAS!)
+// En: src/components/Cabecera.tsx (¡VERSIÓN LIMPIAa, SIN IDIOMAS!)
 
 "use client";
 import { useState } from 'react';

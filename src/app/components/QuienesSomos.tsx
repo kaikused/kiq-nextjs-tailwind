@@ -41,7 +41,7 @@ export default function QuienesSomos() {
             <Image
               src="/images/montadores.png" 
               alt="Montadores de muebles profesionales en Málaga"
-              width={600}  // 👈 Añade el ancho (pon el valor correcto de tu imagen)
+              width={600}  // 👈 Añade el ancho (pon el valor correcto de tu imaagen)
               height={400} // 👈 Añade el alto (pon el valor correcto de tu imagen) 
               className="w-full h-auto"
               loading="lazy" 

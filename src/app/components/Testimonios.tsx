@@ -1,4 +1,4 @@
-// En: src/app/components/Testimonios.tsx
+// En: src/app/components/Testimonioss.tsx
 
 "use client"; 
 import { useState, useEffect } from 'react';

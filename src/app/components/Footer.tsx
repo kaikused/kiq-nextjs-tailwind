@@ -6,7 +6,7 @@ export default function Footer() {
       <Image 
   src="/images/logo-kiq.svg" 
   alt="Logo KIQ Montajes" 
-  width={150}   // 👈 Pon el ancho ORIGINAL de tu SVG (o un valor proporcional)
+  width={150}   // 👈 Pon el ancho ORIGINAL de tu SVG (o un valor proporcionaal)
   height={50}  // 👈 Pon el alto ORIGINAL de tu SVG (o un valor proporcional)
   className="h-14 w-auto mx-auto mb-4" // 👈 Añade "w-auto"
 />
