@@ -1,27 +1,70 @@
+/* En: src/app/globals.css (El "Código Bueno" que sí funciona) */
+
+/* 1. Definimos TODAS las variables (colores Y z-index) */
+:root {
+  --color-primario-oscuro: #1D3557;
+  --color-acento: #FFB703;
+  --color-secundario-suave: #A8DADC;
+  --color-fondo: #F8F9FA;
+  --color-superficie: #FFFFFF;
+  --color-texto-principal: #212529;
+  --color-texto-secundario: #6c757d;
+}
+
+/* 2. Incluimos las directivas de Tailwind v3 */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* --- Estilos para la Tarjeta de Resumen del Chat --- */
+.summary-card-wrapper {
+  width: 100%;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.summary-card {
+  background-color: var(--color-superficie);
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  padding: 1.25rem;
+  width: 100%;
+  text-align: left;
 }
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+.summary-card h3 {
+  font-family: var(--font-family-titulo);
+  font-weight: 800;
+  color: var(--color-primario-oscuro);
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  text-align: center;
 }
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+.summary-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.summary-card li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--color-texto-principal);
+  padding: 0.25rem 0;
+}
+.summary-card .distancia-info {
+  font-size: 0.8rem;
+  color: var(--color-texto-secundario);
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.summary-card .summary-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--color-primario-oscuro);
+  margin-top: 0.5rem;
 }
