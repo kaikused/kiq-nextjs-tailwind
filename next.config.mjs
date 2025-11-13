@@ -1,21 +1,23 @@
+// En: next.config.mjs
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configuración de internacionalización (i18n)
-  i18n: {
-    locales: ['es', 'en'],
-    defaultLocale: 'es',
-  },
+  // ... otras configuraciones
 
-  // Configuración de optimización de imágenes (images)
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'googleusercontent.com',
+        hostname: 'googleusercontent.com', // 👈 Mantenemos este por si acaso
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com', // 👈 ¡ESTE ES EL DOMINIO QUE FALTA!
       },
     ],
   },
+
+  // ...
 };
 
-// 🌟 Importante: Exportación con sintaxis de ES Modules (.mjs)
 export default nextConfig;
