@@ -26,7 +26,7 @@ type BudgetDetail = {
 // 1. CORRECCIÓN: Definición de la interfaz para el Análisis del Backend (antes era 'any')
 export interface Analysis {
   necesita_anclaje_general?: boolean;
-  // Permitimos otras propiedades ya que es la respuesta completa del backend
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; 
 }
 
