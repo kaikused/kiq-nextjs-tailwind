@@ -1,26 +1,40 @@
-// En: src/app/components/ChatCalculadora.tsx (¡CORREGIDoO!)
-
 "use client"; 
 import { useState, useEffect, useRef } from 'react';
 import { FaPaperclip, FaPaperPlane } from "react-icons/fa";
-import { FaWhatsapp, FaPhoneAlt } from "react-icons/fa";
+// La importación de FaPhoneAlt ha sido eliminada.
 
-// Definimos los "tipos"
+// --- Definiciones de Tipos/Interfaces ---
+
 type Message = {
   type: 'bot' | 'user' | 'loading' | 'summary';
   text: string;
   html?: string;
 };
+
 type Option = {
   text: string;
   value: string;
   href?: string;
   isExternal?: boolean;
 };
-type Analysis = any; // Lo dejamos como 'any' por ahora para simplificar
+
 type BudgetDetail = {
   label: string;
   value: string;
+};
+
+// 1. CORRECCIÓN: Definición de la interfaz para el Análisis del Backend (antes era 'any')
+export interface Analysis {
+  necesita_anclaje_general?: boolean;
+  // Permitimos otras propiedades ya que es la respuesta completa del backend
+  [key: string]: any; 
+}
+
+// 2. NUEVO TIPO: Definición para los elementos del desglose del presupuesto
+type DesgloseItem = {
+  item: string;
+  cantidad: number;
+  precio: number;
 };
 
 // Diccionario de Textos
@@ -69,7 +83,7 @@ export default function ChatCalculadora() {
   const [messages, setMessages] = useState<Message[]>([]); 
   const [options, setOptions] = useState<Option[]>([]);
   const [budgetDetails, setBudgetDetails] = useState<BudgetDetail[]>([]);
-  const [storedAnalysis, setStoredAnalysis] = useState<Analysis>(null);
+  const [storedAnalysis, setStoredAnalysis] = useState<Analysis | null>(null); // Usamos Analysis | null
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[] | null>(null);
   const [imageLabels, setImageLabels] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -149,7 +163,8 @@ export default function ChatCalculadora() {
       
     } else if (stage === 'awaiting_description_after_photo') {
       setCurrentTextDescription(text);
-      const analysisData = await sendDataToBackend(text, currentImageFiles);
+      // El resultado de sendDataToBackend ya tiene un tipo inferido, lo mantenemos.
+      const analysisData = await sendDataToBackend(text, currentImageFiles); 
       await processInitialAnalysis(analysisData);
       
     } else if (stage === 'ask_address') {
@@ -184,7 +199,7 @@ export default function ChatCalculadora() {
     const files = event.target.files;
     setCurrentImageFiles(files);
     
-    const fileNames = Array.from(files).map(f => f.name); // <-- CORRECCIÓN: 'let' a 'const'
+    const fileNames = Array.from(files).map(f => f.name);
     addUserMessage(`🖼️ Archivo/s subido/s: ${fileNames.join(', ')}`);
     setIsLoading(true);
     setOptions([]);
@@ -199,7 +214,7 @@ export default function ChatCalculadora() {
     }
   };
 
-  async function sendDataToBackend(text: string, files: FileList | null) {
+  async function sendDataToBackend(text: string, files: FileList | null): Promise<{ analisis: Analysis; image_urls: string[] | null; image_labels: string[] | null } | null> {
     const formData = new FormData();
     formData.append('descripcion_texto_mueble', text);
     formData.append('language', 'es'); 
@@ -232,8 +247,12 @@ export default function ChatCalculadora() {
     }
   }
 
-  // CORRECCIÓN: Se añade el tipo 'analysisData'
-  async function processInitialAnalysis(analysisData: { analisis: any; image_urls: string[] | null; image_labels: string[] | null } | null) {
+  // 3. CORRECCIÓN: Usamos la interfaz Analysis en el tipo del parámetro 'analisis'
+  async function processInitialAnalysis(analysisData: { 
+    analisis: Analysis; // CORREGIDO de 'any'
+    image_urls: string[] | null; 
+    image_labels: string[] | null 
+  } | null) {
     if (!analysisData || !analysisData.analisis) {
       console.error("Error: Análisis inicial no válido.");
       addBotMessage(T.imageError);
@@ -265,17 +284,21 @@ export default function ChatCalculadora() {
     if (inputRef.current) inputRef.current.disabled = false;
   }
   
-  // CORRECCIÓN: Se añaden tipos para 'data'
-  const showSummary = (data: { precio_estimado: number; desglose: any[]; zona_desplazamiento_info: string; }, clientAddress: string) => {
+  // 4. CORRECCIÓN: Usamos DesgloseItem[] para tipificar 'desglose'
+  const showSummary = (data: { 
+    precio_estimado: number; 
+    desglose: DesgloseItem[]; // CORREGIDO de 'any[]'
+    zona_desplazamiento_info: string; 
+  }, clientAddress: string) => {
     // 1. Construir el Resumen en HTML
     const priceRangeStart = data.precio_estimado;
     const priceRangeEnd = priceRangeStart + 20;
     
     let desgloseList = "";
     if (data.desglose && data.desglose.length > 0) {
-      // CORRECCIÓN: Se añade tipo 'any' a 'item'
+      // 5. CORRECCIÓN: Eliminado ': any' (se infiere DesgloseItem)
       desgloseList = "<ul>" + 
-        data.desglose.map((item: any) => 
+        data.desglose.map((item) => 
           `<li><span>${item.item} (x${item.cantidad})</span> <span><strong>${item.precio}€</strong></span></li>`
         ).join('') + 
       "</ul>";
@@ -307,8 +330,8 @@ export default function ChatCalculadora() {
     // 2. Construir el Mensaje de WhatsApp
     let desgloseText = "";
     if (data.desglose && data.desglose.length > 0) {
-      // CORRECCIÓN: Se añade tipo 'any' a 'item'
-      data.desglose.forEach((item: any) => {
+      // 6. CORRECCIÓN: Eliminado ': any' (se infiere DesgloseItem)
+      data.desglose.forEach((item) => {
         desgloseText += `- ${item.item} (x${item.cantidad}): ${item.precio}€\n`;
       });
     }
@@ -327,11 +350,10 @@ export default function ChatCalculadora() {
 
     if (uploadedImageUrls && uploadedImageUrls.length > 0) {
       summaryDetails += `\n- ${T.photoLabel}: ${uploadedImageUrls.length} ${T.photoReceived}`;
-      summaryDetails += `\n  ${T.seeFirstPhoto}: ${uploadedImageUrls[0]}`; 
+      summaryDetails += `\n  ${T.seeFirstPhoto}: ${uploadedImageUrls[0]}`; 
     }
 
     const priceText = `€${priceRangeStart} - €${priceRangeEnd}`;
-    // CORRECCIÓN: 'let' a 'const'
     const summaryText = T.whatsappMessage
         .replace('{summaryTitle}', T.summaryTitle)
         .replace('{summary}', summaryDetails)
@@ -368,7 +390,8 @@ export default function ChatCalculadora() {
         })
       });
       if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
-      const data = await response.json(); // <-- CORRECCIÓN: Añadido tipo 'any'
+      // El tipo del resultado se pasa a showSummary. No necesita un tipo explícito aquí.
+      const data = await response.json(); 
       
       setMessages(prev => prev.filter(m => m.type !== 'loading'));
       showSummary(data, clientAddress); 
@@ -441,7 +464,7 @@ export default function ChatCalculadora() {
                 className="bg-green-500 text-white font-bold py-2 px-4 rounded-full transition-transform hover:scale-105 inline-flex items-center gap-2"
                 onClick={() => { if (opt.value === 'nav_whatsapp') setIsLoading(true); }}
               >
-                <FaWhatsapp /> {opt.text}
+               {opt.text}
               </a>
             )
           }
