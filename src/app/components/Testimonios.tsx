@@ -1,7 +1,6 @@
-// En: src/app/components/Testimonios.tsx (¡CORREGIDO!)
+// En: src/app/components/Testimonios.tsx
 
 "use client"; 
-
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
@@ -60,7 +59,7 @@ export default function Testimonios() {
 
         setReviews(data.result.reviews.slice(0, 3));
 
-      } catch (err: unknown) { // <-- CORRECCIÓN: 'any' cambiado a 'unknown'
+      } catch (err: unknown) { 
         console.error('Error al cargar las reseñas:', err);
         if (err instanceof Error) {
           setError(err.message);
@@ -91,18 +90,21 @@ export default function Testimonios() {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {reviews.map((review) => (
+        {/* --- CAMBIO AQUÍ: Se añade 'i' para usarlo como key --- */}
+        {reviews.map((review, i) => ( 
           <a 
             href={REVIEWS_URL}
             target="_blank" 
             rel="noopener noreferrer" 
-            key={review.author_name} 
+            key={i} // <-- CAMBIO AQUÍ: Usamos el índice como key
             className="flex flex-col rounded-lg bg-superficie p-6 shadow-xl transition-transform duration-300 hover:-translate-y-2"
           >
             <div className="flex items-center mb-4">
               <Image 
                 src={review.profile_photo_url} 
                 alt={review.author_name} 
+                width={48}  // <-- ARREGLO 1: Añadir width
+                height={48} // <-- ARREGLO 2: Añadir height
                 className="w-12 h-12 rounded-full mr-4"
               />
               <div className="ml-4">
@@ -110,9 +112,8 @@ export default function Testimonios() {
                 <StarRating rating={review.rating} />
               </div>
             </div>
-            {/* --- CORRECCIÓN: Se quitan las comillas dobles (") literales --- */}
             <p className="text-texto-secundario italic text-base">
-              &ldquo;{review.text}&rdquo; {/* <-- Se usan comillas tipográficas */}
+              &ldquo;{review.text}&rdquo; 
             </p>
           </a>
         ))}
