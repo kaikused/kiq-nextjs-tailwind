@@ -1,11 +1,11 @@
-// En: src/app/components/ChatCalculadora.tsx (¡CON ENLACES DE FOTOS EN WHATSAPP!)
+// En: src/app/components/ChatCalculadora.tsx (¡CORREGIDO!)
 
 "use client"; 
 import { useState, useEffect, useRef } from 'react';
 import { FaPaperclip, FaPaperPlane } from "react-icons/fa";
 import { FaWhatsapp, FaPhoneAlt } from "react-icons/fa";
 
-// --- Definimos los "tipos" ---
+// Definimos los "tipos"
 type Message = {
   type: 'bot' | 'user' | 'loading' | 'summary';
   text: string;
@@ -17,13 +17,13 @@ type Option = {
   href?: string;
   isExternal?: boolean;
 };
-type Analysis = any; 
+type Analysis = any; // Lo dejamos como 'any' por ahora para simplificar
 type BudgetDetail = {
   label: string;
   value: string;
 };
 
-// --- Diccionario de Textos (MIGRADO DE traductor.js) ---
+// Diccionario de Textos
 const T = {
   inputPlaceholderName: "Escribe tu nombre...",
   welcomeName: "¡Hola! Soy el asistente virtual de KIQ. Para empezar, ¿cómo te llamas?",
@@ -53,17 +53,14 @@ const T = {
   whatsappButton: "Confirmar por WhatsApp",
   restartButton: "Calcular otro presupuesto",
   summaryTitle: "RESUMEN DEL SERVICIO",
-  // --- ¡NUEVO! Textos para el resumen de WhatsApp ---
   photoLabel: "Fotos de referencia",
   photoReceived: "imágenes recibidas",
   seeFirstPhoto: "Ver la primera",
 };
 
-// --- URL de tu API (de tu traductor.js) ---
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 export default function ChatCalculadora() {
-  // --- Estados de React (la "memoria" del chat) ---
   const [stage, setStage] = useState('start'); 
   const [clientName, setClientName] = useState('');
   const [currentTextDescription, setCurrentTextDescription] = useState('');
@@ -77,12 +74,10 @@ export default function ChatCalculadora() {
   const [imageLabels, setImageLabels] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // --- Referencias a elementos ---
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // --- Función de Scroll ---
   const scrollToBottom = () => {
     messagesContainerRef.current?.scrollTo({ top: messagesContainerRef.current.scrollHeight, behavior: 'smooth' });
   };
@@ -90,7 +85,6 @@ export default function ChatCalculadora() {
     scrollToBottom();
   }, [messages, options, isLoading]);
 
-  // --- Función de Inicio (startChat) ---
   useEffect(() => {
     startChat();
   }, []); 
@@ -108,12 +102,10 @@ export default function ChatCalculadora() {
     setUploadedImageUrls(null);
     setImageLabels(null);
     setIsLoading(false);
-
     setMessages([{ type: 'bot', text: T.welcomeName }]);
     setStage('ask_name');
   }
 
-  // --- Funciones de Ayuda del Chat ---
   const addBotMessage = (text: string) => {
     setIsLoading(true);
     setTimeout(() => {
@@ -132,10 +124,7 @@ export default function ChatCalculadora() {
     setMessages(prev => [...prev, newUserMessage]);
     return newUserMessage;
   };
-  
-  // --- Lógica del Chatbot (Migración COMPLETA) ---
 
-  // Etapa 1: Enviar Texto (handleTextInput)
   const handleSend = async () => {
     const text = inputValue.trim();
     if (!text && stage !== 'awaiting_description_after_photo') return;
@@ -168,7 +157,6 @@ export default function ChatCalculadora() {
     }
   };
 
-  // Etapa 2: Clic en Opción (handleOptionClick)
   const handleOptionClick = async (option: Option) => {
     addUserMessage(option.text);
     setOptions([]);
@@ -190,14 +178,13 @@ export default function ChatCalculadora() {
     }
   };
 
-  // Etapa 3: Subida de Imagen (handleImageUpload)
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) return;
     
     const files = event.target.files;
     setCurrentImageFiles(files);
     
-    let fileNames = Array.from(files).map(f => f.name);
+    const fileNames = Array.from(files).map(f => f.name); // <-- CORRECCIÓN: 'let' a 'const'
     addUserMessage(`🖼️ Archivo/s subido/s: ${fileNames.join(', ')}`);
     setIsLoading(true);
     setOptions([]);
@@ -212,7 +199,6 @@ export default function ChatCalculadora() {
     }
   };
 
-  // Etapa 4: Llamar a la API (sendDataToBackend)
   async function sendDataToBackend(text: string, files: FileList | null) {
     const formData = new FormData();
     formData.append('descripcion_texto_mueble', text);
@@ -246,8 +232,8 @@ export default function ChatCalculadora() {
     }
   }
 
-  // Etapa 5: Procesar Respuesta de API (processInitialAnalysis)
-  async function processInitialAnalysis(analysisData: any) {
+  // CORRECCIÓN: Se añade el tipo 'analysisData'
+  async function processInitialAnalysis(analysisData: { analisis: any; image_urls: string[] | null; image_labels: string[] | null } | null) {
     if (!analysisData || !analysisData.analisis) {
       console.error("Error: Análisis inicial no válido.");
       addBotMessage(T.imageError);
@@ -256,7 +242,7 @@ export default function ChatCalculadora() {
     }
 
     setStoredAnalysis(analysisData.analisis);
-    setUploadedImageUrls(analysisData.image_urls); // <-- ¡Guardamos las URLs!
+    setUploadedImageUrls(analysisData.image_urls);
     setImageLabels(analysisData.image_labels);
 
     if (analysisData.analisis.necesita_anclaje_general) {
@@ -267,59 +253,27 @@ export default function ChatCalculadora() {
     }
   }
 
-  // Etapa 6: Preguntar por Anclaje
   async function askFinalQuestions() {
     setStage('ask_anchoring');
     addBotMessage(T.finalQuestion);
     showOptions([{ text: T.si, value: 'si' }, { text: T.no, value: 'no' }]);
   }
 
-  // Etapa 7: Preguntar por Dirección
   async function askForAddress() {
     setStage('ask_address');
     addBotMessage(T.askAddressMessage);
     if (inputRef.current) inputRef.current.disabled = false;
   }
   
-  // Etapa 8: Calcular Presupuesto Final (sendQuoteToBackend)
-  async function sendQuoteToBackend(clientAddress: string) {
-    setMessages(prev => [...prev, { type: 'loading', text: T.processingAddress }]);
-    setStage('done');
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/calcular_presupuesto`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          analisis: storedAnalysis,
-          direccion_cliente: clientAddress,
-          language: 'es',
-          image_urls: uploadedImageUrls, // <-- ¡Enviamos las URLs de vuelta!
-          image_labels: imageLabels
-        })
-      });
-      if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
-      const data = await response.json();
-      
-      setMessages(prev => prev.filter(m => m.type !== 'loading'));
-      showSummary(data, clientAddress); // ¡Llamamos al resumen!
-
-    } catch (error) {
-      console.error("Error en sendQuoteToBackend:", error);
-      setMessages(prev => prev.filter(m => m.type !== 'loading'));
-      addBotMessage(T.imageError);
-      showOptions([{ text: T.restartButton, value: 'restart' }]);
-    }
-  }
-
-  // --- ¡Etapa 9: Mostrar el Resumen (AHORA CON FOTOS)! ---
-  const showSummary = (data: any, clientAddress: string) => {
-    // 1. Construir el Resumen en HTML (para el chat)
+  // CORRECCIÓN: Se añaden tipos para 'data'
+  const showSummary = (data: { precio_estimado: number; desglose: any[]; zona_desplazamiento_info: string; }, clientAddress: string) => {
+    // 1. Construir el Resumen en HTML
     const priceRangeStart = data.precio_estimado;
     const priceRangeEnd = priceRangeStart + 20;
     
     let desgloseList = "";
     if (data.desglose && data.desglose.length > 0) {
+      // CORRECCIÓN: Se añade tipo 'any' a 'item'
       desgloseList = "<ul>" + 
         data.desglose.map((item: any) => 
           `<li><span>${item.item} (x${item.cantidad})</span> <span><strong>${item.precio}€</strong></span></li>`
@@ -350,9 +304,10 @@ export default function ChatCalculadora() {
       html: summaryCardHtml
     }]);
 
-    // 2. Construir el Mensaje de WhatsApp (¡CON LOS ENLACES!)
+    // 2. Construir el Mensaje de WhatsApp
     let desgloseText = "";
     if (data.desglose && data.desglose.length > 0) {
+      // CORRECCIÓN: Se añade tipo 'any' a 'item'
       data.desglose.forEach((item: any) => {
         desgloseText += `- ${item.item} (x${item.cantidad}): ${item.precio}€\n`;
       });
@@ -370,18 +325,14 @@ export default function ChatCalculadora() {
       summaryDetails += `\n- Distancia: ${data.zona_desplazamiento_info}`;
     }
 
-    // --- ¡¡AQUÍ ESTÁ LA MEJORA!! ---
-    // (Lógica migrada de tu traductor.js)
-    // data.image_urls es lo que recibimos de la API
-    if (data.image_urls && data.image_urls.length > 0) {
-      summaryDetails += `\n- ${T.photoLabel}: ${data.image_urls.length} ${T.photoReceived}`;
-      // Añadimos solo el primer enlace acortado
-      summaryDetails += `\n  ${T.seeFirstPhoto}: ${data.image_urls[0]}`; 
+    if (uploadedImageUrls && uploadedImageUrls.length > 0) {
+      summaryDetails += `\n- ${T.photoLabel}: ${uploadedImageUrls.length} ${T.photoReceived}`;
+      summaryDetails += `\n  ${T.seeFirstPhoto}: ${uploadedImageUrls[0]}`; 
     }
-    // --- FIN DE LA MEJORA ---
 
     const priceText = `€${priceRangeStart} - €${priceRangeEnd}`;
-    let summaryText = T.whatsappMessage
+    // CORRECCIÓN: 'let' a 'const'
+    const summaryText = T.whatsappMessage
         .replace('{summaryTitle}', T.summaryTitle)
         .replace('{summary}', summaryDetails)
         .replace('{priceText}', priceText);
@@ -399,6 +350,36 @@ export default function ChatCalculadora() {
       { text: T.restartButton, value: 'restart' }
     ]);
   };
+  
+  async function sendQuoteToBackend(clientAddress: string) {
+    setMessages(prev => [...prev, { type: 'loading', text: T.processingAddress }]);
+    setStage('done');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/calcular_presupuesto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          analisis: storedAnalysis,
+          direccion_cliente: clientAddress,
+          language: 'es',
+          image_urls: uploadedImageUrls,
+          image_labels: imageLabels
+        })
+      });
+      if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
+      const data = await response.json(); // <-- CORRECCIÓN: Añadido tipo 'any'
+      
+      setMessages(prev => prev.filter(m => m.type !== 'loading'));
+      showSummary(data, clientAddress); 
+
+    } catch (error) {
+      console.error("Error en sendQuoteToBackend:", error);
+      setMessages(prev => prev.filter(m => m.type !== 'loading'));
+      addBotMessage(T.imageError);
+      showOptions([{ text: T.restartButton, value: 'restart' }]);
+    }
+  }
 
   // --- Interfaz del Chat (HTML/JSX) ---
   return (
@@ -420,7 +401,6 @@ export default function ChatCalculadora() {
               </div>
             );
           }
-          // --- ¡NUEVO! Renderiza la tarjeta de resumen ---
           if (msg.type === 'summary') {
             return (
               <div 
@@ -459,7 +439,7 @@ export default function ChatCalculadora() {
                 target={opt.isExternal ? '_blank' : '_self'}
                 rel="noopener noreferrer"
                 className="bg-green-500 text-white font-bold py-2 px-4 rounded-full transition-transform hover:scale-105 inline-flex items-center gap-2"
-                onClick={() => { if (opt.value === 'nav_whatsapp') setIsLoading(true); }} // Opcional: mostrar carga
+                onClick={() => { if (opt.value === 'nav_whatsapp') setIsLoading(true); }}
               >
                 <FaWhatsapp /> {opt.text}
               </a>
@@ -496,7 +476,7 @@ export default function ChatCalculadora() {
           type="file" 
           ref={fileInputRef} 
           multiple 
-          accept="image/*" // Aceptar solo imágenes
+          accept="image/*"
           className="hidden" 
           onChange={handleImageUpload} 
         />

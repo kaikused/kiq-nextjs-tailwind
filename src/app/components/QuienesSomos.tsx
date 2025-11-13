@@ -4,6 +4,7 @@
 
 // --- ¡CAMBIO 2! Importamos "motion" de framer-motion ---
 import { motion } from "framer-motion";
+import Image from 'next/image';
 
 export default function QuienesSomos() {
   return (
@@ -37,9 +38,11 @@ export default function QuienesSomos() {
             </p>
           </div>
           <div className="flex-1">
-            <img 
+            <Image
               src="/images/montadores.png" 
-              alt="Montadores de muebles profesionales en Málaga" 
+              alt="Montadores de muebles profesionales en Málaga"
+              width={600}  // 👈 Añade el ancho (pon el valor correcto de tu imagen)
+              height={400} // 👈 Añade el alto (pon el valor correcto de tu imagen) 
               className="w-full h-auto"
               loading="lazy" 
             />

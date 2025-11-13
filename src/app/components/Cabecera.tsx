@@ -2,6 +2,7 @@
 
 "use client";
 import { useState } from 'react';
+import Image from 'next/image';
 
 export default function Cabecera() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,7 +36,7 @@ export default function Cabecera() {
           {/* Logo (con scroll suave) */}
           <div className="navbar-logo z-50">
             <a href="/#inicio" onClick={(e) => handleScroll(e, '#inicio')}>
-              <img src="/images/logo-kiq.svg" alt="Logo KIQ" className="h-10" />
+              <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={100} height={40} className="h-10 w-auto" />
             </a>
           </div>
 
@@ -95,10 +96,17 @@ export default function Cabecera() {
           {/* Fila superior: Logo, X */}
           <div className="flex items-center justify-between mb-8">
             <div className="navbar-logo">
-              <a href="/#inicio" onClick={(e) => handleScroll(e, '#inicio')}>
-                <img src="/images/logo-kiq.svg" alt="Logo KIQ" className="h-10" />
-              </a>
-            </div>
+  <a href="/#inicio" onClick={(e) => handleScroll(e, '#inicio')}>
+    <Image 
+      src="/images/logo-kiq.svg" 
+      alt="Logo KIQ" 
+      width={100}
+      height={40}
+      className="h-10 w-auto"
+    />
+  </a> 
+{/* 👈 ¡Añade esta etiqueta de cierre! */}
+</div>
 
             {/* --- SELECTOR DE IDIOMA MÓVIL ELIMINADO --- */}
 

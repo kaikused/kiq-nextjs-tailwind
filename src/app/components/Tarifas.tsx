@@ -4,6 +4,7 @@
 
 // --- ¡CAMBIO 2! Importamos "motion" de framer-motion ---
 import { motion } from "framer-motion";
+import Image from 'next/image';
 
 export default function Tarifas() {
   return (
@@ -32,7 +33,7 @@ export default function Tarifas() {
 
           {/* Tarjeta 1: Montaje Básico */}
           <div className="flex flex-col rounded-lg bg-superficie p-8 text-center shadow-xl transition-transform duration-300 hover:-translate-y-2">
-            <div className="mb-4"><img src="/images/icono-mesita.svg" alt="Montaje Básico" className="h-16 w-16 mx-auto" /></div>
+            <div className="mb-4"><Image src="/images/icono-mesita.svg" alt="Montaje Básico" width={64} height={64} className="h-16 w-16 mx-auto" /></div>
             <h3 className="font-titulo text-2xl font-bold text-primario-oscuro mb-3">Montaje Básico</h3>
             <p className="text-texto-secundario mb-6 flex-grow">Mesillas, sillas, estanterías sencillas, zapateros, muebles de baño...</p>
             <div className="text-3xl font-titulo font-bold text-primario-oscuro">Desde 30€</div>
@@ -40,7 +41,7 @@ export default function Tarifas() {
 
           {/* Tarjeta 2: Montaje Mediano */}
           <div className="flex flex-col rounded-lg bg-superficie p-8 text-center shadow-xl transition-transform duration-300 hover:-translate-y-2">
-            <div className="mb-4"><img src="/images/icono-canape.svg" alt="Montaje Mediano" className="h-16 w-16 mx-auto" /></div>
+            <div className="mb-4"><Image src="/images/icono-canape.svg" alt="Montaje Mediano" width={64} height={64} className="h-16 w-16 mx-auto" /></div>
             <h3 className="font-titulo text-2xl font-bold text-primario-oscuro mb-3">Montaje Mediano</h3>
             <p className="text-texto-secundario mb-6 flex-grow">Canapés, camas, cómodas grandes, sofás, mesas de comedor...</p>
             <div className="text-3xl font-titulo font-bold text-primario-oscuro">Desde 50€</div>
@@ -48,7 +49,7 @@ export default function Tarifas() {
 
           {/* Tarjeta 3: Montaje Grande */}
           <div className="flex flex-col rounded-lg bg-superficie p-8 text-center shadow-xl transition-transform duration-300 hover:-translate-y-2">
-            <div className="mb-4"><img src="/images/icono-armario.svg" alt="Montaje Grande" className="h-16 w-16 mx-auto" /></div>
+            <div className="mb-4"><Image src="/images/icono-armario.svg" alt="Montaje Grande" width={64} height={64} className="h-16 w-16 mx-auto" /></div>
             <h3 className="font-titulo text-2xl font-bold text-primario-oscuro mb-3">Montaje Grande</h3>
             <p className="text-texto-secundario mb-6 flex-grow">Armarios complejos, dormitorios completos, cocinas, muebles a medida...</p>
             <div className="text-3xl font-titulo font-bold text-primario-oscuro">A Consultar</div>
