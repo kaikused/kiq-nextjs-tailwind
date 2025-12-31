@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'; // 👈 Añadido Suspense
 import { 
   FaCreditCard, 
   FaCamera, 
@@ -46,7 +46,6 @@ interface TrabajoMontador {
     metodo_pago?: string; 
 }
 
-// 👇 NUEVA INTERFAZ PARA MIS PRODUCTOS (INVENTARIO)
 interface MyProduct {
     id: number;
     titulo: string;
@@ -56,15 +55,18 @@ interface MyProduct {
     fecha: string;
 }
 
-export default function PanelMontadorPage() {
+// ------------------------------------------------------------------
+// COMPONENTE INTERNO (Lógica del panel)
+// ------------------------------------------------------------------
+function ContenidoPanelMontador() {
     const { userGems, openGemStore, userProfile, accessToken, handleLogout, updateProfileData } = useUI(); 
     const router = useRouter();
-    const searchParams = useSearchParams();
+    const searchParams = useSearchParams(); // 👈 Esto causaba el error sin Suspense
 
     // Estados de Datos
     const [trabajosDisponibles, setTrabajosDisponibles] = useState<TrabajoMontador[]>([]);
     const [misTrabajosAsignados, setMisTrabajosAsignados] = useState<TrabajoMontador[]>([]);
-    const [misProductos, setMisProductos] = useState<MyProduct[]>([]); // <--- CAMBIO: Inventario en lugar de solo ventas
+    const [misProductos, setMisProductos] = useState<MyProduct[]>([]); 
     
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -130,7 +132,7 @@ export default function PanelMontadorPage() {
             setTrabajosDisponibles(await resDisponibles.json());
             setMisTrabajosAsignados(await resAsignados.json());
 
-            // 2. Cargar Mis Productos (INVENTARIO) - NUEVO ENDPOINT
+            // 2. Cargar Mis Productos (INVENTARIO)
             try {
                 const resProds = await fetch(`${API_BASE_URL}/api/outlet/mis-productos`, { headers });
                 if (resProds.ok) {
@@ -533,5 +535,16 @@ export default function PanelMontadorPage() {
                 
             </div>
         </div>
+    );
+}
+
+// ------------------------------------------------------------------
+// COMPONENTE PRINCIPAL (Wrapper con Suspense para Build Correcto)
+// ------------------------------------------------------------------
+export default function PanelMontadorPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Cargando panel...</div>}>
+            <ContenidoPanelMontador />
+        </Suspense>
     );
 }

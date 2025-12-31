@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'; // 👈 Añadido Suspense
 import { 
   FaCog, 
   FaPlus, 
@@ -26,7 +26,7 @@ import JobCard from '../components/JobCard';
 import JobBreakdown from '../components/JobBreakdown';
 import ChatModal from '../components/ChatModal'; 
 import OrderCard from '../components/OrderCard';
-import VenderItemModal from '../components/VenderItemModal'; // 🆕 Asegúrate de importar esto
+import VenderItemModal from '../components/VenderItemModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
@@ -35,7 +35,6 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
 interface ItemDesglose { item: string; cantidad: number; subtotal: number; precio_unitario: number; necesita_anclaje: boolean; }
 interface DesgloseDetallado { coste_muebles_base: number; coste_desplazamiento: number; distancia_km: string; coste_anclaje_estimado: number; total_extras: number; muebles_cotizados: ItemDesglose[]; }
 
-// TrabajoCliente incluye tanto Proyectos de Montaje como Compras en Curso del Outlet
 interface TrabajoCliente {
     trabajo_id: number;
     descripcion: string;
@@ -53,7 +52,6 @@ interface TrabajoCliente {
     etiquetas?: any; 
 }
 
-// Order es solo para el histórico de compras finalizadas
 interface Order {
     order_id: number;
     fecha: string;
@@ -63,7 +61,6 @@ interface Order {
     producto: { id: number; titulo: string; imagen: string | null; ubicacion: string; };
 }
 
-// 🆕 Interfaz para tus productos en venta
 interface MyProduct {
     id: number;
     titulo: string;
@@ -73,15 +70,18 @@ interface MyProduct {
     fecha: string;
 }
 
-export default function PanelClientePage() {
+// ------------------------------------------------------------------
+// COMPONENTE INTERNO (Lógica con useSearchParams)
+// ------------------------------------------------------------------
+function ContenidoPanelCliente() {
     const { userProfile, accessToken, handleLogout, openCalculatorModal, userGems, openGemStore } = useUI();
     const router = useRouter();
-    const searchParams = useSearchParams();
+    const searchParams = useSearchParams(); // 👈 Esto es lo que causaba el error sin Suspense
     
     // --- ESTADOS DE DATOS ---
     const [trabajos, setTrabajos] = useState<TrabajoCliente[]>([]);
     const [pedidos, setPedidos] = useState<Order[]>([]);
-    const [misProductos, setMisProductos] = useState<MyProduct[]>([]); // 🆕 Inventario
+    const [misProductos, setMisProductos] = useState<MyProduct[]>([]); 
     
     const [isLoading, setIsLoading] = useState(true);
     
@@ -119,7 +119,6 @@ export default function PanelClientePage() {
         try {
             const headers = { 'Authorization': `Bearer ${accessToken}`, 'Cache-Control': 'no-cache' };
             
-            // Llamamos a los 3 endpoints: Trabajos (incluye compras en curso), Pedidos (histórico), Productos (inventario)
             const [resTrabajos, resPedidos, resProductos] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/cliente/mis-trabajos`, { headers }),
                 fetch(`${API_BASE_URL}/api/orders/mis-compras`, { headers }),
@@ -183,7 +182,6 @@ export default function PanelClientePage() {
                         await fetchAllData(); 
                         setChatJobId(data.job_id);
                         setIsChatOpen(true);
-                        // IMPORTANTE: Si venimos del Outlet, vamos a la pestaña PEDIDOS (donde están las compras en curso)
                         setActiveTab('pedidos'); 
                         router.replace('/panel-cliente', { scroll: false });
                     }
@@ -199,7 +197,7 @@ export default function PanelClientePage() {
     const abrirChat = (trabajo: TrabajoCliente) => { setChatJobId(trabajo.trabajo_id); setIsChatOpen(true); };
     const contactarVendedorPedido = async (productoId: number) => { router.push(`/panel-cliente?accion=nuevo_chat&producto=${productoId}`); };
 
-    // --- LÓGICA DE PAGOS (INTACTA) ---
+    // --- LÓGICA DE PAGOS ---
     const abrirSelectorPago = (t: TrabajoCliente) => { setSelectedJobForPayment(t); setIsSelectionModalOpen(true); };
     
     const handleIniciarPagoStripe = async () => { 
@@ -264,26 +262,19 @@ export default function PanelClientePage() {
 
 
     // --- 🚨 LÓGICA DE FILTRADO CORRECTA 🚨 ---
-    
-    // Estados
     const activos = ['cotizacion', 'pendiente', 'aceptado', 'revision_cliente', 'aprobado_cliente_stripe', 'cancelado_incidencia'];
     const finalizados = ['completado', 'cancelado', 'finalizado', 'rechazado', 'vendido']; 
 
-    // 1. PROYECTOS DE MONTAJE (Servicios puros)
-    // Filtramos lo que NO tenga etiqueta de outlet
     const trabajosProyectos = trabajos.filter(t => 
         activos.includes(t.estado) && 
         (!t.etiquetas || (t.etiquetas as any).tipo !== 'outlet') 
     );
 
-    // 2. COMPRAS EN CURSO (Lo que estaba en el limbo)
-    // Filtramos lo que SÍ tenga etiqueta de outlet y esté activo
     const comprasEnCurso = trabajos.filter(t => 
         activos.includes(t.estado) && 
         (t.etiquetas && (t.etiquetas as any).tipo === 'outlet')
     );
 
-    // 3. HISTORIAL (Todo lo terminado)
     const trabajosHistorial = trabajos.filter(t => finalizados.includes(t.estado));
 
     const getStatusInfo = (estado: string) => {
@@ -298,7 +289,6 @@ export default function PanelClientePage() {
         }
     };
 
-    // Helper para status de mis productos en venta
     const getProductStatus = (estado: string) => {
         switch(estado) {
             case 'disponible': return { label: 'En Venta', color: 'bg-emerald-100 text-emerald-700' };
@@ -427,7 +417,7 @@ export default function PanelClientePage() {
                 {/* B. PESTAÑA PROYECTOS (SOLO MONTAJES) */}
                 {activeTab === 'proyectos' && (
                     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                         {trabajosProyectos.length === 0 ? (
+                            {trabajosProyectos.length === 0 ? (
                             <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-gray-200">
                                 <FaClipboardList className="mx-auto text-gray-300 text-4xl mb-3" />
                                 <p className="text-gray-500">No tienes proyectos de montaje activos.</p>
@@ -495,7 +485,7 @@ export default function PanelClientePage() {
                 {/* D. HISTORIAL */}
                 {activeTab === 'historial' && (
                     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                         {trabajosHistorial.length === 0 ? (
+                            {trabajosHistorial.length === 0 ? (
                             <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-gray-200">
                                 <FaHistory className="mx-auto text-gray-300 text-4xl mb-3" />
                                 <p className="text-gray-500">No hay historial.</p>
@@ -528,4 +518,15 @@ export default function PanelClientePage() {
             </div>
         </div>
     );
+}
+
+// ------------------------------------------------------------------
+// COMPONENTE PRINCIPAL (Wrapper con Suspense para Build Correcto)
+// ------------------------------------------------------------------
+export default function PanelClientePage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Cargando panel...</div>}>
+      <ContenidoPanelCliente />
+    </Suspense>
+  );
 }
