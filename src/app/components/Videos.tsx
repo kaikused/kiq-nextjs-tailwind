@@ -11,8 +11,8 @@ import { motion } from "framer-motion";
 // --- Tu lista de vídeos (esto está perfecto) ---
 const videoSources = [
   "https://www.youtube.com/watch?v=eb9iSP9rTJQ", // (¡Tus IDs reales!)
-  "https://www.youtube.com/watch?v=ID_REAL_2", 
-  "https://www.youtube.com/watch?v=ID_REAL_3"
+  "https://www.youtube.com/watch?v=U2UCswyzPso", 
+  "https://www.youtube.com/watch?v=NY8erii1VJY"
 ];
 
 export default function Videos() {

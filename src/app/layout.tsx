@@ -1,25 +1,34 @@
-// En: src/app/layout.tsx (El Código de Fuentes)
-
 import type { Metadata } from 'next';
-// 1. Importa tus fuentes
 import { Manrope, Permanent_Marker, Work_Sans } from 'next/font/google';
 import './globals.css';
 
-// 2. Configura las fuentes y asígnales una variable CSS
+// Importamos el proveedor de contexto (estado global)
+import { UIProvider } from './context/UIContext'; 
+
+// Importamos componentes globales
+import Cabecera from './components/Cabecera'; 
+// NOTA: Hemos eliminado 'Footer' de aquí para usar el específico en cada página
+
+// Importamos los Modales Globales
+import LoginModal from './components/LoginModal';
+import RegisterModal from './components/RegisterModal';
+import CalculatorModal from './components/CalculatorModal'; 
+
+// Configuración de fuentes
 const workSans = Work_Sans({ 
   subsets: ['latin'], 
   weight: ['400', '700'],
-  variable: '--font-family-base' // Variable para la fuente base
+  variable: '--font-family-base'
 });
 const manrope = Manrope({ 
   subsets: ['latin'], 
   weight: ['800'],
-  variable: '--font-family-titulo' // Variable para la fuente del título
+  variable: '--font-family-titulo'
 });
 const permanentMarker = Permanent_Marker({ 
   subsets: ['latin'], 
   weight: '400',
-  variable: '--font-family-especial' // Variable para la fuente especial
+  variable: '--font-family-especial'
 });
 
 export const metadata: Metadata = {
@@ -33,9 +42,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    // 3. Inyectamos las variables de fuente en el <html>
     <html lang="es" className={`${workSans.variable} ${manrope.variable} ${permanentMarker.variable}`}>
-      <body>{children}</body>
+      <body>
+        <UIProvider>
+          
+          {/* La cabecera se mantiene global */}
+          <Cabecera />
+          
+          {/* Aquí se renderiza la página actual (Home, Panel, etc.) */}
+          <main>
+            {children}
+          </main>
+          
+          {/* ELIMINADO: <Footer /> ya no está aquí para evitar duplicados */}
+          
+          {/* Modales disponibles en toda la aplicación */}
+          <LoginModal />
+          <RegisterModal />
+          <CalculatorModal />
+
+        </UIProvider>
+      </body>
     </html>
   );
 }

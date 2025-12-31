@@ -1,70 +1,132 @@
-/* En: src/app/globals.css (El "Código Bueno" que sí funciona) */
+/* En: src/app/globals.css (ESTILO UNIFICADO "KIQ VIBRANT") */
 
-/* 1. Definimos TODAS las variables (colores Y z-index) */
 :root {
-  --color-primario-oscuro: #1D3557;
-  --color-acento: #FFB703;
-  --color-secundario-suave: #A8DADC;
-  --color-fondo: #F8F9FA;
-  --color-superficie: #FFFFFF;
-  --color-texto-principal: #212529;
-  --color-texto-secundario: #6c757d;
+  /* --- PALETA PRINCIPAL (Coincide con tus Modales) --- */
+  
+  /* Color Principal (Índigo Vibrante) - Usado en textos y bordes */
+  --color-primario-oscuro: #4f46e5; /* Indigo 600 */
+  
+  /* Color Acento (Fucsia/Rosa) - Para botones de acción y detalles */
+  --color-acento: #d946ef; /* Fuchsia 500 */
+
+  /* Color Secundario (Lila suave) - Para fondos de tarjetas o badges */
+  --color-secundario-suave: #e0e7ff; /* Indigo 100 */
+
+  /* --- FONDOS Y SUPERFICIES (Clean Light Mode) --- */
+  /* Mantenemos el fondo claro para que el panel sea cómodo de leer */
+  --color-fondo: #f8fafc; /* Slate 50 */
+  --color-superficie: #ffffff; /* Blanco puro */
+
+  /* --- TEXTOS --- */
+  --color-texto-principal: #1e293b; /* Slate 800 */
+  --color-texto-secundario: #64748b; /* Slate 500 */
 }
 
-/* 2. Incluimos las directivas de Tailwind v3 */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* --- Estilos para la Tarjeta de Resumen del Chat --- */
-.summary-card-wrapper {
-  width: 100%;
+body {
+  background-color: var(--color-fondo);
+  color: var(--color-texto-principal);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
+
+/* --- UTILIDADES DE GRADIENTE (La Magia Visual) --- */
+@layer utilities {
+  
+  /* Botones Principales (Estilo Modal Login) */
+  /* Sobreescribimos bg-primario-oscuro para que sea un gradiente */
+  .bg-primario-oscuro {
+    background-image: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); /* Indigo -> Violeta */
+    background-color: transparent;
+    color: white !important;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+  }
+  
+  .bg-primario-oscuro:hover {
+    background-image: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%); /* Un poco más oscuro */
+    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+    transform: translateY(-1px);
+  }
+
+  /* Botones de Acento (Estilo Botón Amarillo Antiguo -> Ahora Fucsia) */
+  .bg-acento {
+    background-image: linear-gradient(135deg, #d946ef 0%, #ec4899 100%); /* Fucsia -> Rosa */
+    color: white !important;
+    box-shadow: 0 4px 6px -1px rgba(217, 70, 239, 0.2);
+  }
+  
+  .bg-acento:hover {
+    background-image: linear-gradient(135deg, #c026d3 0%, #db2777 100%);
+    box-shadow: 0 10px 15px -3px rgba(217, 70, 239, 0.4);
+    transform: translateY(-1px);
+  }
+
+  /* Texto con Gradiente (Para títulos grandes) */
+  .text-gradient-primary {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-image: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  }
+}
+
+/* --- TARJETAS Y PANELES --- */
 .summary-card {
   background-color: var(--color-superficie);
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  padding: 1.25rem;
-  width: 100%;
-  text-align: left;
+  border-radius: 16px;
+  border: 1px solid #f1f5f9; /* Borde muy sutil */
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
 }
+
+.summary-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  border-color: #e2e8f0;
+}
+
 .summary-card h3 {
-  font-family: var(--font-family-titulo);
   font-weight: 800;
   color: var(--color-primario-oscuro);
   font-size: 1.25rem;
   margin-bottom: 1rem;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
-.summary-card ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 0.75rem;
+
+.summary-card ul, .summary-card .distancia-info {
+  border-bottom: 1px solid #f1f5f9;
   margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
 }
+
 .summary-card li {
   display: flex;
   justify-content: space-between;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--color-texto-principal);
-  padding: 0.25rem 0;
+  padding: 0.5rem 0;
 }
+
 .summary-card .distancia-info {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--color-texto-secundario);
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 0.75rem;
-  margin-bottom: 0.75rem;
 }
+
 .summary-card .summary-total {
   display: flex;
   justify-content: space-between;
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: var(--color-primario-oscuro);
-  margin-top: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 900;
+  /* Precio en Fucsia para destacar */
+  color: #d946ef; 
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 2px dashed #f1f5f9;
 }

@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^5.3.0",
+    "@stripe/stripe-js": "^8.4.0",
+    "@supabase/supabase-js": "^2.86.0",
     "framer-motion": "^12.23.24",
     "fslightbox-react": "^2.0.0",
     "next": "14.2.33",
