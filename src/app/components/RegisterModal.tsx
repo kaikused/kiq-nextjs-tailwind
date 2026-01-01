@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useUI, UserProfile } from '../context/UIContext';
 import { FaTimes, FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt, FaShieldAlt, FaArrowLeft } from 'react-icons/fa';
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
 
 /**
  * Función auxiliar que centraliza la obtención del perfil completo después del login/registro.
