@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { FaTimes, FaEnvelope, FaLock, FaUser, FaCheckCircle, FaArrowRight, FaSignInAlt } from 'react-icons/fa';
 import { useUI } from '../context/UIContext';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 interface OutletAuthModalProps {
   isOpen: boolean;

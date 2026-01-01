@@ -8,7 +8,8 @@ import { FaUserCircle, FaSignOutAlt, FaCog, FaChevronDown, FaGem, FaPlusCircle, 
 import GemStoreModal from './GemStoreModal'; 
 import { useInbox } from '../hooks/useInbox';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+
+const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 export default function Cabecera() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);

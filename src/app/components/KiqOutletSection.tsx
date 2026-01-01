@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 // aunque el feed es público.
 // import { useUI } from '../context/UIContext'; 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 // Esta interfaz debe coincidir con lo que devuelve tu backend (/api/outlet/feed)
 interface ProductoOutlet {

@@ -112,7 +112,7 @@ const T = {
 };
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 function isValidEmail(email: string) {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

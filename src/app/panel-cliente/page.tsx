@@ -29,7 +29,7 @@ import OrderCard from '../components/OrderCard';
 import VenderItemModal from '../components/VenderItemModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 // --- INTERFACES ---
 interface ItemDesglose { item: string; cantidad: number; subtotal: number; precio_unitario: number; necesita_anclaje: boolean; }

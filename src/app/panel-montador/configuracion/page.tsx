@@ -5,7 +5,7 @@ import { FaUser, FaMapMarkerAlt, FaPhone, FaSave, FaTruck, FaClock, FaCamera, Fa
 import { useUI, UserProfile } from '../../context/UIContext'; 
 import { useRouter } from 'next/navigation';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 export default function ConfiguracionMontadorPage() {
     // Leemos el perfil y las funciones de actualización del Contexto
