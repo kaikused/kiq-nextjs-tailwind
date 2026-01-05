@@ -7,7 +7,6 @@ import HeroModerno from './components/HeroModerno';
 import ChatCalculadora from './components/ChatCalculadora';
 import CalculatorModal from './components/CalculatorModal'; 
 import SocialProof from './components/SocialProof';
-import ComoFunciona from './components/ComoFunciona';
 import Testimonios from './components/Testimonios'; 
 import FooterMinimal from './components/FooterMinimal';
 
@@ -45,8 +44,6 @@ export default function Home() {
             {/* 👇 AQUÍ INSERTAMOS EL COMPONENTE LIMPIO */}
             <KiqOutletSection />
             {/* ------------------------------------- */}
-
-            <ComoFunciona />
             <Testimonios />
           </div>
 
