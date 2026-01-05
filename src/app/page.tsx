@@ -78,7 +78,7 @@ export default function Home() {
             </div>
             
              <p className="text-center text-xs text-gray-400 mt-4">
-                Kiq Montajes AI v3.0 • Cotizaciones precisas en segundos
+                Kiq Montajes AI• Cotizaciones precisas en segundos
             </p>
           </div>
         </section>
