@@ -332,22 +332,32 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             }
 
         } else if (stage === 'awaiting_clarification_quantity' && needsClarity) {
-            const quantity = parseInt(text, 10);
+            // --- LÓGICA MEJORADA DE TEXTO ---
+            const quantity = parseInt(text.replace(/\D/g, ''), 10);
             
             if (isNaN(quantity) || quantity <= 0) {
                 addBotMessage("Por favor, introduce un número válido mayor a cero.");
-                setStage('awaiting_clarification_quantity');
+                // No reseteamos stage para permitir reintento
                 return;
             }
             
-            const muebleName = needsClarity.MUEBLE_PROBABLE.replace(/_/g, ' ');
-            const newDescription = `${quantity} ${muebleName}`;
+            let newDescription = "";
+            
+            // Si el backend pedía aclarar 'armario', el número son PUERTAS
+            if (needsClarity.MUEBLE_PROBABLE === 'armario') {
+                newDescription = `armario de ${quantity} puertas`;
+            } else {
+                // Para otros muebles, es cantidad
+                const muebleName = needsClarity.MUEBLE_PROBABLE.replace(/_/g, ' ');
+                newDescription = `${quantity} ${muebleName}`;
+            }
             
             setNeedsClarity(null);
             setCurrentTextDescription(newDescription); 
             
             const analysisData = await sendDataToBackend(newDescription, currentImageFiles); 
             await processInitialAnalysis(analysisData);
+            // --------------------------------
 
         } else if (stage === 'ask_address') {
             await sendQuoteToBackend(text);
@@ -458,16 +468,13 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         }
     };
 
-    // --- CORRECCIÓN CLAVE AQUÍ ---
     const handlePublishLite = async () => {
         setIsTyping(true);
 
-        // Usamos la función helper que busca ambos tokens
         const token = getToken();
         
         if (!token) {
             setIsTyping(false);
-            // Mensaje más amigable y quizás redirigir al login si falla gravemente
             addBotMessage("Error: No se encontró tu sesión. Por favor, recarga la página.");
             return;
         }
@@ -477,7 +484,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` // Ahora sí lleva el token correcto
+                    'Authorization': `Bearer ${token}` 
                 },
                 body: JSON.stringify({
                     descripcion: currentTextDescription,
@@ -522,6 +529,22 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             return;
         }
 
+        // --- LÓGICA DE BOTONES DE ARMARIO ---
+        if (option.value.startsWith('clarify_doors_')) {
+            const numPuertas = option.value.split('_')[2]; 
+            const newDescription = `armario de ${numPuertas} puertas`; 
+            
+            addUserMessage(option.text);
+            setOptions([]);
+            setNeedsClarity(null);
+            setCurrentTextDescription(newDescription);
+            
+            const analysisData = await sendDataToBackend(newDescription, currentImageFiles); 
+            await processInitialAnalysis(analysisData);
+            return;
+        }
+        // ------------------------------------
+
         addUserMessage(option.text);
         setOptions([]);
         
@@ -538,6 +561,10 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         } else if (stage === 'ask_anchoring') {
             setBudgetDetails(prev => [...prev, { label: T.summaryLabels.anchoring, value: option.text }]);
             await askForAddress();
+        } else if (option.value === 'si' || option.value === 'no') {
+            if (stage === 'ask_anchoring') {
+                 await askForAddress();
+            }
         } else if (option.value === 'restart') {
             if (typeof window !== 'undefined') {
                 window.location.reload();
@@ -594,6 +621,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
             const data = await response.json();
             
+            // --- DETECCIÓN DE ERROR 422 (ACLARACIÓN) ---
             if (response.status === 422 && data.ACLARACION_REQUERIDA) {
                 setIsTyping(false);
                 setNeedsClarity(data as AclaracionRequerida); 
@@ -615,6 +643,36 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
     }
     
     async function askForQuantityClarity(muebleKey: string) {
+        // --- 1. SALUDO DETECTADO (BACKEND DICE "SALUDO") ---
+        if (muebleKey === 'saludo') {
+            addBotMessage("¡Hola! 👋 Soy tu asistente de montajes. Cuéntame, ¿qué muebles necesitas montar hoy? (Ej: 'Un armario PAX', 'Una cómoda')");
+            setStage('describe'); 
+            setCurrentTextDescription(''); 
+            return;
+        }
+
+        // --- 2. TEXTO SIN SENTIDO (BACKEND DICE "DESCONOCIDO") ---
+        if (muebleKey === 'desconocido') {
+            addBotMessage("Lo siento, no he entendido qué mueble es ese. ¿Podrías intentar describirlo de otra forma?");
+            setStage('describe');
+            setCurrentTextDescription('');
+            return;
+        }
+
+        // --- 3. ARMARIO (BOTONES DE PUERTAS) ---
+        if (muebleKey === 'armario') {
+            addBotMessage("Entendido, es un armario. Para el precio exacto, ¿cuántas puertas/cuerpos tiene?");
+            setStage('awaiting_clarification_quantity');
+            showOptions([
+                { text: "2 Puertas", value: "clarify_doors_2" },
+                { text: "3 Puertas", value: "clarify_doors_3" },
+                { text: "4 Puertas", value: "clarify_doors_4" },
+                { text: "+4 Puertas", value: "clarify_doors_5" }
+            ]);
+            return;
+        }
+
+        // --- 4. OTROS MUEBLES (CANTIDAD) ---
         const muebleName = muebleKey.replace(/_/g, ' '); 
         const clarificationMessage = `¡Ups! Para darte el precio exacto, necesito una cantidad específica de ${muebleName}. Por favor, indica SÓLO la cantidad de unidades que deseas montar (Ej: '2').`;
 
@@ -624,7 +682,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
     async function processInitialAnalysis(analysisData: { analisis: Analysis; image_urls: string[] | null; image_labels: string[] | null } | null) {
         if (!analysisData || !analysisData.analisis) {
-            console.error("Error: Análisis inicial no válido.");
+            console.error("Error: Análisis inicial no válido (falta clave 'analisis').", analysisData);
             if (!needsClarity) { 
                 addBotMessage("Lo siento, hubo un error de análisis. Reiniciemos.");
                 setStage('describe');
@@ -634,6 +692,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         setStoredAnalysis(analysisData.analisis);
         setUploadedImageUrls(analysisData.image_urls);
         setImageLabels(analysisData.image_labels);
+        
         if (analysisData.analisis.necesita_anclaje_general) {
             await askFinalQuestions();
         } else {
