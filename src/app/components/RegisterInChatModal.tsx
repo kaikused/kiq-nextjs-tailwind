@@ -61,7 +61,7 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
   const router = useRouter();
 
   const [step, setStep] = useState(1); // 1: Email, 2: Código + Pass
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(registrationData?.email || ''); // Pre-llenar si viene del chat
   const [verificationCode, setVerificationCode] = useState('');
   const [password, setPassword] = useState('');
   
@@ -104,11 +104,13 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
     let redirectPath = '/';
 
     try {
+      // AQUÍ ESTÁ EL CAMBIO CLAVE: Incluimos el teléfono
       const payload = {
         nombre: prefilledName,
         email,
         password,
         codigo: verificationCode,
+        telefono: registrationData.telefono, // <--- ¡IMPORTANTE! Pasamos el teléfono capturado
         ...registrationData 
       };
 

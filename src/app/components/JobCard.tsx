@@ -1,4 +1,4 @@
-import { FaCalendarAlt, FaMapMarkerAlt, FaImage, FaCommentDots } from "react-icons/fa";
+import { FaCalendarAlt, FaMapMarkerAlt, FaImage, FaCommentDots, FaWhatsapp } from "react-icons/fa";
 
 interface JobCardProps {
   title: string;
@@ -7,6 +7,9 @@ interface JobCardProps {
   location: string;
   imageUrl?: string;
   
+  // 🔥 NUEVO: El dato que viene del backend (puede ser null o string)
+  clientPhone?: string; 
+
   // Datos de Estado
   statusLabel: string;
   statusColorClass: string; 
@@ -20,7 +23,7 @@ interface JobCardProps {
 }
 
 export default function JobCard({ 
-  title, price, date, location, imageUrl, statusLabel, statusColorClass, children, onImageClick, onChatClick 
+  title, price, date, location, imageUrl, clientPhone, statusLabel, statusColorClass, children, onImageClick, onChatClick 
 }: JobCardProps) {
   
   const format = (n: number) => n.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
@@ -90,18 +93,45 @@ export default function JobCard({
         </div>
       </div>
 
+      {/* 🔮 VENTANA MÁGICA: DATOS DE CONTACTO 
+          Solo se muestra si el backend envió el teléfono (clientPhone existe)
+      */}
+      {clientPhone && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl flex items-center justify-between animate-in fade-in zoom-in duration-300">
+            <div className="flex items-center gap-3">
+                <div className="bg-green-500 text-white p-2 rounded-full shadow-sm">
+                    <FaWhatsapp size={18} />
+                </div>
+                <div>
+                    <p className="text-[10px] font-bold text-green-800 uppercase tracking-wider">Contacto Directo</p>
+                    <p className="text-sm font-black text-gray-800 tracking-tight">{clientPhone}</p>
+                </div>
+            </div>
+            <button 
+                onClick={(e) => {
+                    e.stopPropagation();
+                    // Limpiamos espacios para el enlace
+                    const cleanPhone = clientPhone.replace(/\D/g, '');
+                    window.open(`https://wa.me/${cleanPhone}`, '_blank');
+                }}
+                className="px-3 py-1.5 bg-white text-green-700 text-xs font-bold rounded-lg border border-green-100 shadow-sm hover:bg-green-50 transition-colors"
+            >
+                Abrir
+            </button>
+        </div>
+      )}
+
       {/* --- ÁREA DE CONTENIDO (Botones del padre, Desglose, etc.) --- */}
       <div className="flex-grow">
         {children}
       </div>
 
-      {/* --- FOOTER: BOTÓN CHAT DESTACADO (NUEVA POSICIÓN) --- */}
-      {/* Solo se renderiza si se pasa la función onChatClick */}
+      {/* --- FOOTER: BOTÓN CHAT DESTACADO --- */}
       {onChatClick && (
         <div className="mt-4 pt-3 border-t border-gray-50 flex justify-end">
             <button 
                 onClick={(e) => {
-                    e.stopPropagation(); // Evita clicks accidentales en la tarjeta
+                    e.stopPropagation(); 
                     onChatClick();
                 }}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-100"

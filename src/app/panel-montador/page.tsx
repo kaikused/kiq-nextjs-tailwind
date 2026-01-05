@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react'; // 👈 Añadido Suspense
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'; 
 import { 
   FaCreditCard, 
   FaCamera, 
@@ -38,7 +38,12 @@ interface TrabajoMontador {
     precio_calculado: number; 
     fecha_creacion: string; 
     cliente_nombre: string; 
-    cliente_info?: { nombre: string; foto_url?: string; }; 
+    // 🔥 ACTUALIZADO: Añadido el campo telefono aquí
+    cliente_info?: { 
+        nombre: string; 
+        foto_url?: string; 
+        telefono?: string; 
+    }; 
     estado: string; 
     imagenes_urls?: string[]; 
     etiquetas?: any; 
@@ -61,7 +66,7 @@ interface MyProduct {
 function ContenidoPanelMontador() {
     const { userGems, openGemStore, userProfile, accessToken, handleLogout, updateProfileData } = useUI(); 
     const router = useRouter();
-    const searchParams = useSearchParams(); // 👈 Esto causaba el error sin Suspense
+    const searchParams = useSearchParams(); 
 
     // Estados de Datos
     const [trabajosDisponibles, setTrabajosDisponibles] = useState<TrabajoMontador[]>([]);
@@ -312,7 +317,6 @@ function ContenidoPanelMontador() {
         }
     };
 
-    // Helper para status de producto
     const getProductStatus = (estado: string) => {
         switch(estado) {
             case 'disponible': return { label: 'En Venta', color: 'bg-emerald-100 text-emerald-700' };
@@ -359,7 +363,7 @@ function ContenidoPanelMontador() {
                     </div>
                 )}
 
-                {/* --- PESTAÑAS (DISEÑO UNIFICADO) --- */}
+                {/* --- PESTAÑAS --- */}
                 <div className="flex flex-wrap justify-center items-center gap-4 md:gap-8 py-2 mb-8">
                     
                     <button 
@@ -390,7 +394,6 @@ function ContenidoPanelMontador() {
                         </span>
                     </button>
                     
-                    {/* Tab: MIS PRODUCTOS (Antes ventas) */}
                     <button 
                         onClick={() => setActiveTab('ventas')}
                         className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-200 min-w-[100px] md:min-w-[120px] ${
@@ -434,7 +437,6 @@ function ContenidoPanelMontador() {
                                 </button>
                             </div>
                         ) : (
-                            // Renderizamos como lista de tarjetas usando JobCard (reutilización inteligente)
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {misProductos.map((prod) => {
                                     const st = getProductStatus(prod.estado);
@@ -448,7 +450,6 @@ function ContenidoPanelMontador() {
                                             imageUrl={prod.imagen || undefined}
                                             statusLabel={st.label}
                                             statusColorClass={st.color}
-                                            // Al hacer clic, llevamos al detalle público
                                             onImageClick={() => router.push(`/producto/${prod.id}`)}
                                         >
                                             <div className="mt-2 text-xs text-gray-400 flex items-center gap-1">
@@ -462,7 +463,7 @@ function ContenidoPanelMontador() {
                     </div>
                 )}
 
-                {/* B. VISTA TRABAJOS (SERVICIOS) - INTACTO */}
+                {/* B. VISTA TRABAJOS (SERVICIOS) */}
                 {activeTab !== 'ventas' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                         {displayedJobs.length === 0 ? (
@@ -485,6 +486,12 @@ function ContenidoPanelMontador() {
                                         statusLabel={status.label}
                                         statusColorClass={status.color}
                                         onImageClick={() => trabajo.imagenes_urls?.[0] && window.open(trabajo.imagenes_urls[0], '_blank')}
+                                        
+                                        // 🔥 AQUÍ SE ENVÍA EL TELÉFONO A LA TARJETA
+                                        // Si el backend envía null (disponibles), esto es null y no se ve nada.
+                                        // Si el backend envía número (aceptado), esto es string y se ve la ventana mágica.
+                                        clientPhone={trabajo.cliente_info?.telefono}
+
                                         onChatClick={
                                             (activeTab === 'activos' && trabajo.estado === 'aceptado') ? undefined : 
                                             (puedeChatear ? () => abrirChat(trabajo) : undefined)
@@ -527,7 +534,7 @@ function ContenidoPanelMontador() {
                     </div>
                 )}
 
-                {/* Modales INTACTOS */}
+                {/* Modales */}
                 <ChatModal isOpen={isChatOpen} onClose={() => { setIsChatOpen(false); setChatJobId(null); }} jobId={chatJobId} currentUserId={perfil.id.toString()} currentUserRole="montador" jobTitle={`Chat de Trabajo #${chatJobId}`} myAvatar={perfil.foto_url || undefined} otherAvatar={trabajoChatActivo?.cliente_info?.foto_url || undefined} otherName={trabajoChatActivo?.cliente_info?.nombre || trabajoChatActivo?.cliente_nombre} />
                 <WelcomeBonusModal isOpen={showWelcomeModal} onClose={handleCloseWelcome} />
                 <VenderItemModal isOpen={isVenderModalOpen} onClose={() => setIsVenderModalOpen(false)} onSuccess={() => { alert("¡Publicado! Pronto aparecerá en el feed."); fetchData(); }} />
