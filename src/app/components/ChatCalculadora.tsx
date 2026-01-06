@@ -36,6 +36,7 @@ interface ItemDesglose {
 interface AclaracionRequerida {
     ACLARACION_REQUERIDA: boolean;
     MUEBLE_PROBABLE: string;
+    CAMPOS_FALTANTES?: string[];
 }
 
 interface DesgloseCompleto {
@@ -108,7 +109,7 @@ const T = {
     loginSuccess: "¡Contraseña correcta! Guardando cotización...",
     restartButton: "Calcular otro presupuesto",
 
-    preRegister: "¡Genial, {name}! Tu precio estimado es de {priceText}. Abriendo formulario seguro para guardar tu presupuesto..."
+    preRegister: "¡Genial, {name}! Tu precio estimado es de {priceText}. Haz clic en 'Aceptar' para guardar tu presupuesto y que un montador te contacte."
 };
 
 
@@ -196,7 +197,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             // CASO A: Venimos del Panel (Modo Lite) y tenemos Nombre (Usuario Logueado)
             if (mode === 'lite' && initialUserName) {
                 setIsAuthenticated(true);
-                startChat(initialUserName);
+                startChat(initialUserName, initialPrompt);
                 return;
             }
 
@@ -204,7 +205,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             if (mode === 'lite') {
                 const token = getToken(); // USAMOS LA FUNCIÓN SEGURA
                 if (!token) {
-                    startChat(null);
+                    startChat(null, initialPrompt);
                     return;
                 }
                 try {
@@ -213,33 +214,38 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     const data = await res.json();
                     if (res.ok && data.tipo === 'cliente') {
                         setIsAuthenticated(true);
-                        startChat(data.nombre);
+                        startChat(data.nombre, initialPrompt);
                     } else {
                         // Token inválido, limpiamos
                         localStorage.removeItem('accessToken');
                         localStorage.removeItem('token');
-                        startChat(null);
+                        startChat(null, initialPrompt);
                     }
                 } catch (error) {
-                    startChat(null);
+                    startChat(null, initialPrompt);
                 }
                 return;
             }
 
             // CASO C: Modo Público (Home)
             setIsAuthenticated(false);
-            startChat(null);
+            startChat(null, initialPrompt);
         };
 
         initializeChat();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode, initialUserName]);
 
-    const startChat = (nombreUsuario: string | null) => {
+    const startChat = (nombreUsuario: string | null, promptInicial: string = '') => {
         setClientName(nombreUsuario || ''); 
         
-        if (initialPrompt) {
-            setCurrentTextDescription(initialPrompt);
+        // --- DETECCIÓN DE SALUDO INICIAL (Frontend) ---
+        const saludos = ['hola', 'buenos', 'buenas', 'hey', 'que tal'];
+        const esSaludo = promptInicial && saludos.some(s => promptInicial.toLowerCase().startsWith(s)) && promptInicial.length < 15;
+
+        // Si es un saludo, NO lo guardamos como descripción para no romper el flujo
+        if (promptInicial && !esSaludo) {
+            setCurrentTextDescription(promptInicial);
         } else {
             setCurrentTextDescription('');
         }
@@ -267,10 +273,11 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             setStage('describe');
         } else {
             setIsAuthenticated(false);
-            if (initialPrompt) {
-                addBotMessage(`¡Hola! Veo que quieres cotizar: "${initialPrompt}". Para darte el precio exacto, primero dime: ¿cómo te llamas?`, 600);
+            if (promptInicial && !esSaludo) {
+                addBotMessage(`¡Hola! Veo que quieres cotizar: "${promptInicial}". Para darte el precio exacto, primero dime: ¿cómo te llamas?`, 600);
                 setStage('ask_name'); 
             } else {
+                // Si no hay prompt o es solo un saludo, empezamos normal
                 addBotMessage(T.welcomeName, 800);
                 setStage('ask_name');
             }
@@ -308,7 +315,8 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     setStage('awaiting_photo_option'); 
                 }, 800);
             } else {
-                addBotMessage(T.welcomeUser.replace('{name}', text));
+                // Si veníamos de un saludo, ahora pedimos la descripción
+                addBotMessage(`¡Encantado, ${text}! ¿Qué necesitas montar hoy? (Ej: Un armario, una mesa...)`);
                 setStage('describe');
             }
 
@@ -332,24 +340,31 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             }
 
         } else if (stage === 'awaiting_clarification_quantity' && needsClarity) {
-            // --- LÓGICA MEJORADA DE TEXTO ---
-            const quantity = parseInt(text.replace(/\D/g, ''), 10);
             
-            if (isNaN(quantity) || quantity <= 0) {
-                addBotMessage("Por favor, introduce un número válido mayor a cero.");
-                // No reseteamos stage para permitir reintento
-                return;
-            }
-            
+            // MANEJO DE ENTRADA MANUAL DE TEXTO (Si ignoran los botones)
             let newDescription = "";
             
-            // Si el backend pedía aclarar 'armario', el número son PUERTAS
-            if (needsClarity.MUEBLE_PROBABLE === 'armario') {
-                newDescription = `armario de ${quantity} puertas`;
+            // Caso especial: Armario pidiendo TIPO de puerta
+            if (needsClarity.CAMPOS_FALTANTES && needsClarity.CAMPOS_FALTANTES.includes('tipo_puerta')) {
+                // Asumimos que lo que escriben es el tipo
+                newDescription = `armario de puertas ${text}`;
             } else {
-                // Para otros muebles, es cantidad
-                const muebleName = needsClarity.MUEBLE_PROBABLE.replace(/_/g, ' ');
-                newDescription = `${quantity} ${muebleName}`;
+                // Asumimos que es cantidad numérica
+                const quantity = parseInt(text.replace(/\D/g, ''), 10);
+                
+                if (isNaN(quantity) || quantity <= 0) {
+                    addBotMessage("Por favor, introduce un número válido mayor a cero.");
+                    return;
+                }
+                
+                if (needsClarity.MUEBLE_PROBABLE === 'armario') {
+                    // Si ya sabíamos el tipo, esto son puertas.
+                    // IMPORTANTE: Concatenamos a la descripción anterior para no perder el "puertas correderas"
+                    newDescription = `${currentTextDescription} de ${quantity} puertas`;
+                } else {
+                    const muebleName = needsClarity.MUEBLE_PROBABLE.replace(/_/g, ' ');
+                    newDescription = `${quantity} ${muebleName}`;
+                }
             }
             
             setNeedsClarity(null);
@@ -357,7 +372,6 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             
             const analysisData = await sendDataToBackend(newDescription, currentImageFiles); 
             await processInitialAnalysis(analysisData);
-            // --------------------------------
 
         } else if (stage === 'ask_address') {
             await sendQuoteToBackend(text);
@@ -468,13 +482,16 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         }
     };
 
+    // --- CORRECCIÓN CLAVE AQUÍ ---
     const handlePublishLite = async () => {
         setIsTyping(true);
 
+        // Usamos la función helper que busca ambos tokens
         const token = getToken();
         
         if (!token) {
             setIsTyping(false);
+            // Mensaje más amigable y quizás redirigir al login si falla gravemente
             addBotMessage("Error: No se encontró tu sesión. Por favor, recarga la página.");
             return;
         }
@@ -484,7 +501,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Authorization': `Bearer ${token}` // Ahora sí lleva el token correcto
                 },
                 body: JSON.stringify({
                     descripcion: currentTextDescription,
@@ -529,21 +546,46 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             return;
         }
 
-        // --- LÓGICA DE BOTONES DE ARMARIO ---
-        if (option.value.startsWith('clarify_doors_')) {
-            const numPuertas = option.value.split('_')[2]; 
-            const newDescription = `armario de ${numPuertas} puertas`; 
+        // --- LÓGICA DE BOTONES DE ACLARACIÓN (ARMARIOS Y POPUP) ---
+        
+        // A) TIPO DE PUERTA
+        if (option.value.startsWith('clarify_type_')) {
+            const tipo = option.value.split('_')[2]; // 'correderas' o 'batientes'
+            const newDescription = `armario de puertas ${tipo}`; 
             
             addUserMessage(option.text);
-            setOptions([]);
-            setNeedsClarity(null);
-            setCurrentTextDescription(newDescription);
+            setOptions([]); setNeedsClarity(null); setCurrentTextDescription(newDescription);
             
             const analysisData = await sendDataToBackend(newDescription, currentImageFiles); 
             await processInitialAnalysis(analysisData);
             return;
         }
-        // ------------------------------------
+
+        // B) CANTIDAD DE PUERTAS
+        if (option.value.startsWith('clarify_doors_')) {
+            if (option.value === 'clarify_doors_more') {
+                addUserMessage(option.text); setOptions([]);
+                addBotMessage("Entendido. Por favor, escribe el número exacto de puertas:");
+                return; 
+            }
+            const numPuertas = option.value.split('_')[2];
+            // TRUCO: Concatenamos a la descripción actual para no perder el "puertas correderas"
+            const newDescription = `${currentTextDescription} de ${numPuertas} puertas`; 
+            
+            addUserMessage(option.text);
+            setOptions([]); setNeedsClarity(null); setCurrentTextDescription(newDescription);
+            
+            const analysisData = await sendDataToBackend(newDescription, currentImageFiles); 
+            await processInitialAnalysis(analysisData);
+            return;
+        }
+        
+        // C) BOTÓN DE ACEPTAR PRECIO (ABRIR REGISTRO)
+        if (option.value === 'open_register_modal') {
+            setIsRegisterModalOpen(true);
+            return;
+        }
+        // ---------------------------------------------------------
 
         addUserMessage(option.text);
         setOptions([]);
@@ -621,11 +663,11 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
             const data = await response.json();
             
-            // --- DETECCIÓN DE ERROR 422 (ACLARACIÓN) ---
             if (response.status === 422 && data.ACLARACION_REQUERIDA) {
                 setIsTyping(false);
                 setNeedsClarity(data as AclaracionRequerida); 
-                await askForQuantityClarity(data.MUEBLE_PROBABLE); 
+                // Pasamos los campos faltantes a la función
+                await askForQuantityClarity(data.MUEBLE_PROBABLE, data.CAMPOS_FALTANTES); 
                 return null; 
             }
 
@@ -642,16 +684,16 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         }
     }
     
-    async function askForQuantityClarity(muebleKey: string) {
-        // --- 1. SALUDO DETECTADO (BACKEND DICE "SALUDO") ---
+    // --- FUNCIÓN DE CLARIFICACIÓN MEJORADA (2 PASOS) ---
+    async function askForQuantityClarity(muebleKey: string, camposFaltantes: string[] = []) {
+        // 1. SALUDO
         if (muebleKey === 'saludo') {
             addBotMessage("¡Hola! 👋 Soy tu asistente de montajes. Cuéntame, ¿qué muebles necesitas montar hoy? (Ej: 'Un armario PAX', 'Una cómoda')");
             setStage('describe'); 
             setCurrentTextDescription(''); 
             return;
         }
-
-        // --- 2. TEXTO SIN SENTIDO (BACKEND DICE "DESCONOCIDO") ---
+        // 2. DESCONOCIDO
         if (muebleKey === 'desconocido') {
             addBotMessage("Lo siento, no he entendido qué mueble es ese. ¿Podrías intentar describirlo de otra forma?");
             setStage('describe');
@@ -659,20 +701,34 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             return;
         }
 
-        // --- 3. ARMARIO (BOTONES DE PUERTAS) ---
+        // 3. ARMARIO (PASOS SECUENCIALES)
         if (muebleKey === 'armario') {
-            addBotMessage("Entendido, es un armario. Para el precio exacto, ¿cuántas puertas/cuerpos tiene?");
-            setStage('awaiting_clarification_quantity');
-            showOptions([
-                { text: "2 Puertas", value: "clarify_doors_2" },
-                { text: "3 Puertas", value: "clarify_doors_3" },
-                { text: "4 Puertas", value: "clarify_doors_4" },
-                { text: "+4 Puertas", value: "clarify_doors_5" }
-            ]);
-            return;
+            // Paso 1: Tipo de puerta (Si falta)
+            if (camposFaltantes && camposFaltantes.includes('tipo_puerta')) {
+                addBotMessage("Entendido, es un armario. Para darte el precio exacto, ¿cómo son las puertas?");
+                setStage('awaiting_clarification_quantity');
+                showOptions([
+                    { text: "Batientes (Abatibles)", value: "clarify_type_batientes" },
+                    { text: "Correderas", value: "clarify_type_correderas" }
+                ]);
+                return;
+            }
+            // Paso 2: Cantidad de puertas (Si falta)
+            if (camposFaltantes && camposFaltantes.includes('num_puertas')) {
+                addBotMessage("Perfecto. ¿Cuántas puertas/cuerpos tiene el armario?");
+                setStage('awaiting_clarification_quantity');
+                showOptions([
+                    { text: "1 Puerta", value: "clarify_doors_1" },
+                    { text: "2 Puertas", value: "clarify_doors_2" },
+                    { text: "3 Puertas", value: "clarify_doors_3" },
+                    { text: "4 Puertas", value: "clarify_doors_4" },
+                    { text: "Más de 4", value: "clarify_doors_more" }
+                ]);
+                return;
+            }
         }
 
-        // --- 4. OTROS MUEBLES (CANTIDAD) ---
+        // 4. OTROS MUEBLES
         const muebleName = muebleKey.replace(/_/g, ' '); 
         const clarificationMessage = `¡Ups! Para darte el precio exacto, necesito una cantidad específica de ${muebleName}. Por favor, indica SÓLO la cantidad de unidades que deseas montar (Ej: '2').`;
 
@@ -761,14 +817,13 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 ]);
                 setStage('confirm_publish_loggedin');
             } else {
+                // --- CAMBIO PARA EL POPUP ---
                 addBotMessage(T.preRegister
                     .replace('{name}', clientName)
                     .replace('{priceText}', priceText)
                 );
-                setTimeout(() => {
-                    setIsRegisterModalOpen(true);
-                }, 1500);
-                
+                // YA NO ABRIMOS EL MODAL AUTOMÁTICAMENTE
+                showOptions([{ text: "Aceptar y Continuar", value: "open_register_modal" }]);
                 setStage('modal_open'); 
             }
         } catch (error) {
@@ -899,7 +954,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                         <button
                             key={opt.value}
                             className={`font-bold py-2 px-4 rounded-full transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5 ${
-                                opt.value === 'confirm_yes' ? 'bg-acento text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                opt.value === 'confirm_yes' || opt.value === 'open_register_modal' ? 'bg-acento text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                             onClick={() => handleOptionClick(opt)}
                         >
