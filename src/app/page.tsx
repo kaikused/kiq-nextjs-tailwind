@@ -10,8 +10,10 @@ import SocialProof from './components/SocialProof';
 import Testimonios from './components/Testimonios'; 
 import FooterMinimal from './components/FooterMinimal';
 
+
 // 👇 Nuevo Componente Modular (Mucho más limpio)
 import KiqOutletSection from './components/KiqOutletSection';
+import CtaFinal from './components/CtaFinal';
 
 export default function Home() {
   const [cotizacionActiva, setCotizacionActiva] = useState(false);
@@ -40,7 +42,7 @@ export default function Home() {
           <div className="flex-grow">
             <HeroModerno onStartCotizacion={handleStartCotizacion} />
             <SocialProof />
-
+            <CtaFinal/>
             {/* 👇 AQUÍ INSERTAMOS EL COMPONENTE LIMPIO */}
             <KiqOutletSection />
             {/* ------------------------------------- */}
