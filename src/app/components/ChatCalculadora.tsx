@@ -120,7 +120,7 @@ function isValidEmail(email: string) {
     return regex.test(email);
 }
 
-// Función auxiliar para obtener el token correcto
+// Helper function to get the correct token
 const getToken = () => {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('accessToken') || localStorage.getItem('token');
@@ -346,9 +346,13 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             
             // Caso especial: Armario pidiendo TIPO de puerta
             if (needsClarity.CAMPOS_FALTANTES && needsClarity.CAMPOS_FALTANTES.includes('tipo_puerta')) {
-                // Asumimos que lo que escriben es el tipo
                 newDescription = `armario de puertas ${text}`;
-            } else {
+            } 
+            // Caso especial: Canapé pidiendo MEDIDA
+            else if (needsClarity.CAMPOS_FALTANTES && needsClarity.CAMPOS_FALTANTES.includes('medida')) {
+                 newDescription = `${needsClarity.MUEBLE_PROBABLE} medida ${text}`;
+            }
+            else {
                 // Asumimos que es cantidad numérica
                 const quantity = parseInt(text.replace(/\D/g, ''), 10);
                 
@@ -358,8 +362,6 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 }
                 
                 if (needsClarity.MUEBLE_PROBABLE === 'armario') {
-                    // Si ya sabíamos el tipo, esto son puertas.
-                    // IMPORTANTE: Concatenamos a la descripción anterior para no perder el "puertas correderas"
                     newDescription = `${currentTextDescription} de ${quantity} puertas`;
                 } else {
                     const muebleName = needsClarity.MUEBLE_PROBABLE.replace(/_/g, ' ');
@@ -546,9 +548,9 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             return;
         }
 
-        // --- LÓGICA DE BOTONES DE ACLARACIÓN (ARMARIOS Y POPUP) ---
+        // --- LÓGICA DE BOTONES DE ACLARACIÓN ---
         
-        // A) TIPO DE PUERTA
+        // A) TIPO DE PUERTA (ARMARIOS)
         if (option.value.startsWith('clarify_type_')) {
             const tipo = option.value.split('_')[2]; // 'correderas' o 'batientes'
             const newDescription = `armario de puertas ${tipo}`; 
@@ -561,7 +563,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             return;
         }
 
-        // B) CANTIDAD DE PUERTAS
+        // B) CANTIDAD DE PUERTAS (ARMARIOS)
         if (option.value.startsWith('clarify_doors_')) {
             if (option.value === 'clarify_doors_more') {
                 addUserMessage(option.text); setOptions([]);
@@ -569,7 +571,6 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 return; 
             }
             const numPuertas = option.value.split('_')[2];
-            // TRUCO: Concatenamos a la descripción actual para no perder el "puertas correderas"
             const newDescription = `${currentTextDescription} de ${numPuertas} puertas`; 
             
             addUserMessage(option.text);
@@ -579,8 +580,23 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             await processInitialAnalysis(analysisData);
             return;
         }
+
+        // C) MEDIDA (CANAPÉS / CAMAS)  <-- NUEVA LÓGICA AGREGADA
+        if (option.value.startsWith('clarify_size_')) {
+            const size = option.value.split('_')[2]; // pequeno, mediano, grande
+            const muebleName = needsClarity?.MUEBLE_PROBABLE || 'canape';
+            // Concatenamos para que el backend reconozca la medida
+            const newDescription = `${muebleName} medida ${size}`;
+
+            addUserMessage(option.text);
+            setOptions([]); setNeedsClarity(null); setCurrentTextDescription(newDescription);
+
+            const analysisData = await sendDataToBackend(newDescription, currentImageFiles);
+            await processInitialAnalysis(analysisData);
+            return;
+        }
         
-        // C) BOTÓN DE ACEPTAR PRECIO (ABRIR REGISTRO)
+        // D) BOTÓN DE ACEPTAR PRECIO (ABRIR REGISTRO)
         if (option.value === 'open_register_modal') {
             setIsRegisterModalOpen(true);
             return;
@@ -728,7 +744,21 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             }
         }
 
-        // 4. OTROS MUEBLES
+        // 4. CANAPE / CAMA (MEDIDAS) <-- NUEVO BLOQUE LÓGICO
+        if (muebleKey === 'canape' || muebleKey === 'cama') {
+            if (camposFaltantes && camposFaltantes.includes('medida')) {
+                addBotMessage(`Entendido. Para ajustar el precio, ¿qué medida tiene el ${muebleKey.replace('_', ' ')}?`);
+                setStage('awaiting_clarification_quantity');
+                showOptions([
+                    { text: "90/105 cm (Individual)", value: "clarify_size_pequeno" },
+                    { text: "135/150 cm (Estándar)", value: "clarify_size_mediano" },
+                    { text: "160/180/200 cm (King)", value: "clarify_size_grande" }
+                ]);
+                return;
+            }
+        }
+
+        // 5. OTROS MUEBLES (CANTIDAD GENÉRICA)
         const muebleName = muebleKey.replace(/_/g, ' '); 
         const clarificationMessage = `¡Ups! Para darte el precio exacto, necesito una cantidad específica de ${muebleName}. Por favor, indica SÓLO la cantidad de unidades que deseas montar (Ej: '2').`;
 
