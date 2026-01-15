@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 
 // --- 1. Definimos las Interfaces de Datos y Funcionalidades ---
 
-// Interfaz para los datos del usuario logueado
 export interface UserProfile {
     id: number;
     nombre: string;
@@ -16,7 +15,6 @@ export interface UserProfile {
     telefono?: string;
     zona_servicio?: string;
     bono_entregado?: boolean; 
-    // 👇 CAMBIO QUIRÚRGICO: Añadida esta propiedad para evitar el error TS en el Panel Montador
     bono_visto?: boolean; 
 }
 
@@ -25,10 +23,13 @@ interface UIContextType {
     isLoginModalOpen: boolean;
     isRegisterModalOpen: boolean;
     isCalculatorModalOpen: boolean;
+    isRecoveryModalOpen: boolean; // 👇 NUEVO: Estado del modal de recuperación
     calculatorMode: 'public' | 'lite';
+    
     openLoginModal: () => void;
     openRegisterModal: () => void;
     openCalculatorModal: (mode?: 'public' | 'lite') => void;
+    openRecoveryModal: () => void; // 👇 NUEVO: Función para abrirlo
     closeModals: () => void;
 
     // --- AUTENTICACIÓN Y PERFIL ---
@@ -39,7 +40,6 @@ interface UIContextType {
     handleSuccessfulLogin: (token: string, profileData: UserProfile, gems: number) => void;
     handleLogout: () => void;
     
-    // Funciones de Reactividad
     updateProfilePhoto: (url: string) => void; 
     updateProfileData: (data: Partial<UserProfile>) => void; 
 
@@ -51,15 +51,14 @@ interface UIContextType {
     closeGemStore: () => void;
 }
 
-// 2. Creamos el Contexto
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
-// 3. Creamos el "Proveedor"
 export function UIProvider({ children }: { children: ReactNode }) {
     // --- ESTADOS DE UI ---
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
     const [isCalculatorModalOpen, setIsCalculatorModalOpen] = useState(false);
+    const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false); // 👇 NUEVO
     const [calculatorMode, setCalculatorMode] = useState<'public' | 'lite'>('public');
 
     // --- ESTADOS DE USUARIO ---
@@ -71,7 +70,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
     const [userGems, setUserGems] = useState(0); 
     const [isGemStoreOpen, setIsGemStoreOpen] = useState(false);
 
-    // --- LÓGICA DE PERSISTENCIA (useEffect) ---
+    // --- LÓGICA DE PERSISTENCIA ---
     useEffect(() => {
         const storedToken = localStorage.getItem('accessToken'); 
         if (storedToken) {
@@ -80,22 +79,20 @@ export function UIProvider({ children }: { children: ReactNode }) {
         }
     }, []); 
 
-    // --- FUNCIONES DE AUTENTICACIÓN Y PERFIL ---
+    // --- FUNCIONES ---
 
     const handleSuccessfulLogin = (token: string, profileData: UserProfile, gems: number) => {
         localStorage.setItem('accessToken', token); 
-        
         setAccessToken(token);
         setUserProfile(profileData);
         setUserGems(gems);
         setIsLoggedIn(true);
-        
         closeModals();
     };
 
     const handleLogout = () => {
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('kiq_bono_visto'); // Limpieza extra para pruebas
+        localStorage.removeItem('kiq_bono_visto'); 
         setAccessToken(null);
         setUserProfile(null);
         setUserGems(0);
@@ -114,34 +111,35 @@ export function UIProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    // --- FUNCIONES DE MODALES Y TIENDA ---
+    // --- MODALES ---
 
     const openLoginModal = () => {
-        setIsRegisterModalOpen(false);
-        setIsCalculatorModalOpen(false);
-        setIsGemStoreOpen(false); 
+        closeModals(); // Cierra todo primero
         setIsLoginModalOpen(true);
     };
 
     const openRegisterModal = () => {
-        setIsLoginModalOpen(false); 
-        setIsCalculatorModalOpen(false);
-        setIsGemStoreOpen(false); 
+        closeModals();
         setIsRegisterModalOpen(true);
     };
 
     const openCalculatorModal = (mode: 'public' | 'lite' = 'public') => {
+        closeModals();
         setCalculatorMode(mode);
-        setIsLoginModalOpen(false);
-        setIsRegisterModalOpen(false);
-        setIsGemStoreOpen(false); 
         setIsCalculatorModalOpen(true);
+    };
+
+    // 👇 NUEVO: Función para abrir recuperación
+    const openRecoveryModal = () => {
+        closeModals();
+        setIsRecoveryModalOpen(true);
     };
 
     const closeModals = () => {
         setIsLoginModalOpen(false);
         setIsRegisterModalOpen(false);
         setIsCalculatorModalOpen(false);
+        setIsRecoveryModalOpen(false); // 👇 NUEVO: Asegurar que se cierra
         setIsGemStoreOpen(false); 
         setTimeout(() => setCalculatorMode('public'), 300);
     };
@@ -155,16 +153,17 @@ export function UIProvider({ children }: { children: ReactNode }) {
 
     const closeGemStore = () => setIsGemStoreOpen(false);
 
-    // --- RETURN DEL PROVIDER ---
     return (
         <UIContext.Provider value={{ 
             isLoginModalOpen, 
             isRegisterModalOpen, 
             isCalculatorModalOpen,
+            isRecoveryModalOpen, // 👇 NUEVO
             calculatorMode, 
             openLoginModal, 
             openRegisterModal, 
             openCalculatorModal,
+            openRecoveryModal, // 👇 NUEVO
             closeModals, 
             
             isLoggedIn,
@@ -186,7 +185,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
     );
 }
 
-// 4. Hook para usar el Contexto
 export function useUI() {
     const context = useContext(UIContext); 
     if (context === undefined) {

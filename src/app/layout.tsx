@@ -7,12 +7,13 @@ import { UIProvider } from './context/UIContext';
 
 // Importamos componentes globales
 import Cabecera from './components/Cabecera'; 
-// NOTA: Hemos eliminado 'Footer' de aquí para usar el específico en cada página
 
 // Importamos los Modales Globales
 import LoginModal from './components/LoginModal';
 import RegisterModal from './components/RegisterModal';
 import CalculatorModal from './components/CalculatorModal'; 
+// 👇 1. AÑADE ESTE IMPORT
+import RecoveryModal from './components/RecoveryModal'; 
 
 // Configuración de fuentes
 const workSans = Work_Sans({ 
@@ -54,12 +55,11 @@ export default function RootLayout({
             {children}
           </main>
           
-          {/* ELIMINADO: <Footer /> ya no está aquí para evitar duplicados */}
-          
           {/* Modales disponibles en toda la aplicación */}
           <LoginModal />
           <RegisterModal />
           <CalculatorModal />
+          <RecoveryModal />
 
         </UIProvider>
       </body>
