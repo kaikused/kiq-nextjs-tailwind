@@ -6,8 +6,8 @@ import { FaTimes, FaEnvelope, FaLock } from 'react-icons/fa';
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 export default function LoginModal() {
-    // Extraemos las funciones del Contexto
-    const { isLoginModalOpen, closeModals, openRegisterModal, handleSuccessfulLogin } = useUI();
+    // 👇 1. Extraemos openRecoveryModal del contexto
+    const { isLoginModalOpen, closeModals, openRegisterModal, handleSuccessfulLogin, openRecoveryModal } = useUI();
     
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -42,7 +42,7 @@ export default function LoginModal() {
             email: profileData.email,
             tipo: profileData.tipo,
             foto_url: profileData.foto_url,
-            bono_entregado: profileData.bono_entregado, // <--- IMPORTANTE: Bandera de bienvenida
+            bono_entregado: profileData.bono_entregado,
             stripe_boarding_completado: profileData.stripe_boarding_completado,
             stripe_account_id: profileData.stripe_account_id,
             telefono: profileData.telefono,
@@ -74,12 +74,11 @@ export default function LoginModal() {
             const loginData = await loginRes.json();
 
             if (!loginRes.ok) {
-                // Si borraste el usuario, aquí caerá el error 401
-                throw new Error(loginData.error || 'Credenciales incorrectas');
+                throw new Error(loginData.message || 'Credenciales incorrectas');
             }
 
-            const token = loginData.access_token;
-            const tipoUsuario = loginData.tipo_usuario as 'cliente' | 'montador';
+            const token = loginData.token;
+            const tipoUsuario = loginData.role as 'cliente' | 'montador';
 
             if (!token || !tipoUsuario) {
                 throw new Error("Error de conexión con el servidor.");
@@ -94,7 +93,7 @@ export default function LoginModal() {
         } catch (err: any) {
             setIsLoading(false);
             localStorage.removeItem('accessToken'); 
-            setError(err.message); // Esto mostrará el mensaje rojo en el modal
+            setError(err.message);
         }
     };
 
@@ -103,12 +102,17 @@ export default function LoginModal() {
         openRegisterModal();
     };
 
+    // 👇 Función para cambiar al modal de recuperación
+    const switchToRecovery = () => {
+        // No cerramos modal aquí, openRecoveryModal del contexto ya se encarga de gestionar el cierre
+        openRecoveryModal(); 
+    };
+
     if (!isLoginModalOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           
-          {/* Modal con diseño original intacto */}
           <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             
             {/* Cabecera Gradient */}
@@ -157,6 +161,17 @@ export default function LoginModal() {
                         required
                         className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-gray-800 placeholder-gray-400 font-medium"
                     />
+                </div>
+
+                {/* 👇 2. BOTÓN DE RECUPERAR CONTRASEÑA AÑADIDO AQUÍ 👇 */}
+                <div className="flex justify-end">
+                    <button 
+                        type="button"
+                        onClick={switchToRecovery}
+                        className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline transition-colors"
+                    >
+                        ¿Olvidaste tu contraseña?
+                    </button>
                 </div>
 
                 {/* Mensaje de Error */}
