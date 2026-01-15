@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { FaLock, FaSync, FaCheckCircle, FaClock, FaTimesCircle } from 'react-icons/fa';
+import { FaLock, FaSync, FaCheckCircle, FaClock, FaTimesCircle, FaPhone } from 'react-icons/fa';
 
+// Asegúrate de que esta URL sea la de tu backend real
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 export default function AdminDashboard() {
@@ -11,6 +12,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
 
   const checkAuth = () => {
+    // Esta contraseña debe coincidir con la del backend (x-admin-secret)
     if (password === 'kiq2025master') {
       setIsAuth(true);
       fetchData();
@@ -22,6 +24,7 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Llamada al endpoint seguro que creamos en auth_routes.py
       const res = await fetch(`${API_BASE_URL}/api/admin/todos-los-trabajos`, {
         headers: {
           'x-admin-secret': 'kiq2025master'
@@ -30,6 +33,8 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (res.ok) {
         setTrabajos(data);
+      } else {
+        console.error("Error fetching data:", data);
       }
     } catch (err) {
       console.error(err);
@@ -89,6 +94,8 @@ export default function AdminDashboard() {
                   <th className="p-4">ID</th>
                   <th className="p-4">Fecha</th>
                   <th className="p-4">Cliente</th>
+                  {/* NUEVA COLUMNA TELÉFONO */}
+                  <th className="p-4">Teléfono</th>
                   <th className="p-4">Descripción</th>
                   <th className="p-4">Precio</th>
                   <th className="p-4">Montador</th>
@@ -100,14 +107,31 @@ export default function AdminDashboard() {
                   <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                     <td className="p-4 font-mono text-gray-400">#{t.id}</td>
                     <td className="p-4 text-gray-600">{t.fecha}</td>
+                    
+                    {/* COLUMNA CLIENTE */}
                     <td className="p-4">
                       <div className="font-medium text-gray-900">{t.cliente}</div>
                       <div className="text-xs text-gray-400">{t.email_cliente}</div>
                     </td>
+
+                    {/* NUEVA COLUMNA TELÉFONO (Conectada con telefono_cliente del backend) */}
+                    <td className="p-4 text-gray-600">
+                       {t.telefono_cliente ? (
+                         <div className="flex items-center gap-2">
+                           <FaPhone className="text-xs text-gray-400" />
+                           {t.telefono_cliente}
+                         </div>
+                       ) : (
+                         <span className="text-gray-300 italic">--</span>
+                       )}
+                    </td>
+
                     <td className="p-4 text-gray-600 max-w-xs truncate" title={t.descripcion}>
                       {t.descripcion}
                     </td>
                     <td className="p-4 font-bold text-gray-900">{t.precio}€</td>
+                    
+                    {/* COLUMNA MONTADOR */}
                     <td className="p-4">
                       {t.montador !== "Sin asignar" ? (
                         <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded text-xs font-medium">{t.montador}</span>
@@ -115,6 +139,8 @@ export default function AdminDashboard() {
                         <span className="text-gray-400 italic">Pendiente</span>
                       )}
                     </td>
+
+                    {/* COLUMNA ESTADO */}
                     <td className="p-4">
                       <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium 
                         ${t.estado === 'completado' ? 'bg-green-100 text-green-700' : 
@@ -123,7 +149,7 @@ export default function AdminDashboard() {
                         {t.estado === 'completado' && <FaCheckCircle />}
                         {t.estado === 'pendiente' && <FaClock />}
                         {t.estado === 'cancelado' && <FaTimesCircle />}
-                        {t.estado.toUpperCase()}
+                        {t.estado ? t.estado.toUpperCase() : 'UNKNOWN'}
                       </span>
                     </td>
                   </tr>
