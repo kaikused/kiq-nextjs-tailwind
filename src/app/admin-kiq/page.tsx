@@ -34,7 +34,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/todos-los-trabajos`, {
-        headers: { 'x-admin-secret': 'kiq2025master' }
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer kiq2025master' }
       });
       if (res.ok) setTrabajos(await res.json());
     } catch (err) { console.error(err); } 
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/usuarios`, {
-        headers: { 'x-admin-secret': 'kiq2025master' }
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer kiq2025master' }
       });
       if (res.ok) setUsuarios(await res.json());
     } catch (err) { console.error(err); } 
