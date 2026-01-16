@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react'; // 👈 Añadido Suspense
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { 
   FaCog, 
   FaPlus, 
@@ -14,9 +14,9 @@ import {
   FaTruck, 
   FaComments,
   FaSearch,
-  FaTag,            // 🆕 Icono para ventas
-  FaMoneyBillWave,  // 🆕 Icono para gestión
-  FaHourglassHalf   // 🆕 Icono para 'En Proceso'
+  FaTag,            
+  FaMoneyBillWave,  
+  FaHourglassHalf   
 } from "react-icons/fa";
 import { useUI } from '../context/UIContext';
 import PaymentModal from '../components/PaymentModal';
@@ -76,7 +76,7 @@ interface MyProduct {
 function ContenidoPanelCliente() {
     const { userProfile, accessToken, handleLogout, openCalculatorModal, userGems, openGemStore } = useUI();
     const router = useRouter();
-    const searchParams = useSearchParams(); // 👈 Esto es lo que causaba el error sin Suspense
+    const searchParams = useSearchParams(); 
     
     // --- ESTADOS DE DATOS ---
     const [trabajos, setTrabajos] = useState<TrabajoCliente[]>([]);
@@ -85,7 +85,7 @@ function ContenidoPanelCliente() {
     
     const [isLoading, setIsLoading] = useState(true);
     
-    // Pestañas actualizadas
+    // Pestañas
     const [activeTab, setActiveTab] = useState<'proyectos' | 'pedidos' | 'ventas' | 'historial'>('proyectos');
     
     // Estados de Pago
@@ -99,7 +99,7 @@ function ContenidoPanelCliente() {
     const [isChatOpen, setIsChatOpen] = useState(false);
     const trabajoChatActivo = trabajos.find(t => t.trabajo_id === chatJobId);
 
-    // 🆕 Estado Modal Vender
+    // Estado Modal Vender
     const [isVenderModalOpen, setIsVenderModalOpen] = useState(false);
 
     const [modalInfo, setModalInfo] = useState({
@@ -113,7 +113,7 @@ function ContenidoPanelCliente() {
     const cerrarModal = () => setModalInfo(prev => ({ ...prev, isOpen: false }));
     const navigate = (path: string) => router.push(path);
 
-    // --- 1. FETCH DATA UNIFICADO ---
+    // --- FETCH DATA UNIFICADO ---
     const fetchAllData = useCallback(async () => {
         if (!accessToken) return;
         try {
@@ -261,7 +261,7 @@ function ContenidoPanelCliente() {
     const solicitarCancelacion = (id: number) => setModalInfo({ isOpen: true, type: 'danger', title: '¿Cancelar?', message: '¿Seguro?', confirmText: 'Sí', onConfirm: () => ejecutarCancelarTrabajo(id) });
 
 
-    // --- 🚨 LÓGICA DE FILTRADO CORRECTA 🚨 ---
+    // --- LÓGICA DE FILTRADO ---
     const activos = ['cotizacion', 'pendiente', 'aceptado', 'revision_cliente', 'aprobado_cliente_stripe', 'cancelado_incidencia'];
     const finalizados = ['completado', 'cancelado', 'finalizado', 'rechazado', 'vendido']; 
 
@@ -314,7 +314,6 @@ function ContenidoPanelCliente() {
                     <div className="flex gap-3">
                         <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1 rounded-full text-indigo-700 font-bold text-sm mr-2"><FaGem className="text-indigo-500"/> {userGems}</div>
                         <button onClick={() => navigate('/panel-cliente/configuracion')} className="p-2.5 bg-white rounded-full text-gray-500 shadow-sm hover:text-indigo-600 transition"><FaCog size={18} /></button>
-                        {/* Botón Vender */}
                         <button onClick={() => setIsVenderModalOpen(true)} className="p-2.5 bg-yellow-100 text-yellow-700 rounded-full shadow-sm hover:bg-yellow-200 transition"><FaTag size={18} /></button>
                         <button onClick={() => openCalculatorModal('lite')} className="bg-indigo-600 text-white px-4 py-2.5 rounded-full font-bold text-sm shadow-lg hover:bg-indigo-700 transition flex items-center gap-2"><FaPlus className="mb-0.5"/> Nuevo Proyecto</button>
                     </div>
@@ -351,7 +350,6 @@ function ContenidoPanelCliente() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {comprasEnCurso.map((trabajo) => {
                                         const status = getStatusInfo(trabajo.estado);
-                                        // Usamos JobCard porque técnicamente es un trabajo (tiene chat, estado, etc.)
                                         return (
                                             <JobCard
                                                 key={trabajo.trabajo_id}
@@ -426,7 +424,7 @@ function ContenidoPanelCliente() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {trabajosProyectos.map(trabajo => {
                                     const status = getStatusInfo(trabajo.estado);
-                                    // Renderizado normal de JobCard para servicios
+                                    
                                     return (
                                         <JobCard
                                             key={trabajo.trabajo_id}
@@ -437,11 +435,55 @@ function ContenidoPanelCliente() {
                                             imageUrl={trabajo.imagenes_urls?.[0]}
                                             statusLabel={status.label}
                                             statusColorClass={status.color}
-                                            onChatClick={() => abrirChat(trabajo)}
+                                            onChatClick={trabajo.estado !== 'cotizacion' ? () => abrirChat(trabajo) : undefined}
                                         >
+                                            {/* Contenido Extra (Desglose) */}
                                             {trabajo.desglose && <JobBreakdown desglose={trabajo.desglose} precioFinal={trabajo.precio_calculado} modo="total" />}
-                                            <div className="flex gap-2 justify-end mt-4 pt-4 border-t border-gray-50">
-                                                <button onClick={() => solicitarCancelacion(trabajo.trabajo_id)} className="text-xs text-red-400 underline">Cancelar Proyecto</button>
+                                            
+                                            {/* --- ACCIONES --- */}
+                                            <div className="mt-4 flex flex-col gap-3">
+                                                
+                                                {/* 🚨 BOTÓN DE PAGAR (AQUÍ ESTÁ LA SOLUCIÓN) 🚨 */}
+                                                {trabajo.estado === 'cotizacion' && (
+                                                    <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200 animate-in fade-in zoom-in duration-300">
+                                                        <p className="text-xs text-yellow-800 font-bold mb-2 text-center uppercase tracking-wide">
+                                                            ⚠️ Pedido pendiente de confirmación
+                                                        </p>
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                abrirSelectorPago(trabajo);
+                                                            }}
+                                                            className="w-full py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wide"
+                                                        >
+                                                            <FaCreditCard className="text-lg" />
+                                                            Completar y Activar Pedido
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {/* Botón Confirmar Entrega */}
+                                                {trabajo.estado === 'revision_cliente' && (
+                                                    <button 
+                                                        onClick={() => solicitarConfirmacionFinal(trabajo.trabajo_id)} 
+                                                        className="w-full py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition shadow-md flex items-center justify-center gap-2"
+                                                    >
+                                                        <FaCheckCircle /> Confirmar Trabajo Finalizado
+                                                    </button>
+                                                )}
+
+                                                {/* Botón Cancelar */}
+                                                <div className="flex justify-end pt-2">
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            solicitarCancelacion(trabajo.trabajo_id);
+                                                        }} 
+                                                        className="text-xs text-red-400 font-bold hover:text-red-600 hover:underline transition"
+                                                    >
+                                                        Cancelar Proyecto
+                                                    </button>
+                                                </div>
                                             </div>
                                         </JobCard>
                                     )
