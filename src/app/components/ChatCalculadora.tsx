@@ -660,9 +660,13 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
     async function sendDataToBackend(text: string, files: FileList | null): Promise<any | null> {
         const formData = new FormData();
-        formData.append('descripcion_texto_mueble', text);
+        // 🔧 FIX: Enviar AMBOS campos para asegurar compatibilidad
+        formData.append('descripcion_texto_mueble', text); // Nombre antiguo
+        formData.append('descripcion', text);              // Nombre moderno
+        
         formData.append('language', 'es');
         formData.append('client_name', clientName);
+        
         if (files && files.length > 0) {
             for (let i = 0; i < files.length; i++) {
                 formData.append('imagen', files[i]);
@@ -811,7 +815,11 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     direccion_cliente: clientAddress,
                     language: 'es',
                     image_urls: uploadedImageUrls,
-                    image_labels: imageLabels
+                    image_labels: imageLabels,
+                    // 🔧 FIX: AÑADIDO ESTE CAMPO CRÍTICO QUE FALTABA
+                    descripcion_texto_mueble: currentTextDescription, 
+                    descripcion: currentTextDescription, // Por si acaso
+                    client_name: clientName
                 })
             });
             if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
