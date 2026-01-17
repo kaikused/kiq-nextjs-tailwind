@@ -1,22 +1,18 @@
 'use client';
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { 
   FaCog, 
   FaPlus, 
   FaCheckCircle, 
   FaClipboardList, 
   FaHistory, 
-  FaChevronRight, 
   FaGem, 
   FaCreditCard, 
-  FaShoppingBag, 
   FaBoxOpen, 
-  FaTruck, 
   FaComments,
-  FaSearch,
   FaTag,            
   FaMoneyBillWave,  
-  FaHourglassHalf   
+  FaHourglassHalf 
 } from "react-icons/fa";
 import { useUI } from '../context/UIContext';
 import PaymentModal from '../components/PaymentModal';
@@ -31,9 +27,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
-// --- INTERFACES ---
+// --- INTERFACES BLINDADAS ---
 interface ItemDesglose { item: string; cantidad: number; subtotal: number; precio_unitario: number; necesita_anclaje: boolean; }
 interface DesgloseDetallado { coste_muebles_base: number; coste_desplazamiento: number; distancia_km: string; coste_anclaje_estimado: number; total_extras: number; muebles_cotizados: ItemDesglose[]; }
+
+// ✅ MEJORA 1: Definimos la estructura de etiquetas para no usar 'any'
+interface EtiquetasTrabajo {
+    tipo?: string;
+    [key: string]: any;
+}
 
 interface TrabajoCliente {
     trabajo_id: number;
@@ -49,7 +51,7 @@ interface TrabajoCliente {
     foto_finalizacion?: string;
     desglose?: DesgloseDetallado;
     metodo_pago?: string;
-    etiquetas?: any; 
+    etiquetas?: EtiquetasTrabajo; // ✅ Tipado seguro
 }
 
 interface Order {
@@ -71,36 +73,31 @@ interface MyProduct {
 }
 
 // ------------------------------------------------------------------
-// COMPONENTE INTERNO (Lógica con useSearchParams)
+// COMPONENTE INTERNO
 // ------------------------------------------------------------------
 function ContenidoPanelCliente() {
     const { userProfile, accessToken, handleLogout, openCalculatorModal, userGems, openGemStore } = useUI();
     const router = useRouter();
     const searchParams = useSearchParams(); 
     
-    // --- ESTADOS DE DATOS ---
+    // --- ESTADOS ---
     const [trabajos, setTrabajos] = useState<TrabajoCliente[]>([]);
     const [pedidos, setPedidos] = useState<Order[]>([]);
     const [misProductos, setMisProductos] = useState<MyProduct[]>([]); 
     
     const [isLoading, setIsLoading] = useState(true);
-    
-    // Pestañas
     const [activeTab, setActiveTab] = useState<'proyectos' | 'pedidos' | 'ventas' | 'historial'>('proyectos');
     
-    // Estados de Pago
+    // Estados Modales
     const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
     const [clientSecret, setClientSecret] = useState('');
     const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
     const [selectedJobForPayment, setSelectedJobForPayment] = useState<TrabajoCliente | null>(null);
-
-    // Estados Chat
     const [chatJobId, setChatJobId] = useState<number | null>(null);
     const [isChatOpen, setIsChatOpen] = useState(false);
-    const trabajoChatActivo = trabajos.find(t => t.trabajo_id === chatJobId);
-
-    // Estado Modal Vender
     const [isVenderModalOpen, setIsVenderModalOpen] = useState(false);
+
+    const trabajoChatActivo = trabajos.find(t => t.trabajo_id === chatJobId);
 
     const [modalInfo, setModalInfo] = useState({
         isOpen: false,
@@ -110,10 +107,11 @@ function ContenidoPanelCliente() {
         confirmText: 'Aceptar',
         onConfirm: undefined as (() => void) | undefined,
     });
+
     const cerrarModal = () => setModalInfo(prev => ({ ...prev, isOpen: false }));
     const navigate = (path: string) => router.push(path);
 
-    // --- FETCH DATA UNIFICADO ---
+    // --- FETCH DATA ---
     const fetchAllData = useCallback(async () => {
         if (!accessToken) return;
         try {
@@ -131,15 +129,16 @@ function ContenidoPanelCliente() {
             setPedidos(resPedidos.ok ? await resPedidos.json() : []);
             setMisProductos(resProductos.ok ? await resProductos.json() : []);
 
-        } catch (err: any) { console.error("Error fetching data:", err); }
+        } catch (err: any) { 
+            console.error("Error fetching data:", err);
+            // Opcional: Podríamos mostrar un toast aquí si falla la red
+        }
     }, [accessToken, handleLogout]);
 
-    // Carga Inicial
     useEffect(() => { 
         if (userProfile?.tipo === 'cliente') {
             setIsLoading(true);
             fetchAllData().finally(() => setIsLoading(false));
-            
             if (searchParams.get('tab') === 'outlet') router.push('/');
         } else if (!accessToken) {
              setIsLoading(false);
@@ -148,12 +147,11 @@ function ContenidoPanelCliente() {
         }
     }, [fetchAllData, userProfile, accessToken]);
 
-    // --- LÓGICA AUTO-APERTURA CHAT ---
+    // --- LÓGICA DEEP LINKING (Chat) ---
     useEffect(() => {
         const gestionarIntencion = async () => {
             if (!accessToken || !userProfile) return;
 
-            // Caso A: Abrir chat existente por ID
             const chatParam = searchParams.get('chat');
             if (chatParam) {
                 const id = parseInt(chatParam);
@@ -164,7 +162,6 @@ function ContenidoPanelCliente() {
                 }
             }
 
-            // Caso B: Crear nuevo chat desde Outlet
             const accion = searchParams.get('accion');
             const productoId = searchParams.get('producto');
             const intencionPago = searchParams.get('intencion_pago');
@@ -192,14 +189,12 @@ function ContenidoPanelCliente() {
         if (!isLoading) gestionarIntencion();
     }, [searchParams, accessToken, userProfile, isLoading, router, fetchAllData]);
 
-
     // --- ACCIONES UI ---
     const abrirChat = (trabajo: TrabajoCliente) => { setChatJobId(trabajo.trabajo_id); setIsChatOpen(true); };
     const contactarVendedorPedido = async (productoId: number) => { router.push(`/panel-cliente?accion=nuevo_chat&producto=${productoId}`); };
-
-    // --- LÓGICA DE PAGOS ---
     const abrirSelectorPago = (t: TrabajoCliente) => { setSelectedJobForPayment(t); setIsSelectionModalOpen(true); };
     
+    // --- ACCIONES API (Pagos, Cancelar, Confirmar) ---
     const handleIniciarPagoStripe = async () => { 
          setIsSelectionModalOpen(false);
          if (!selectedJobForPayment || !accessToken) return;
@@ -214,6 +209,7 @@ function ContenidoPanelCliente() {
             setPaymentModalOpen(true);
         } catch (err: any) { setModalInfo({ isOpen: true, type: 'danger', title: 'Error', message: err.message, confirmText: 'Cerrar', onConfirm: undefined }); }
     };
+
     const handlePagoEfectivo = async () => { 
          setIsSelectionModalOpen(false);
          if (!selectedJobForPayment || !accessToken) return;
@@ -228,6 +224,7 @@ function ContenidoPanelCliente() {
             setSelectedJobForPayment(null);
         } catch (err: any) { setModalInfo({ isOpen: true, type: 'danger', title: 'Error', message: 'No se pudo conectar.', confirmText: 'Cerrar', onConfirm: undefined }); }
     };
+
     const handlePaymentSuccess = async (pid: string) => {
          if (!accessToken || !selectedJobForPayment) return;
          try {
@@ -240,6 +237,7 @@ function ContenidoPanelCliente() {
             setModalInfo({ isOpen: true, type: 'success', title: '¡Pago Correcto!', message: 'Transacción activa.', confirmText: 'Genial', onConfirm: undefined });
         } catch (err: any) { setModalInfo({ isOpen: true, type: 'danger', title: 'Error', message: err.message, confirmText: 'Cerrar', onConfirm: undefined }); }
     };
+
     const ejecutarConfirmarPago = async (tid: number) => { 
          if (!accessToken) return;
          try {
@@ -249,6 +247,7 @@ function ContenidoPanelCliente() {
             setModalInfo({ isOpen: true, type: 'success', title: '¡Finalizado!', message: 'Gracias por tu compra.', confirmText: 'Cerrar', onConfirm: undefined });
         } catch (err: any) { setModalInfo({ isOpen: true, type: 'danger', title: 'Error', message: err.message, confirmText: 'Cerrar', onConfirm: undefined }); }
     };
+
     const ejecutarCancelarTrabajo = async (tid: number) => { 
          if (!accessToken) return;
          try {
@@ -260,19 +259,20 @@ function ContenidoPanelCliente() {
     const solicitarConfirmacionFinal = (id: number) => setModalInfo({ isOpen: true, type: 'success', title: '¿Confirmar Recepción?', message: 'Al aceptar, confirmas que tienes el producto.', confirmText: 'Sí, recibido', onConfirm: () => ejecutarConfirmarPago(id) });
     const solicitarCancelacion = (id: number) => setModalInfo({ isOpen: true, type: 'danger', title: '¿Cancelar?', message: '¿Seguro?', confirmText: 'Sí', onConfirm: () => ejecutarCancelarTrabajo(id) });
 
-
-    // --- LÓGICA DE FILTRADO ---
+    // --- FILTRADO SEGURO (AQUÍ ESTÁ LA MAGIA) ---
     const activos = ['cotizacion', 'pendiente', 'aceptado', 'revision_cliente', 'aprobado_cliente_stripe', 'cancelado_incidencia'];
     const finalizados = ['completado', 'cancelado', 'finalizado', 'rechazado', 'vendido']; 
 
     const trabajosProyectos = trabajos.filter(t => 
         activos.includes(t.estado) && 
-        (!t.etiquetas || (t.etiquetas as any).tipo !== 'outlet') 
+        // ✅ MEJORA 2: Uso de Optional Chaining (?.) para evitar crasheos si etiquetas es null
+        t.etiquetas?.tipo !== 'outlet' 
     );
 
     const comprasEnCurso = trabajos.filter(t => 
         activos.includes(t.estado) && 
-        (t.etiquetas && (t.etiquetas as any).tipo === 'outlet')
+        // ✅ MEJORA 2: Optional Chaining
+        t.etiquetas?.tipo === 'outlet'
     );
 
     const trabajosHistorial = trabajos.filter(t => finalizados.includes(t.estado));
@@ -313,9 +313,30 @@ function ContenidoPanelCliente() {
                     </div>
                     <div className="flex gap-3">
                         <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1 rounded-full text-indigo-700 font-bold text-sm mr-2"><FaGem className="text-indigo-500"/> {userGems}</div>
-                        <button onClick={() => navigate('/panel-cliente/configuracion')} className="p-2.5 bg-white rounded-full text-gray-500 shadow-sm hover:text-indigo-600 transition"><FaCog size={18} /></button>
-                        <button onClick={() => setIsVenderModalOpen(true)} className="p-2.5 bg-yellow-100 text-yellow-700 rounded-full shadow-sm hover:bg-yellow-200 transition"><FaTag size={18} /></button>
-                        <button onClick={() => openCalculatorModal('lite')} className="bg-indigo-600 text-white px-4 py-2.5 rounded-full font-bold text-sm shadow-lg hover:bg-indigo-700 transition flex items-center gap-2"><FaPlus className="mb-0.5"/> Nuevo Proyecto</button>
+                        
+                        {/* ✅ MEJORA 3: Accesibilidad (aria-labels) */}
+                        <button 
+                            onClick={() => navigate('/panel-cliente/configuracion')} 
+                            aria-label="Configuración"
+                            className="p-2.5 bg-white rounded-full text-gray-500 shadow-sm hover:text-indigo-600 transition"
+                        >
+                            <FaCog size={18} />
+                        </button>
+                        
+                        <button 
+                            onClick={() => setIsVenderModalOpen(true)} 
+                            aria-label="Vender artículo"
+                            className="p-2.5 bg-yellow-100 text-yellow-700 rounded-full shadow-sm hover:bg-yellow-200 transition"
+                        >
+                            <FaTag size={18} />
+                        </button>
+                        
+                        <button 
+                            onClick={() => openCalculatorModal('lite')} 
+                            className="bg-indigo-600 text-white px-4 py-2.5 rounded-full font-bold text-sm shadow-lg hover:bg-indigo-700 transition flex items-center gap-2"
+                        >
+                            <FaPlus className="mb-0.5"/> Nuevo Proyecto
+                        </button>
                     </div>
                 </div>
 
@@ -337,11 +358,9 @@ function ContenidoPanelCliente() {
 
                 {/* --- CONTENIDO --- */}
 
-                {/* A. PESTAÑA PEDIDOS (AQUÍ ESTÁ LA MAGIA) */}
+                {/* A. PESTAÑA PEDIDOS */}
                 {activeTab === 'pedidos' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        
-                        {/* 1. SECCIÓN: COMPRAS EN CURSO (Recuperadas del limbo) */}
                         {comprasEnCurso.length > 0 && (
                             <div className="space-y-4">
                                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
@@ -362,28 +381,23 @@ function ContenidoPanelCliente() {
                                                 statusColorClass={status.color}
                                                 onImageClick={() => trabajo.imagenes_urls?.[0] && window.open(trabajo.imagenes_urls[0], '_blank')}
                                             >
-                                                {/* BOTONES DE ACCIÓN PARA COMPLETAR LA COMPRA */}
                                                 <div className="flex gap-2 justify-end mt-4 pt-4 border-t border-gray-50">
                                                     <button onClick={() => abrirChat(trabajo)} className="flex-1 py-2 bg-indigo-50 text-indigo-600 font-bold rounded-xl hover:bg-indigo-100 transition text-sm flex items-center justify-center gap-2"><FaComments /> Chat</button>
-                                                    
                                                     {trabajo.estado === 'revision_cliente' && (
                                                         <button onClick={() => solicitarConfirmacionFinal(trabajo.trabajo_id)} className="flex-1 py-2 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition text-sm flex items-center justify-center gap-2"><FaCheckCircle /> Confirmar Recibido</button>
                                                     )}
-                                                    
                                                     {trabajo.estado === 'cotizacion' && (
                                                         <button onClick={() => abrirSelectorPago(trabajo)} className="flex-1 py-2 bg-indigo-700 text-white font-bold rounded-xl hover:bg-pink-600 transition text-sm flex items-center justify-center gap-2">Pagar Ahora</button>
                                                     )}
-
                                                     <button onClick={() => solicitarCancelacion(trabajo.trabajo_id)} className="px-3 py-2 text-red-400 font-bold text-xs hover:bg-red-50 rounded-xl transition">Cancelar</button>
                                                 </div>
                                             </JobCard>
-                                        );
+                                        )
                                     })}
                                 </div>
                             </div>
                         )}
 
-                        {/* 2. SECCIÓN: PEDIDOS FINALIZADOS (Historial) */}
                         <div className="space-y-4">
                             {pedidos.length > 0 && <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Historial de Recibos</h3>}
                             {pedidos.length === 0 && comprasEnCurso.length === 0 ? (
@@ -412,7 +426,7 @@ function ContenidoPanelCliente() {
                     </div>
                 )}
 
-                {/* B. PESTAÑA PROYECTOS (SOLO MONTAJES) */}
+                {/* B. PESTAÑA PROYECTOS */}
                 {activeTab === 'proyectos' && (
                     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             {trabajosProyectos.length === 0 ? (
@@ -424,7 +438,6 @@ function ContenidoPanelCliente() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {trabajosProyectos.map(trabajo => {
                                     const status = getStatusInfo(trabajo.estado);
-                                    
                                     return (
                                         <JobCard
                                             key={trabajo.trabajo_id}
@@ -437,32 +450,21 @@ function ContenidoPanelCliente() {
                                             statusColorClass={status.color}
                                             onChatClick={trabajo.estado !== 'cotizacion' ? () => abrirChat(trabajo) : undefined}
                                         >
-                                            {/* Contenido Extra (Desglose) */}
                                             {trabajo.desglose && <JobBreakdown desglose={trabajo.desglose} precioFinal={trabajo.precio_calculado} modo="total" />}
-                                            
-                                            {/* --- ACCIONES --- */}
                                             <div className="mt-4 flex flex-col gap-3">
-                                                
-                                                {/* 🚨 BOTÓN DE PAGAR (AQUÍ ESTÁ LA SOLUCIÓN) 🚨 */}
                                                 {trabajo.estado === 'cotizacion' && (
                                                     <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200 animate-in fade-in zoom-in duration-300">
                                                         <p className="text-xs text-yellow-800 font-bold mb-2 text-center uppercase tracking-wide">
                                                             ⚠️ Pedido pendiente de confirmación
                                                         </p>
                                                         <button 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                abrirSelectorPago(trabajo);
-                                                            }}
+                                                            onClick={(e) => { e.stopPropagation(); abrirSelectorPago(trabajo); }}
                                                             className="w-full py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wide"
                                                         >
-                                                            <FaCreditCard className="text-lg" />
-                                                            Completar y Activar Pedido
+                                                            <FaCreditCard className="text-lg" /> Completar y Activar Pedido
                                                         </button>
                                                     </div>
                                                 )}
-
-                                                {/* Botón Confirmar Entrega */}
                                                 {trabajo.estado === 'revision_cliente' && (
                                                     <button 
                                                         onClick={() => solicitarConfirmacionFinal(trabajo.trabajo_id)} 
@@ -471,14 +473,9 @@ function ContenidoPanelCliente() {
                                                         <FaCheckCircle /> Confirmar Trabajo Finalizado
                                                     </button>
                                                 )}
-
-                                                {/* Botón Cancelar */}
                                                 <div className="flex justify-end pt-2">
                                                     <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            solicitarCancelacion(trabajo.trabajo_id);
-                                                        }} 
+                                                        onClick={(e) => { e.stopPropagation(); solicitarCancelacion(trabajo.trabajo_id); }} 
                                                         className="text-xs text-red-400 font-bold hover:text-red-600 hover:underline transition"
                                                     >
                                                         Cancelar Proyecto
@@ -493,7 +490,7 @@ function ContenidoPanelCliente() {
                     </div>
                 )}
 
-                {/* C. PESTAÑA MIS VENTAS (TU INVENTARIO) */}
+                {/* C. PESTAÑA VENTAS */}
                 {activeTab === 'ventas' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                         {misProductos.length === 0 ? (
@@ -563,7 +560,7 @@ function ContenidoPanelCliente() {
 }
 
 // ------------------------------------------------------------------
-// COMPONENTE PRINCIPAL (Wrapper con Suspense para Build Correcto)
+// COMPONENTE PRINCIPAL
 // ------------------------------------------------------------------
 export default function PanelClientePage() {
   return (
