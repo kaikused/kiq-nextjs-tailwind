@@ -29,7 +29,7 @@ export default function CtaFinal() {
             target="_blank" 
             rel="noopener noreferrer" 
             aria-label="Contactar por WhatsApp para pedir presupuesto"
-            className="inline-flex items-center justify-center rounded-xl bg-green-600 px-8 py-3 font-bold text-white transition-all duration-300 hover:bg-green-700 hover:scale-105 shadow-lg shadow-green-900/20"
+            className="inline-flex items-center justify-center rounded-xl bg-green-700 px-8 py-3 font-bold text-white transition-all duration-300 hover:bg-green-700 hover:scale-105 shadow-lg shadow-green-900/20"
           >
             <FaWhatsapp className="h-6 w-6 mr-2" />
             WHATSAPP
