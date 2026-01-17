@@ -12,7 +12,6 @@ export default function HeroModerno({ onStartCotizacion }: HeroModernoProps) {
   const [placeholder, setPlaceholder] = useState('');
   
   useEffect(() => {
-    // ... (Mantenemos la lógica del typing effect igual, no la toques) ...
     const frases = ["un armario de IKEA Pax...", "un soporte de TV...", "unas cortinas...", "una cama canapé..."];
     let fraseIndex = 0;
     let charIndex = 0;
@@ -56,32 +55,28 @@ export default function HeroModerno({ onStartCotizacion }: HeroModernoProps) {
   return (
     <section className="relative w-full min-h-[85vh] flex flex-col items-center justify-center bg-white overflow-hidden px-4">
       
-      {/* OPTIMIZACIÓN 1: El fondo de puntitos (radial-gradient) consume CPU.
-         SOLUCIÓN: 'hidden md:block'. Lo ocultamos en móvil para acelerar la pintura.
-      */}
+      {/* Fondo optimizado: Oculto en móvil */}
       <div className="hidden md:block absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-30 pointer-events-none"></div>
 
-      <div className="z-10 w-full max-w-3xl text-center space-y-8 animate-in fade-in zoom-in duration-700">
+      {/* 🔥 CORRECCIÓN CRÍTICA DE LCP 🔥
+         He quitado: "animate-in fade-in zoom-in duration-700"
+         Ahora el texto aparece INSTANTÁNEAMENTE. Esto eliminará los 2.3s de retraso.
+      */}
+      <div className="z-10 w-full max-w-3xl text-center space-y-8">
         
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-gray-900">
-          {/* OPTIMIZACIÓN 2: El texto con gradiente (bg-clip-text) es lento de renderizar.
-             SOLUCIÓN: En móvil usamos 'text-blue-600' sólido. En desktop usamos el gradiente.
-          */}
           <span className="text-blue-600 md:text-transparent md:bg-clip-text md:bg-gradient-to-r md:from-blue-600 md:to-violet-600">
             Kiq Montajes
           </span>
         </h1>
         
-        {/* Usamos text-gray-600 para asegurar contraste AA */}
         <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto">
           Tu experto en montajes, potenciado por IA.
         </p>
 
         {/* INPUT TIPO GEMINI */}
         <div className="relative w-full group max-w-2xl mx-auto mt-8">
-          {/* OPTIMIZACIÓN 3: El brillo borroso (blur) detrás del input mata el rendimiento móvil.
-             SOLUCIÓN: 'hidden md:block'.
-          */}
+          {/* Fondo borroso oculto en móvil */}
           <div className="hidden md:block absolute -inset-1 bg-gradient-to-r from-blue-400 to-violet-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
           
           <div className="relative flex items-center bg-white border border-gray-200 rounded-2xl shadow-xl p-2 transition-all focus-within:shadow-2xl focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-50">
