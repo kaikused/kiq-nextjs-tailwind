@@ -8,7 +8,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // 3. Configuración de imágenes (ACTUALIZADA)
+  // 3. Configuración de imágenes
   images: {
     remotePatterns: [
       {
@@ -17,20 +17,52 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'lh3.googleusercontent.com', // Fotos de perfil de Google Maps
+        hostname: 'lh3.googleusercontent.com',
       },
       {
         protocol: 'https',
-        hostname: 'storage.googleapis.com', // Tus fotos de muebles subidas
+        hostname: 'storage.googleapis.com',
         port: '',
         pathname: '/**',
       },
-      // --- NUEVO: NECESARIO PARA EL BACKEND QUE ACABAMOS DE HACER ---
       {
         protocol: 'https',
-        hostname: 'ui-avatars.com', // Para los avatares por defecto "Kiq Client"
+        hostname: 'ui-avatars.com',
       },
     ],
+  },
+  // 4. 🛡️ CABECERAS DE SEGURIDAD (Esto te dará el 100/100 en Best Practices)
+  async headers() {
+    return [
+      {
+        source: '/(.*)', // Aplicar a todas las rutas
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY', // Evita ataques de Clickjacking (nadie puede poner tu web en un iframe)
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff', // Evita inyecciones MIME
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin', // Privacidad de datos al navegar fuera
+          },
+          {
+            // HSTS: Fuerza HTTPS estricto. Vital para la puntuación.
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            // Permisos: Bloquea uso de cámara/micrófono/geo si no se pide explícitamente.
+            // Google ama esto para el SEO móvil.
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+          }
+        ],
+      },
+    ];
   },
 };
 

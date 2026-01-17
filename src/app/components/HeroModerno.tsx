@@ -13,9 +13,11 @@ export default function HeroModerno({ onStartCotizacion }: HeroModernoProps) {
   const [placeholder, setPlaceholder] = useState('');
   
   // Lógica para el efecto "Máquina de escribir"
-  const frases = ["un armario de IKEA Pax...", "un soporte de TV...", "unas cortinas...", "una cama canapé..."];
+  // Definimos las frases fuera del useEffect o usamos useMemo si fuera complejo, 
+  // pero aquí está bien ya que es estático.
   
   useEffect(() => {
+    const frases = ["un armario de IKEA Pax...", "un soporte de TV...", "unas cortinas...", "una cama canapé..."];
     let fraseIndex = 0;
     let charIndex = 0;
     let isDeleting = false;
@@ -52,14 +54,13 @@ export default function HeroModerno({ onStartCotizacion }: HeroModernoProps) {
 
   const handleStart = () => {
     if (!inputValue.trim()) return;
-    // Aquí enviamos el mensaje a la página principal
     onStartCotizacion(inputValue); 
   };
 
   return (
     <section className="relative w-full min-h-[85vh] flex flex-col items-center justify-center bg-white overflow-hidden px-4">
       
-      {/* Fondo sutil */}
+      {/* Fondo sutil CSS (Excelente para LCP - Carga instantánea) */}
       <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-30 pointer-events-none"></div>
 
       <div className="z-10 w-full max-w-3xl text-center space-y-8 animate-in fade-in zoom-in duration-700">
@@ -85,21 +86,24 @@ export default function HeroModerno({ onStartCotizacion }: HeroModernoProps) {
 
             <input
               type="text"
+              name="descripcion_trabajo" // Ayuda al autocompletado del navegador
+              aria-label="Describe qué necesitas montar" // CRÍTICO PARA ACCESIBILIDAD
               className="w-full p-4 text-lg md:text-xl text-gray-800 outline-none placeholder-gray-400 bg-transparent"
               placeholder={`Necesito montar ${placeholder}`}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleStart()}
-              autoFocus
+              // autoFocus eliminado: Mejora UX en móvil y métrica CLS/Layout
             />
 
             <button 
               onClick={handleStart}
               disabled={!inputValue.trim()}
+              aria-label="Comenzar cotización automática" // CRÍTICO PARA ACCESIBILIDAD (Botón flecha)
               className={`p-3 rounded-xl transition-all duration-300 ${
                 inputValue.trim().length > 0 
                   ? 'bg-blue-600 text-white shadow-lg hover:scale-105 hover:bg-blue-700' 
-                  : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed' // Contraste ajustado
               }`}
             >
               <FaArrowUp size={20} />
@@ -108,10 +112,11 @@ export default function HeroModerno({ onStartCotizacion }: HeroModernoProps) {
         </div>
 
         {/* Etiquetas rápidas */}
+        {/* CORRECCIÓN DE CONTRASTE: text-gray-600 -> text-gray-700 */}
         <div className="flex flex-wrap justify-center gap-3 mt-6 opacity-80">
-            <span className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-600">📸 Sube fotos</span>
-            <span className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-600">⚡ Precio inmediato</span>
-            <span className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-600">🔒 Pago seguro</span>
+            <span className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-700">📸 Sube fotos</span>
+            <span className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-700">⚡ Precio inmediato</span>
+            <span className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-700">🔒 Pago seguro</span>
         </div>
 
       </div>

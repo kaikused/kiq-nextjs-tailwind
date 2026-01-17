@@ -1,24 +1,27 @@
 'use client';
 import Link from 'next/link';
 import React from 'react';
-import { FaUserCircle } from 'react-icons/fa';
+// He borrado la importación de 'FaUserCircle' que no se usaba (Mejora Rendimiento)
 
 interface HeaderProps {
-  // Función para abrir el modal de inicio de sesión/registro
-  onOpenLogin: () => void; 
+  onOpenLogin: () => void;
+  // Añadimos esta prop opcional para que el botón funcione de verdad si quieres conectarlo luego
+  onOpenCalculator?: () => void;
 }
 
-export default function HeaderModerno({ onOpenLogin }: HeaderProps) {
+export default function HeaderModerno({ onOpenLogin, onOpenCalculator }: HeaderProps) {
   
-  // Función simulada de acceso a la calculadora, a conectar luego en page.tsx
-  const onOpenCalculator = () => alert("Abriendo flujo de Calculadora/Cotización");
-
   return (
     <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
       <div className="container mx-auto px-6 h-16 flex justify-between items-center max-w-7xl">
         
         {/* --- Logo --- */}
-        <Link href="/" className="flex items-center gap-2 font-extrabold text-xl tracking-tight text-slate-900">
+        {/* ACCESIBILIDAD: Añadido aria-label para lectores de pantalla */}
+        <Link 
+          href="/" 
+          aria-label="Ir a la página de inicio de Kiq Montajes"
+          className="flex items-center gap-2 font-extrabold text-xl tracking-tight text-slate-900"
+        >
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg">
             K
           </div>
@@ -39,6 +42,7 @@ export default function HeaderModerno({ onOpenLogin }: HeaderProps) {
           {/* 2. Inicio/Registro */}
           <button 
             onClick={onOpenLogin}
+            aria-label="Abrir inicio de sesión o registro"
             className="px-4 py-2 rounded-full text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-md flex items-center gap-1"
           >
             Inicio/Registro
