@@ -5,13 +5,12 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 
 // --- COMPONENTES CRÍTICOS (Se cargan al instante para el LCP) ---
-import HeroModerno from './components/HeroModerno'; 
+// 🔄 CAMBIO 1: Importamos el nuevo Hero Aspiracional
+import HeroAspiracional from './components/HeroAspiracional'; 
 import CalculatorModal from './components/CalculatorModal'; 
 import ChatCalculadora from './components/ChatCalculadora';
 
 // --- COMPONENTES NO CRÍTICOS (Lazy Load para el 100/100 en Móvil) ---
-// ssr: false significa que no se renderizan en el servidor, ahorrando HTML inicial
-// loading: Muestra un esqueleto ligero mientras carga el componente real
 const SocialProof = dynamic(() => import('./components/SocialProof'), { 
   loading: () => <div className="h-96 bg-gray-50 animate-pulse" />,
   ssr: true 
@@ -58,15 +57,19 @@ export default function Home() {
       <CalculatorModal />
 
       {!cotizacionActiva ? (
-        /* VISTA A: LA HOME */
+        /* VISTA A: LA HOME (Ahora Aspiracional "Apple Style") */
         <div className="animate-in fade-in duration-500 flex flex-col min-h-screen">
           
           <div className="flex-grow">
-            {/* El Hero es crítico, se carga normal */}
-            <HeroModerno onStartCotizacion={handleStartCotizacion} />
+            {/* 🔄 CAMBIO 2: Renderizamos HeroAspiracional. 
+                Pasamos la función para que el botón "Calcular" active el chat. 
+            */}
+            <HeroAspiracional onOpenCalculator={() => handleStartCotizacion('')} />
             
             {/* El resto se carga progresivamente para no bloquear el móvil */}
-            <SocialProof />
+            <div id="servicios-section"> {/* Ancla para el scroll suave */}
+                <SocialProof />
+            </div>
             <CtaFinal/>
             <KiqOutletSection />
             <Testimonios />
@@ -76,7 +79,7 @@ export default function Home() {
 
         </div>
       ) : (
-        /* VISTA B: EL CHAT ACTIVO */
+        /* VISTA B: EL CHAT ACTIVO (Sin cambios, funciona igual) */
         <section className="w-full min-h-screen flex flex-col items-center bg-gray-50 py-6 px-4 md:px-8 animate-in slide-in-from-bottom-10 fade-in duration-500">
             <div className="w-full max-w-4xl flex flex-col h-[90vh]">
             
@@ -96,6 +99,8 @@ export default function Home() {
               <ChatCalculadora 
                 mode="public" 
                 initialPrompt={promptInicial} 
+                // Pasamos callback de éxito si quieres redirección o algo especial
+                onPublishSuccess={() => console.log("Lead capturado")}
               />
             </div>
             
