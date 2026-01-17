@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useUI } from '../context/UIContext';
 import { FaUserCircle, FaSignOutAlt, FaCog, FaChevronDown, FaGem, FaPlusCircle, FaBars, FaTimes, FaEnvelope } from 'react-icons/fa';
 import GemStoreModal from './GemStoreModal'; 
@@ -15,15 +15,14 @@ export default function Cabecera() {
     const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
     const [isInboxOpen, setIsInboxOpen] = useState(false);
     
+    // --- ESTADO SCROLL PARA EFECTO CAMALEÓN ---
+    const [isScrolled, setIsScrolled] = useState(false);
+    const pathname = usePathname();
+
     const { 
         openLoginModal, openRegisterModal, openCalculatorModal, 
-        userGems, 
-        isGemStoreOpen, openGemStore, closeGemStore,
-        isLoggedIn, 
-        accessToken, 
-        userProfile, 
-        handleLogout, 
-        handleSuccessfulLogin 
+        userGems, isGemStoreOpen, openGemStore, closeGemStore,
+        isLoggedIn, accessToken, userProfile, handleLogout, handleSuccessfulLogin 
     } = useUI();
 
     const { unreadTotal, conversations, refreshInbox } = useInbox(
@@ -36,53 +35,42 @@ export default function Cabecera() {
     const inboxRef = useRef<HTMLDivElement>(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+    // --- DETECCIÓN DE SCROLL ---
+    useEffect(() => {
+        const handleScroll = () => setIsScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        // Check inicial por si recargamos página ya scrolleada
+        handleScroll();
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // --- LÓGICA DE USUARIO (INTACTA) ---
     useEffect(() => {
         if (isLoggedIn && accessToken && !userProfile) {
             const fetchUserData = async () => {
                 try {
-                    const res = await fetch(`${API_BASE_URL}/api/perfil`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    });
-                    
+                    const res = await fetch(`${API_BASE_URL}/api/perfil`, { headers: { 'Authorization': `Bearer ${accessToken}` } });
                     if (res.ok) {
                         const data = await res.json();
                         handleSuccessfulLogin(accessToken, data, data.gemas || 0);
-                    } else {
-                        handleLogout();
-                    }
-                } catch (error) {
-                    handleLogout(); 
-                } finally {
-                    setIsInitialLoad(false);
-                }
+                    } else handleLogout();
+                } catch (error) { handleLogout(); } 
+                finally { setIsInitialLoad(false); }
             };
             fetchUserData();
-        } else if (!isLoggedIn) {
-             setIsInitialLoad(false);
-        }
+        } else if (!isLoggedIn) setIsInitialLoad(false);
     }, [accessToken]);
 
-    // Click Outside
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsUserDropdownOpen(false);
-            }
-            if (isInboxOpen && inboxRef.current && !inboxRef.current.contains(event.target as Node)) {
-                setIsInboxOpen(false);
-                refreshInbox(); 
-            }
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsUserDropdownOpen(false);
+            if (isInboxOpen && inboxRef.current && !inboxRef.current.contains(event.target as Node)) { setIsInboxOpen(false); refreshInbox(); }
         }
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [isInboxOpen, refreshInbox]);
 
-    const localHandleLogout = () => {
-        handleLogout();
-        router.push('/');
-        setIsUserDropdownOpen(false);
-    };
-
+    const localHandleLogout = () => { handleLogout(); router.push('/'); setIsUserDropdownOpen(false); };
     const handleOpenLogin = () => { setIsMenuOpen(false); openLoginModal(); };
     const handleOpenRegister = () => { setIsMenuOpen(false); openRegisterModal(); };
     const handleOpenCalculator = () => { setIsMenuOpen(false); openCalculatorModal('public'); };
@@ -90,178 +78,138 @@ export default function Cabecera() {
     const goToPanel = () => {
         setIsUserDropdownOpen(false);
         if (!userProfile) return;
-        if (userProfile.tipo === 'cliente') router.push('/panel-cliente');
-        else if (userProfile.tipo === 'montador') router.push('/panel-montador');
+        router.push(userProfile.tipo === 'cliente' ? '/panel-cliente' : '/panel-montador');
     };
 
     const goToConfig = () => {
         setIsUserDropdownOpen(false);
         if (!userProfile) return;
-        if (userProfile.tipo === 'cliente') router.push('/panel-cliente/configuracion');
-        else if (userProfile.tipo === 'montador') router.push('/panel-montador/configuracion');
+        router.push(userProfile.tipo === 'cliente' ? '/panel-cliente/configuracion' : '/panel-montador/configuracion');
     };
 
     const goToChat = (jobId: number) => {
         setIsInboxOpen(false);
         if (!userProfile) return;
         refreshInbox();
-        const basePath = userProfile.tipo === 'cliente' ? '/panel-cliente' : '/panel-montador';
-        router.push(`${basePath}?chat=${jobId}`);
+        router.push(userProfile.tipo === 'cliente' ? `/panel-cliente?chat=${jobId}` : `/panel-montador?chat=${jobId}`);
     };
 
-    // MODO LOGUEADO
+    // --- ESTILOS DINÁMICOS ---
+    const isHome = pathname === '/';
+    // Es transparente SOLO si estamos en Home, arriba del todo, y el menú móvil está cerrado
+    const isTransparent = isHome && !isScrolled && !isMenuOpen;
+
+    const navClass = isTransparent 
+        ? 'bg-transparent border-transparent py-4' 
+        : 'bg-white/95 backdrop-blur-md border-b border-gray-100 py-3 shadow-sm';
+
+    // Textos: Blanco en transparente, Gris oscuro en sólido
+    const textColor = isTransparent ? 'text-white hover:text-white/80' : 'text-slate-700 hover:text-indigo-600';
+    
+    // Logo: Blanco puro en transparente, Normal en sólido
+    const logoClass = isTransparent ? 'brightness-0 invert' : ''; 
+    
+    // Botones fantasma (Iniciar Sesión): Blanco/Transparente vs Gris/Blanco
+    const buttonGhostClass = isTransparent 
+        ? 'text-white hover:bg-white/10' 
+        : 'text-slate-700 hover:bg-gray-50';
+
+    // Botón de acción (Hazte Kiqer): Blanco con texto índigo vs Índigo con texto blanco
+    const buttonActionClass = isTransparent
+        ? 'bg-white text-indigo-900 hover:bg-gray-100'
+        : 'bg-indigo-600 text-white hover:bg-indigo-700';
+
+    // Botón Pedir Precio: Translúcido vs Oscuro
+    const buttonPriceClass = isTransparent
+        ? 'bg-white/20 text-white backdrop-blur-md border border-white/30 hover:bg-white/30'
+        : 'bg-slate-900 text-white hover:bg-slate-800';
+
+
+    // --------------------------------------------------------------------------------
+    // RENDERIZADO
+    // --------------------------------------------------------------------------------
+
+    // 1. MODO LOGUEADO (Siempre barra blanca para consistencia en paneles)
     if (isLoggedIn && userProfile) {
         const inicial = userProfile.nombre ? userProfile.nombre.charAt(0).toUpperCase() : 'U';
-
         return (
             <>
-                <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all">
+                <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 transition-all shadow-sm">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
-                    
-                    <Link href="/" aria-label="Ir al inicio" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                        <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={90} height={35} className="h-8 w-auto" priority />
-                    </Link>
+                        <Link href="/" aria-label="Ir al inicio" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                            <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={90} height={35} className="h-8 w-auto" priority />
+                        </Link>
 
-                    <div className="flex items-center gap-3 sm:gap-5">
-                        
-                        {/* --- BUZÓN DE ENTRADA --- */}
-                        <div className="" ref={inboxRef}>
-                            <button 
-                                onClick={() => setIsInboxOpen(!isInboxOpen)}
-                                aria-label={`Buzón de mensajes, ${unreadTotal} no leídos`} // ACCESIBILIDAD
-                                className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-indigo-600 transition relative"
-                            >
-                                <FaEnvelope size={20} />
-                                {unreadTotal > 0 && (
-                                    <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
-                                        {unreadTotal > 9 ? '+9' : unreadTotal}
-                                    </span>
-                                )}
-                            </button>
-
-                            {isInboxOpen && (
-                                <>
-                                    {/* Overlay móvil */}
-                                    <div className="fixed inset-0 bg-black/50 z-[60] md:hidden" onClick={() => setIsInboxOpen(false)}></div>
-
-                                    {/* Contenedor del Buzón */}
-                                    <div className="
-                                        fixed top-20 left-4 right-4 bottom-auto z-[70] bg-white rounded-xl shadow-2xl border border-gray-100 flex flex-col
-                                        md:absolute md:top-full md:right-0 md:left-auto md:w-80 md:h-auto md:max-h-[500px]
-                                    ">
-                                        <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 rounded-t-xl">
-                                            <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3 sm:gap-5">
+                            {/* BUZÓN */}
+                            <div className="" ref={inboxRef}>
+                                <button 
+                                    onClick={() => setIsInboxOpen(!isInboxOpen)}
+                                    aria-label={`Buzón, ${unreadTotal} mensajes`}
+                                    className="p-2 rounded-full text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition relative"
+                                >
+                                    <FaEnvelope size={20} />
+                                    {unreadTotal > 0 && (
+                                        <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">{unreadTotal > 9 ? '+9' : unreadTotal}</span>
+                                    )}
+                                </button>
+                                {/* Desplegable Buzón (Intacto) */}
+                                {isInboxOpen && (
+                                    <>
+                                        <div className="fixed inset-0 bg-black/20 z-[60] md:hidden" onClick={() => setIsInboxOpen(false)}></div>
+                                        <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-[70] overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                            <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center">
                                                 <span className="font-bold text-gray-800 text-sm">Mensajes</span>
                                                 {unreadTotal > 0 && <span className="text-[10px] bg-indigo-100 text-indigo-600 font-bold px-2 py-0.5 rounded-full">{unreadTotal} nuevos</span>}
                                             </div>
-                                            <button 
-                                                onClick={() => setIsInboxOpen(false)} 
-                                                aria-label="Cerrar buzón" // ACCESIBILIDAD
-                                                className="md:hidden text-gray-400 hover:text-gray-600"
-                                            >
-                                                <FaTimes />
-                                            </button>
-                                        </div>
-                                        
-                                        <div className="overflow-y-auto max-h-[60vh] md:max-h-[400px]">
-                                            {conversations.length === 0 ? (
-                                                <div className="p-8 text-center text-gray-400 text-xs flex flex-col items-center gap-2">
-                                                    <FaEnvelope size={24} className="opacity-20"/>
-                                                    <p>No tienes mensajes recientes.</p>
-                                                </div>
-                                            ) : (
-                                                conversations.map((conv) => (
-                                                    <button 
-                                                        key={conv.jobId} 
-                                                        onClick={() => goToChat(conv.jobId)}
-                                                        className="w-full text-left px-4 py-3.5 hover:bg-gray-50 transition flex gap-3 border-b border-gray-50 last:border-0 relative items-start"
-                                                    >
-                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-1 ${conv.unreadCount > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
-                                                            <FaEnvelope size={14} />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex justify-between items-baseline mb-0.5">
-                                                                <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
-                                                                    Trabajo #{conv.jobId}
-                                                                </p>
-                                                                <p className="text-[10px] text-gray-400 shrink-0">
-                                                                    {new Date(conv.lastActivity).toLocaleDateString(undefined, {day: '2-digit', month: 'short'})}
-                                                                </p>
-                                                            </div>
-                                                            <p className={`text-xs truncate ${conv.unreadCount > 0 ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
-                                                                {conv.lastMessage || '📎 Adjunto'}
-                                                            </p>
-                                                        </div>
-                                                        {conv.unreadCount > 0 && (
-                                                            <span className="absolute top-4 right-4 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white"></span>
-                                                        )}
+                                            <div className="max-h-[300px] overflow-y-auto">
+                                                {conversations.length === 0 ? (
+                                                    <div className="p-8 text-center text-gray-400 text-xs flex flex-col items-center"><FaEnvelope size={24} className="opacity-20 mb-2"/><p>Sin mensajes</p></div>
+                                                ) : conversations.map((conv) => (
+                                                    <button key={conv.jobId} onClick={() => goToChat(conv.jobId)} className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 flex gap-3 items-center">
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${conv.unreadCount > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}><FaEnvelope size={12}/></div>
+                                                        <div className="min-w-0 flex-1"><p className={`text-sm truncate ${conv.unreadCount > 0 ? 'font-bold' : 'font-medium'}`}>Trabajo #{conv.jobId}</p><p className="text-xs text-gray-500 truncate">{conv.lastMessage || 'Adjunto'}</p></div>
                                                     </button>
-                                                ))
-                                            )}
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        {/* GEMAS */}
-                        <button 
-                            onClick={openGemStore} 
-                            aria-label={`Tienda de gemas. Tienes ${userGems} gemas.`} // ACCESIBILIDAD
-                            className="flex items-center gap-1.5 bg-indigo-50/80 backdrop-blur-sm text-indigo-900 px-3 py-1.5 rounded-full border border-indigo-100 shadow-sm hover:bg-indigo-100 transition group"
-                        >
-                            <FaGem className="text-indigo-500 text-sm group-hover:scale-110 transition-transform" />
-                            <span className="font-black text-sm">{userGems}</span> 
-                            <FaPlusCircle className="text-indigo-300 text-xs ml-1 hover:text-indigo-600" />
-                        </button>
-
-                        <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
-
-                        {/* AVATAR */}
-                        <div className="relative" ref={dropdownRef}>
-                            <button 
-                                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} 
-                                aria-label="Menú de usuario" // ACCESIBILIDAD
-                                className="flex items-center gap-2 focus:outline-none group"
-                            >
-                                {userProfile.foto_url ? (
-                                    <div className="h-9 w-9 rounded-full overflow-hidden shadow-md ring-2 ring-transparent group-hover:ring-indigo-300 transition-all">
-                                        <img src={userProfile.foto_url} alt={`Foto de ${userProfile.nombre}`} className="w-full h-full object-cover" />
-                                    </div>
-                                ) : (
-                                    <div className="h-9 w-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-transparent group-hover:ring-indigo-100 transition-all">
-                                        {inicial}
-                                    </div>
+                                    </>
                                 )}
-                                <FaChevronDown size={10} className={`text-gray-400 hidden sm:block transition-transform duration-200 ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
+                            </div>
+
+                            {/* GEMAS */}
+                            <button onClick={openGemStore} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full border border-indigo-100 shadow-sm hover:bg-indigo-100 transition group">
+                                <FaGem className="text-sm group-hover:scale-110 transition-transform" />
+                                <span className="font-bold text-sm">{userGems}</span> 
+                                <FaPlusCircle className="text-indigo-400 text-xs ml-1" />
                             </button>
 
-                            {/* MENÚ USUARIO */}
-                            {isUserDropdownOpen && (
-                                <div className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl py-2 border border-gray-100 animate-in fade-in slide-in-from-top-2 origin-top-right z-50">
-                                    <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-                                        <p className="text-sm font-bold text-gray-900 truncate capitalize">{userProfile.nombre}</p>
-                                        <p className="text-xs text-gray-500 truncate mb-2">{userProfile.email}</p>
-                                        <span className="text-[10px] uppercase tracking-wider font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-                                            {userProfile.tipo}
-                                        </span>
+                            <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
+
+                            {/* AVATAR & MENU */}
+                            <div className="relative" ref={dropdownRef}>
+                                <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} className="flex items-center gap-2 focus:outline-none group">
+                                    {userProfile.foto_url ? (
+                                        <div className="h-9 w-9 rounded-full overflow-hidden shadow-sm ring-2 ring-transparent group-hover:ring-indigo-200 transition-all"><img src={userProfile.foto_url} alt="" className="w-full h-full object-cover" /></div>
+                                    ) : (
+                                        <div className="h-9 w-9 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shadow-sm">{inicial}</div>
+                                    )}
+                                    <FaChevronDown size={10} className={`text-gray-400 hidden sm:block transition-transform ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {isUserDropdownOpen && (
+                                    <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 animate-in fade-in slide-in-from-top-2">
+                                        <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
+                                            <p className="text-sm font-bold text-gray-900 truncate capitalize">{userProfile.nombre}</p>
+                                            <p className="text-xs text-gray-500 truncate">{userProfile.email}</p>
+                                        </div>
+                                        <button onClick={goToPanel} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-2"><FaUserCircle/> Mi Panel</button>
+                                        <button onClick={goToConfig} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-2"><FaCog/> Configuración</button>
+                                        <div className="border-t border-gray-100 my-1"></div>
+                                        <button onClick={localHandleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"><FaSignOutAlt/> Cerrar Sesión</button>
                                     </div>
-                                    <div className="py-1">
-                                        <button onClick={goToPanel} className="w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-3 transition-colors">
-                                            <FaUserCircle className="text-gray-400" /> Mi Panel
-                                        </button>
-                                        <button onClick={goToConfig} className="w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-3 transition-colors">
-                                            <FaCog className="text-gray-400" /> Configuración
-                                        </button>
-                                    </div>
-                                    <div className="border-t border-gray-100 my-1"></div>
-                                    <button onClick={localHandleLogout} className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 font-medium flex items-center gap-3 transition-colors">
-                                        <FaSignOutAlt /> Cerrar Sesión
-                                    </button>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </div>
                     </div>
                 </header>
                 <GemStoreModal isOpen={isGemStoreOpen} onClose={closeGemStore} onBuyPack={() => {}} onWatchAd={() => {}} />
@@ -269,72 +217,66 @@ export default function Cabecera() {
         );
     }
 
-    // MODO PÚBLICO
+    // 2. MODO PÚBLICO (Aquí aplicamos el diseño Camaleón)
     return (
         <>
-            <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all">
-                <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-                    <div className="z-50">
-                        <Link href="/" aria-label="Ir al inicio">
-                            <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={100} height={40} className="h-9 w-auto hover:opacity-80 transition-opacity" priority />
-                        </Link>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                        <nav className="hidden md:flex">
-                            <ul className="flex items-center space-x-4">
-                                <li><button onClick={handleOpenLogin} className="text-sm font-bold text-gray-700 hover:text-indigo-600 px-4 py-2 transition-colors">Iniciar Sesión</button></li>
-                                <li><button onClick={handleOpenRegister} className="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 shadow-lg transition-transform hover:scale-105">Hazte Kiqer</button></li>
-                                <li>
-                                    {/* CORRECCIÓN: bg-pink-700 en lugar de 500 para contraste AA */}
-                                    <button 
-                                        onClick={handleOpenCalculator} 
-                                        className="rounded-full bg-pink-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-pink-800 shadow-lg transition-transform hover:scale-105"
-                                    >
-                                        Calcular Presupuesto
-                                    </button>
-                                </li>
-                            </ul>
-                        </nav>
-                        {/* CORRECCIÓN: div cambiado a button con aria-label */}
-                        <button 
-                            className="md:hidden cursor-pointer z-50 text-gray-700 p-2 focus:outline-none focus:bg-gray-100 rounded-lg" 
-                            onClick={() => setIsMenuOpen(true)}
-                            aria-label="Abrir menú principal"
-                        >
-                            <FaBars size={24} />
+            <nav className={`fixed top-0 z-50 w-full transition-all duration-300 ${navClass}`}>
+                <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
+                    {/* LOGO */}
+                    <Link href="/" aria-label="Ir al inicio" className="group">
+                        <div className={`transition-all duration-300 ${logoClass}`}>
+                             <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={100} height={40} className="h-8 w-auto" priority />
+                        </div>
+                    </Link>
+
+                    {/* MENU DESKTOP */}
+                    <div className="hidden md:flex items-center space-x-2">
+                        <button onClick={handleOpenLogin} className={`px-4 py-2 rounded-full text-sm font-bold transition-colors ${buttonGhostClass}`}>
+                            Iniciar Sesión
+                        </button>
+                        <button onClick={handleOpenRegister} className={`px-5 py-2.5 rounded-full text-sm font-bold transition-transform hover:scale-105 shadow-md ${buttonActionClass}`}>
+                            Hazte Kiqer
+                        </button>
+                        <button onClick={handleOpenCalculator} className={`ml-2 px-5 py-2.5 rounded-full text-sm font-bold transition-transform hover:scale-105 shadow-md ${buttonPriceClass}`}>
+                            Pedir Precio
                         </button>
                     </div>
+
+                    {/* HAMBURGUESA MÓVIL */}
+                    <button 
+                        className={`md:hidden p-2 rounded-lg transition-colors ${isTransparent ? 'text-white' : 'text-slate-800'}`}
+                        onClick={() => setIsMenuOpen(true)}
+                        aria-label="Menú"
+                    >
+                        <FaBars size={24} />
+                    </button>
                 </div>
             </nav>
+
+            {/* MENÚ MÓVIL (Off-canvas) */}
             <div className={`fixed inset-0 z-[60] md:hidden transition-all duration-300 ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}>
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
-                <div className={`absolute top-0 right-0 h-full w-3/4 max-w-sm bg-white shadow-2xl p-6 transition-transform duration-300 ease-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
+                <div className={`absolute top-0 right-0 h-full w-4/5 max-w-sm bg-white shadow-2xl p-6 transition-transform duration-300 ease-out flex flex-col ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                    
                     <div className="flex items-center justify-between mb-8">
-                        <Link href="/" onClick={() => setIsMenuOpen(false)} aria-label="Ir al inicio">
-                            <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={90} height={35} className="h-8 w-auto"/>
-                        </Link>
-                        <button 
-                            className="text-gray-400 hover:text-red-500 transition-colors" 
-                            onClick={() => setIsMenuOpen(false)}
-                            aria-label="Cerrar menú"
-                        >
-                            <FaTimes size={24} />
+                        <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={90} height={35} className="h-7 w-auto"/>
+                        <button onClick={() => setIsMenuOpen(false)} className="text-gray-400 hover:text-gray-600 p-2"><FaTimes size={24}/></button>
+                    </div>
+
+                    <div className="space-y-4 flex-1">
+                        <button onClick={handleOpenLogin} className="w-full text-left p-4 text-lg font-semibold text-gray-700 hover:bg-gray-50 rounded-xl flex items-center justify-between group">
+                            Iniciar Sesión <FaChevronDown className="-rotate-90 text-gray-300 group-hover:text-indigo-500"/>
+                        </button>
+                        <button onClick={handleOpenRegister} className="w-full text-left p-4 text-lg font-bold text-indigo-600 hover:bg-indigo-50 rounded-xl border border-indigo-100">
+                            Hazte Kiqer
                         </button>
                     </div>
-                    <ul className="flex flex-col space-y-2">
-                        <li><button onClick={handleOpenLogin} className="block w-full text-left p-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-xl">Iniciar Sesión</button></li>
-                        <li><button onClick={handleOpenRegister} className="block w-full text-left p-3 text-base font-bold text-indigo-600 hover:bg-indigo-50 rounded-xl">Hazte Kiqer</button></li>
-                        <div className="h-px bg-gray-100 my-2"></div>
-                        <li>
-                            {/* CORRECCIÓN MÓVIL TAMBIÉN: bg-pink-700 */}
-                            <button 
-                                onClick={handleOpenCalculator} 
-                                className="w-full text-center py-3.5 text-base font-bold text-white bg-pink-700 hover:bg-pink-800 rounded-xl shadow-md"
-                            >
-                                Calcular Presupuesto
-                            </button>
-                        </li>
-                    </ul>
+
+                    <div className="mt-auto">
+                        <button onClick={handleOpenCalculator} className="w-full py-4 text-lg font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-lg transition-transform active:scale-95">
+                            Pedir Precio Ahora
+                        </button>
+                    </div>
                 </div>
             </div>
         </>

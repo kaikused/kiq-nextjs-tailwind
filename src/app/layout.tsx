@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Manrope, Permanent_Marker, Work_Sans } from 'next/font/google';
 import './globals.css';
 import { UIProvider } from './context/UIContext'; 
-import Cabecera from './components/Cabecera'; 
+import Cabecera from './components/Cabecera'; // ✅ Correcto: Usamos el componente potente
 import LoginModal from './components/LoginModal';
 import RegisterModal from './components/RegisterModal';
 import CalculatorModal from './components/CalculatorModal'; 
@@ -10,14 +10,14 @@ import RecoveryModal from './components/RecoveryModal';
 
 const workSans = Work_Sans({ 
   subsets: ['latin'], 
-  weight: ['400', '700'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-family-base',
   display: 'swap',
 });
 
 const manrope = Manrope({ 
   subsets: ['latin'], 
-  weight: ['800'],
+  weight: ['600', '800'],
   variable: '--font-family-titulo',
   display: 'swap',
 });
@@ -33,6 +33,7 @@ export const metadata: Metadata = {
   title: 'KIQ - Montaje de Muebles',
   description: 'El marketplace de montadores de muebles en Málaga.',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
+  themeColor: '#ffffff', // Mejor blanco para que combine con el header transparente/blanco
 };
 
 export default function RootLayout({
@@ -41,18 +42,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${workSans.variable} ${manrope.variable} ${permanentMarker.variable}`}>
+    // ✨ MEJORA: scroll-smooth para que los botones de ancla (Hero) funcionen elegante
+    <html lang="es" className={`${workSans.variable} ${manrope.variable} ${permanentMarker.variable} scroll-smooth`}>
       <head>
-        {/* 🚀 OPTIMIZACIÓN LCP: Preconectar al backend para ahorrar 300ms en la carga de datos */}
         <link rel="preconnect" href="https://kiq-calculadora.onrender.com" />
         <link rel="dns-prefetch" href="https://kiq-calculadora.onrender.com" />
       </head>
-      <body className="antialiased">
+      {/* ✨ MEJORA: bg-white y text-slate-900 definen la base del diseño Apple */}
+      <body className="antialiased bg-white text-slate-900">
         <UIProvider>
           <Cabecera />
-          <main>
+          <main className="relative z-0">
             {children}
           </main>
+          
+          {/* Modales globales siempre listos */}
           <LoginModal />
           <RegisterModal />
           <CalculatorModal />
