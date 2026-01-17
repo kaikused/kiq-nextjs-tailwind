@@ -5,23 +5,13 @@ import FsLightbox from "fslightbox-react";
 import { motion } from "framer-motion";
 
 // --- DATOS DE LA GALERÍA ---
-// CORRECCIÓN: He actualizado los nombres para que coincidan EXACTAMENTE con tu carpeta
 const galeriaFotos = [
-  { id: 1, src: "/images/galeria-grande-1.jpg", alt: "Montaje de cocina moderna" },
-  { id: 2, src: "/images/galeria-grande-2.jpg", alt: "Montaje de sofá chaise longue" },
-  { id: 3, src: "/images/galeria-grande-3.jpg", alt: "Mueble de baño suspendido" },
-  { id: 4, src: "/images/galeria-grande-4.jpg", alt: "Estructura de canapé abatible" },
-  { id: 5, src: "/images/galeria-grande-5.jpg", alt: "Interior de armario" },
-  { id: 6, src: "/images/galeria-grande-6.jpg", alt: "Armario y zona de estudio" },
-];
-
-const marcas = [
-  { name: 'IKEA', opacity: 'opacity-40' },
-  { name: 'Leroy Merlin', opacity: 'opacity-40' },
-  { name: 'Amazon', opacity: 'opacity-40' },
-  { name: 'JYSK', opacity: 'opacity-40' },
-  { name: 'Conforama', opacity: 'opacity-40' },
-  { name: 'Bauhaus', opacity: 'opacity-40' },
+  { id: 1, src: "/images/galeria-grande-1.jpg", alt: "Montaje de cocina moderna acabado profesional" },
+  { id: 2, src: "/images/galeria-grande-2.jpg", alt: "Montaje de sofá chaise longue en salón" },
+  { id: 3, src: "/images/galeria-grande-3.jpg", alt: "Mueble de baño suspendido instalado" },
+  { id: 4, src: "/images/galeria-grande-4.jpg", alt: "Estructura de canapé abatible montada" },
+  { id: 5, src: "/images/galeria-grande-5.jpg", alt: "Interior de armario organizado y montado" },
+  { id: 6, src: "/images/galeria-grande-6.jpg", alt: "Armario y zona de estudio a medida" },
 ];
 
 export default function SocialProof() {
@@ -46,7 +36,8 @@ export default function SocialProof() {
             <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
                 Resultados que hablan solos
             </h2>
-            <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">
+            {/* CORRECCIÓN: text-gray-500 -> text-gray-600 (Mejor contraste) */}
+            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
                 No somos una empresa de reformas más. Somos especialistas en dejar tus muebles perfectos.
             </p>
         </div>
@@ -60,10 +51,13 @@ export default function SocialProof() {
             className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-20"
         >
             {galeriaFotos.map((foto, index) => (
-                <div 
+                // CORRECCIÓN VITAL: Cambiado <div> a <button> para accesibilidad (Keyboard navigation)
+                <button 
                     key={foto.id}
+                    type="button"
                     onClick={() => openLightboxOnSlide(index + 1)}
-                    className="relative group cursor-pointer overflow-hidden rounded-2xl h-48 md:h-64 shadow-md hover:shadow-xl transition-all duration-300"
+                    aria-label={`Ver foto ampliada de: ${foto.alt}`} // Etiqueta para ciegos
+                    className="relative group w-full text-left cursor-pointer overflow-hidden rounded-2xl h-48 md:h-64 shadow-md hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-200"
                 >
                     {/* Placeholder gris mientras carga */}
                     <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
@@ -82,18 +76,19 @@ export default function SocialProof() {
                             Ver Resultado
                         </span>
                     </div>
-                </div>
+                </button>
             ))}
         </motion.div>
 
-        {/* 3. LOGOS DE MARCAS */}
+        {/* 3. LOGOS DE MARCAS (Texto simulando logos = Rendimiento brutal) */}
         <div className="border-t border-gray-100 pt-12">
-            <p className="text-center text-sm font-semibold text-gray-400 tracking-wider uppercase mb-8">
+            <p className="text-center text-sm font-semibold text-gray-500 tracking-wider uppercase mb-8">
                 Expertos en montaje de todas las marcas
             </p>
-            <div className="grid grid-cols-3 gap-8 md:grid-cols-6 items-center justify-items-center opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+            {/* CORRECCIÓN: Quitada opacity-60 para mejorar lectura, usamos colores directos */}
+            <div className="grid grid-cols-3 gap-8 md:grid-cols-6 items-center justify-items-center grayscale hover:grayscale-0 transition-all duration-500 opacity-80 hover:opacity-100">
                 <span className="text-2xl font-black text-gray-800">IKEA</span>
-                <span className="text-xl font-bold text-green-600">Leroy Merlin</span>
+                <span className="text-xl font-bold text-green-700">Leroy Merlin</span>
                 <span className="text-xl font-bold text-gray-900">amazon</span>
                 <span className="text-2xl font-extrabold text-blue-900 tracking-tighter">JYSK</span>
                 <span className="text-xl font-bold text-red-600">Conforama</span>

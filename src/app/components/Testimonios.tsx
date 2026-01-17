@@ -1,7 +1,7 @@
-"use client"; 
+'use client'; 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { FaGoogle, FaStar } from 'react-icons/fa'; // Asegúrate de importar FaStar
+import { FaGoogle, FaStar } from 'react-icons/fa';
 
 type Review = {
   author_name: string;
@@ -18,10 +18,10 @@ function StarRating({ rating }: { rating: number }) {
   const stars = [];
   for (let i = 0; i < 5; i++) {
     stars.push(
-      <FaStar key={i} className={`w-4 h-4 ${i < rating ? 'text-yellow-400' : 'text-gray-200'}`} />
+      <FaStar key={i} className={`w-4 h-4 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`} />
     );
   }
-  return <div className="flex items-center gap-1">{stars}</div>;
+  return <div className="flex items-center gap-1" aria-hidden="true">{stars}</div>;
 }
 
 export default function Testimonios() {
@@ -47,7 +47,7 @@ export default function Testimonios() {
     fetchReviews();
   }, []);
 
-  if (isLoading) return <div className="py-20 text-center text-gray-400 animate-pulse">Cargando opiniones reales...</div>;
+  if (isLoading) return <div className="py-20 text-center text-gray-500 animate-pulse">Cargando opiniones reales...</div>;
   if (error) return null;
   if (reviews.length === 0) return null;
 
@@ -55,19 +55,18 @@ export default function Testimonios() {
     <section className="py-20 bg-white px-4 border-t border-gray-100">
       <div className="max-w-6xl mx-auto">
         
-        {/* --- CABECERA UNIFICADA (ESTILO IDENTICO A "COMO FUNCIONA") --- */}
+        {/* --- CABECERA --- */}
         <div className="mb-16 md:text-center max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-5xl font-bold text-gray-900 tracking-tight mb-6">
             Lo que dicen <span className="text-blue-600">de nosotros</span>
           </h2>
           
-          {/* Subtítulo con la valoración */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-lg text-gray-500">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-lg text-gray-600">
              <div className="flex items-center gap-2">
                 <span className="flex text-yellow-400"><FaGoogle size={20}/></span>
                 <span>Valoración media de <strong>4.9/5</strong> en Google</span>
              </div>
-             <span className="hidden md:block text-gray-300">|</span>
+             <span className="hidden md:block text-gray-400">|</span>
              <a href={REVIEWS_URL} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-medium hover:underline text-base">
                 Leer todas las reseñas →
             </a>
@@ -78,28 +77,36 @@ export default function Testimonios() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {reviews.map((review, i) => (
             <a 
-              href={REVIEWS_URL} target="_blank" rel="noopener noreferrer" key={i}
+              href={REVIEWS_URL} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              key={i}
+              // ACCESIBILIDAD: Etiqueta descriptiva para ciegos
+              aria-label={`Reseña de ${review.author_name}: "${review.text.substring(0, 20)}..."`}
               className="bg-gray-50 p-8 rounded-3xl hover:bg-blue-50 transition-colors duration-300 flex flex-col h-full group"
             >
               {/* Header de la tarjeta */}
               <div className="flex items-center gap-4 mb-6">
                 <Image 
                   src={review.profile_photo_url} 
-                  alt={review.author_name} 
+                  alt="" // Vacío porque ya es decorativo o el nombre lo dice el aria-label
                   width={48} height={48} 
                   className="rounded-full bg-white shadow-sm"
+                  aria-hidden="true"
                 />
                 <div>
                   <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wide">{review.author_name}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <StarRating rating={review.rating} />
-                    <span className="text-xs text-gray-400 font-medium">{review.relative_time_description}</span>
+                    {/* Contraste mejorado: gray-400 -> gray-500 */}
+                    <span className="text-xs text-gray-500 font-medium">{review.relative_time_description}</span>
                   </div>
                 </div>
               </div>
               
               {/* Texto de la reseña */}
-              <p className="text-gray-600 leading-relaxed italic mb-4 flex-grow">
+              {/* Contraste mejorado: text-gray-600 -> text-gray-700 */}
+              <p className="text-gray-700 leading-relaxed italic mb-4 flex-grow">
                 "{review.text}"
               </p>
               
