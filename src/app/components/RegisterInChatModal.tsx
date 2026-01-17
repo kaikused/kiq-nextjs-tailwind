@@ -1,10 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { FaEnvelope, FaLock, FaArrowLeft, FaPaperPlane, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaArrowLeft, FaPaperPlane, FaCheck, FaTimes, FaPhone } from 'react-icons/fa';
 import { useUI, UserProfile } from '../context/UIContext';
 import { useRouter } from 'next/navigation';
 
-// Define las props
 interface RegisterInChatModalProps {
   isOpen: boolean;
   onClose: () => void; 
@@ -15,9 +14,6 @@ interface RegisterInChatModalProps {
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
-/**
- * Función auxiliar para sincronizar perfil.
- */
 const getFullProfileAndLogin = async (token: string, tipoUsuario: 'cliente' | 'montador', handleSuccessfulLogin: (token: string, profileData: UserProfile, gems: number) => void) => {
     localStorage.setItem('accessToken', token); 
     
@@ -60,8 +56,9 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
   const { handleSuccessfulLogin, openLoginModal, closeModals } = useUI();
   const router = useRouter();
 
-  const [step, setStep] = useState(1); // 1: Email, 2: Código + Pass
-  const [email, setEmail] = useState(registrationData?.email || ''); // Pre-llenar si viene del chat
+  const [step, setStep] = useState(1); 
+  const [email, setEmail] = useState(registrationData?.email || ''); 
+  const [telefono, setTelefono] = useState(''); // Estado para teléfono
   const [verificationCode, setVerificationCode] = useState('');
   const [password, setPassword] = useState('');
   
@@ -84,7 +81,7 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
       const data = await res.json();
 
       if (data.status === 'registrado') {
-        setError("Este email ya está registrado. Inicia sesión.");
+        setError("Este email ya está registrado. Por favor, inicia sesión.");
       } else if (data.status === 'enviado') {
         setStep(2);
       } else {
@@ -104,13 +101,12 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
     let redirectPath = '/';
 
     try {
-      // AQUÍ ESTÁ EL CAMBIO CLAVE: Incluimos el teléfono
       const payload = {
         nombre: prefilledName,
         email,
         password,
         codigo: verificationCode,
-        telefono: registrationData.telefono, // <--- ¡IMPORTANTE! Pasamos el teléfono capturado
+        telefono: telefono || registrationData.telefono, // Usamos el del state o el de props
         ...registrationData 
       };
 
@@ -127,7 +123,6 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
       const token = data.access_token;
       if (!token) throw new Error("No se recibió token");
 
-      // Sincronizamos el contexto siempre
       redirectPath = await getFullProfileAndLogin(token, 'cliente', handleSuccessfulLogin); 
       
       if (onSuccess) {
@@ -151,44 +146,45 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
   }
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       
-      <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 ring-1 ring-gray-200">
         
         {/* Cabecera Azul */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-center relative">
+        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-center relative">
              <button 
                 onClick={onClose}
-                className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+                aria-label="Cerrar ventana"
+                className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-full transition-all"
             >
-                <FaTimes size={20} />
+                <FaTimes size={16} />
             </button>
 
-            <h3 className="text-xl font-bold text-white flex justify-center items-center gap-2">
+            <h3 className="text-xl font-extrabold text-white flex justify-center items-center gap-2 tracking-tight">
                 {step === 1 ? 'Guardar Presupuesto' : 'Seguridad'}
             </h3>
-            <p className="text-blue-100 text-sm mt-1">
+            <p className="text-blue-100 text-sm mt-1 font-medium">
                 {step === 1 
-                    ? `Hola ${prefilledName}, guarda tu cotización para continuar.` 
+                    ? `Hola ${prefilledName}, completa tus datos para guardar.` 
                     : `Código enviado a ${email}`
                 }
             </p>
         </div>
 
-        <div className="p-8">
+        <div className="p-8 pt-6">
             {/* Barra de Progreso */}
-            <div className="h-1 w-full bg-gray-100 mb-6 rounded-full overflow-hidden">
+            <div className="h-1.5 w-full bg-gray-100 mb-8 rounded-full overflow-hidden">
                 <div 
-                    className="h-full bg-blue-500 transition-all duration-500" 
+                    className="h-full bg-blue-500 transition-all duration-500 ease-out" 
                     style={{ width: step === 1 ? '50%' : '100%' }} 
                 />
             </div>
 
-            {/* PASO 1: EMAIL */}
+            {/* PASO 1: EMAIL & TELÉFONO */}
             {step === 1 && (
-                <form onSubmit={handleSendCode} className="space-y-4">
+                <form onSubmit={handleSendCode} className="space-y-4 animate-in slide-in-from-left-4 duration-300">
                     <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 transition-colors">
                             <FaEnvelope />
                         </div>
                         <input 
@@ -196,19 +192,34 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
                             value={email} onChange={(e) => setEmail(e.target.value)} 
                             required
                             autoFocus
-                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all text-sm" 
+                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400" 
                         />
                     </div>
 
-                    {error && <div className="text-red-500 text-xs bg-red-50 p-3 rounded-lg border border-red-100 font-medium text-center">{error}</div>}
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 transition-colors">
+                            <FaPhone />
+                        </div>
+                        <input 
+                            type="tel" placeholder="Tu teléfono (Opcional)" 
+                            value={telefono} onChange={(e) => setTelefono(e.target.value)} 
+                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400" 
+                        />
+                    </div>
 
-                    <button type="submit" disabled={isLoading} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
+                    {error && (
+                        <div className="text-red-600 text-xs bg-red-50 p-3 rounded-lg border border-red-100 font-bold text-center animate-pulse">
+                            {error}
+                        </div>
+                    )}
+
+                    <button type="submit" disabled={isLoading} className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 transform hover:-translate-y-0.5">
                         {isLoading ? "Enviando..." : <>Continuar <FaPaperPlane size={12}/></>}
                     </button>
                     
-                    <div className="mt-4 text-center">
+                    <div className="mt-6 text-center pt-4 border-t border-gray-50">
                          <p className="text-xs text-gray-500">
-                            ¿Ya tienes cuenta? <button type="button" onClick={handleSwitchToLogin} className="text-blue-600 font-bold hover:underline">Inicia Sesión</button>
+                            ¿Ya tienes cuenta? <button type="button" onClick={handleSwitchToLogin} className="text-blue-600 font-bold hover:text-blue-800 hover:underline transition-colors ml-1">Inicia Sesión</button>
                         </p>
                     </div>
                 </form>
@@ -216,50 +227,54 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
 
             {/* PASO 2: CÓDIGO + PASSWORD */}
             {step === 2 && (
-                <form onSubmit={handleFinalRegister} className="space-y-5 animate-in slide-in-from-right-4 duration-300">
+                <form onSubmit={handleFinalRegister} className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                     
                     {/* Código Visual */}
                     <div>
-                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Código de Verificación</label>
+                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 block">Código de Verificación</label>
                         <input 
                             type="text" placeholder="000000" maxLength={6}
                             value={verificationCode} 
                             onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g,''))} 
                             required
                             autoFocus
-                            className="w-full text-center text-2xl font-mono font-bold tracking-[0.5em] py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-gray-800" 
+                            className="w-full text-center text-3xl font-mono font-bold tracking-[0.5em] py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none text-gray-900 transition-all" 
                         />
                     </div>
 
                     {/* Password */}
                     <div>
-                         <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Crea una contraseña</label>
+                         <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 block">Crea una contraseña</label>
                         <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500"><FaLock /></div>
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 transition-colors"><FaLock /></div>
                             <input 
                                 type="password" placeholder="Mínimo 8 caracteres" 
                                 value={password} onChange={(e) => setPassword(e.target.value)} 
                                 required
-                                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all text-sm" 
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400" 
                             />
                         </div>
                     </div>
 
-                    {error && <div className="text-red-500 text-xs bg-red-50 p-3 rounded-lg border border-red-100 font-medium text-center">{error}</div>}
+                    {error && (
+                        <div className="text-red-600 text-xs bg-red-50 p-3 rounded-lg border border-red-100 font-bold text-center">
+                            {error}
+                        </div>
+                    )}
 
                     <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={() => setStep(1)} className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors">
+                        <button type="button" onClick={() => setStep(1)} className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors focus:ring-2 focus:ring-gray-300">
                             <FaArrowLeft />
                         </button>
                         <button type="submit" disabled={isLoading || verificationCode.length < 6} 
-                            className="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 transition-all disabled:opacity-50 shadow-lg shadow-green-200 flex items-center justify-center gap-2"
+                            className="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 transition-all disabled:opacity-50 shadow-lg shadow-green-600/20 flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
                         >
                             {isLoading ? "Creando..." : <>Finalizar y Guardar <FaCheck /></>}
                         </button>
                     </div>
                     
                     <p className="text-center text-xs text-gray-400 mt-2">
-                        ¿No llegó? <button type="button" onClick={() => setStep(1)} className="text-blue-600 hover:underline font-bold">Reenviar</button>
+                        ¿No llegó? <button type="button" onClick={() => setStep(1)} className="text-blue-600 hover:underline font-bold ml-1">Reenviar</button>
                     </p>
                 </form>
             )}
