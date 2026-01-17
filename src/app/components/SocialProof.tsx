@@ -28,17 +28,16 @@ export default function SocialProof() {
   }
 
   return (
-    <section className="py-20 bg-white overflow-hidden">
+    <section className="py-24 bg-white overflow-hidden" id="social-proof">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* 1. TÍTULO DE LA SECCIÓN */}
-        <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+        <div className="text-center mb-16">
+            <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl tracking-tight">
                 Resultados que hablan solos
             </h2>
-            {/* CORRECCIÓN: text-gray-500 -> text-gray-600 (Mejor contraste) */}
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-                No somos una empresa de reformas más. Somos especialistas en dejar tus muebles perfectos.
+            <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto font-light leading-relaxed">
+                No somos una empresa de reformas más. Somos especialistas en dejar tus muebles <span className="font-semibold text-gray-900">perfectos</span>.
             </p>
         </div>
 
@@ -47,52 +46,51 @@ export default function SocialProof() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-20"
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-24"
         >
             {galeriaFotos.map((foto, index) => (
-                // CORRECCIÓN VITAL: Cambiado <div> a <button> para accesibilidad (Keyboard navigation)
                 <button 
                     key={foto.id}
                     type="button"
                     onClick={() => openLightboxOnSlide(index + 1)}
-                    aria-label={`Ver foto ampliada de: ${foto.alt}`} // Etiqueta para ciegos
-                    className="relative group w-full text-left cursor-pointer overflow-hidden rounded-2xl h-48 md:h-64 shadow-md hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-200"
+                    aria-label={`Ver foto ampliada de: ${foto.alt}`}
+                    className="relative group w-full text-left cursor-zoom-in overflow-hidden rounded-2xl h-64 shadow-lg hover:shadow-2xl transition-all duration-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                 >
-                    {/* Placeholder gris mientras carga */}
-                    <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
+                    {/* Placeholder gris */}
+                    <div className="absolute inset-0 bg-gray-100 animate-pulse"></div>
                     
                     <Image
                         src={foto.src}
                         alt={foto.alt}
                         fill
-                        className="object-cover transform transition-transform duration-700 group-hover:scale-110"
-                        sizes="(max-width: 768px) 50vw, 33vw"
+                        className="object-cover transform transition-transform duration-700 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                     
-                    {/* Overlay al pasar el ratón */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <span className="text-white font-bold text-lg border-2 border-white px-4 py-2 rounded-full backdrop-blur-sm">
-                            Ver Resultado
+                    {/* Overlay al pasar el ratón - Estilo Apple */}
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
+                        <span className="text-white font-medium text-sm tracking-wide border border-white/50 px-6 py-2 rounded-full backdrop-blur-md bg-white/10 hover:bg-white/20 transition-colors">
+                            Ver Detalle
                         </span>
                     </div>
                 </button>
             ))}
         </motion.div>
 
-        {/* 3. LOGOS DE MARCAS (Texto simulando logos = Rendimiento brutal) */}
-        <div className="border-t border-gray-100 pt-12">
-            <p className="text-center text-sm font-semibold text-gray-500 tracking-wider uppercase mb-8">
+        {/* 3. LOGOS DE MARCAS - Estilo Minimalista */}
+        <div className="border-t border-gray-100 pt-16">
+            <p className="text-center text-xs font-bold text-gray-400 tracking-[0.2em] uppercase mb-10">
                 Expertos en montaje de todas las marcas
             </p>
-            {/* CORRECCIÓN: Quitada opacity-60 para mejorar lectura, usamos colores directos */}
-            <div className="grid grid-cols-3 gap-8 md:grid-cols-6 items-center justify-items-center grayscale hover:grayscale-0 transition-all duration-500 opacity-80 hover:opacity-100">
-                <span className="text-2xl font-black text-gray-800">IKEA</span>
-                <span className="text-xl font-bold text-green-700">Leroy Merlin</span>
-                <span className="text-xl font-bold text-gray-900">amazon</span>
-                <span className="text-2xl font-extrabold text-blue-900 tracking-tighter">JYSK</span>
-                <span className="text-xl font-bold text-red-600">Conforama</span>
-                <span className="text-xl font-bold text-red-700">BAUHAUS</span>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center justify-items-center opacity-60 hover:opacity-100 transition-opacity duration-500">
+                {/* Usamos texto estilizado para simular logos (Rendimiento) */}
+                <span className="text-3xl font-black text-gray-800 tracking-tighter">IKEA</span>
+                <span className="text-2xl font-bold text-green-700 tracking-tight">Leroy Merlin</span>
+                <span className="text-2xl font-bold text-gray-900 italic">amazon</span>
+                <span className="text-3xl font-extrabold text-blue-900 tracking-tighter">JYSK</span>
+                <span className="text-2xl font-bold text-red-600 tracking-tight">Conforama</span>
+                <span className="text-2xl font-black text-red-700 tracking-wide">BAUHAUS</span>
             </div>
         </div>
 
