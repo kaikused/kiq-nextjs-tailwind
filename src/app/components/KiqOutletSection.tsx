@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaShoppingBag, FaArrowRight } from 'react-icons/fa';
+import { FaShoppingBag, FaArrowRight, FaTag } from 'react-icons/fa';
 import ProductCard from './ProductCard';
 import { useRouter } from 'next/navigation';
 
@@ -29,8 +29,8 @@ export default function KiqOutletSection() {
         const res = await fetch(`${API_BASE_URL}/api/outlet/feed`);
         if (res.ok) {
           const data = await res.json();
-          // Mostramos solo los 8 más recientes
-          setProductos(data.slice(0, 8)); 
+          // Mostramos solo los 4 más recientes para no saturar la home
+          setProductos(data.slice(0, 4)); 
         }
       } catch (err) {
         console.error("Error cargando outlet", err);
@@ -50,54 +50,53 @@ export default function KiqOutletSection() {
   };
 
   return (
-    <section id="outlet-feed" className="py-16 bg-gradient-to-b from-white to-gray-50 border-t border-gray-100">
+    <section id="outlet-feed" className="py-24 bg-gray-50 border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Cabecera de la Sección */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
-            <div>
-                <span className="text-pink-600 font-bold tracking-wider text-xs uppercase mb-2 block">
-                    Oportunidades Flash
+        {/* Cabecera de la Sección - Alineada con el estilo Apple */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div className="max-w-2xl">
+                <span className="text-indigo-600 font-bold tracking-widest text-xs uppercase mb-3 flex items-center gap-2">
+                    <FaTag /> Oportunidades Flash
                 </span>
-                <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-                    Kiq Outlet <FaShoppingBag className="text-pink-500 text-2xl" aria-hidden="true" />
+                <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4">
+                    Kiq Outlet
                 </h2>
-                {/* CORRECCIÓN CONTRASTE: text-gray-500 -> text-gray-600 */}
-                <p className="text-gray-600 mt-2 max-w-xl">
+                <p className="text-xl text-gray-600 font-light leading-relaxed">
                     Muebles recuperados por nuestros montadores profesionales. 
-                    <span className="text-indigo-700 font-bold"> Precios de liquidación</span> y disponibilidad inmediata.
+                    <strong className="font-semibold text-gray-900"> Calidad verificada</strong> a precios de liquidación.
                 </p>
             </div>
             
             <button 
                 onClick={handleVerTodo}
                 aria-label="Ver todo el catálogo del Outlet"
-                className="hidden md:flex items-center gap-2 text-gray-700 font-bold hover:text-indigo-600 transition"
+                className="hidden md:flex items-center gap-2 text-indigo-600 font-semibold hover:text-indigo-800 transition-colors group"
             >
-                Ver todo <FaArrowRight size={12} aria-hidden="true" />
+                Ver todas las ofertas <FaArrowRight size={14} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
             </button>
         </div>
 
         {/* Grid de Productos */}
         {loading ? (
-            // Esqueletos de carga
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            // Esqueletos de carga más elegantes
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[1,2,3,4].map(i => (
-                    <div key={i} className="h-72 bg-gray-200 rounded-2xl animate-pulse"></div>
+                    <div key={i} className="h-80 bg-white rounded-3xl shadow-sm border border-gray-100 animate-pulse"></div>
                 ))}
             </div>
         ) : productos.length === 0 ? (
             // Estado Vacío
-            <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
-                <p className="text-gray-600 font-bold">No hay ofertas flash ahora mismo.</p>
-                {/* CORRECCIÓN CONTRASTE: text-gray-400 -> text-gray-500 */}
-                <p className="text-xs text-gray-500 mt-1">Nuestros montadores están buscando tesoros...</p>
+            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                <FaShoppingBag className="mx-auto text-gray-300 text-5xl mb-4" />
+                <p className="text-gray-900 font-bold text-lg">No hay ofertas flash ahora mismo.</p>
+                <p className="text-gray-500 mt-2">Nuestros montadores están buscando tesoros...</p>
             </div>
         ) : (
             // Lista de Productos
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {productos.map((prod) => (
-                    <div key={prod.id} className="h-[340px]">
+                    <div key={prod.id} className="h-full">
                         <ProductCard
                             title={prod.titulo}
                             price={prod.precio}
@@ -114,11 +113,10 @@ export default function KiqOutletSection() {
         )}
 
         {/* Botón Móvil Ver Todo */}
-        <div className="mt-10 text-center md:hidden">
+        <div className="mt-12 text-center md:hidden">
             <button 
                 onClick={handleVerTodo}
-                aria-label="Ver todas las ofertas disponibles"
-                className="w-full py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl shadow-sm hover:bg-gray-50"
+                className="w-full py-4 bg-white border border-gray-200 text-gray-900 font-bold rounded-2xl shadow-sm hover:bg-gray-50 transition active:scale-95"
             >
                 Ver todas las ofertas
             </button>
