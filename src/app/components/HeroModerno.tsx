@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { FaArrowUp, FaMagic } from 'react-icons/fa';
 
-// Definimos la "antena" para comunicarnos con la página principal
 interface HeroModernoProps {
   onStartCotizacion: (texto: string) => void;
 }
@@ -12,11 +11,8 @@ export default function HeroModerno({ onStartCotizacion }: HeroModernoProps) {
   const [inputValue, setInputValue] = useState('');
   const [placeholder, setPlaceholder] = useState('');
   
-  // Lógica para el efecto "Máquina de escribir"
-  // Definimos las frases fuera del useEffect o usamos useMemo si fuera complejo, 
-  // pero aquí está bien ya que es estático.
-  
   useEffect(() => {
+    // ... (Mantenemos la lógica del typing effect igual, no la toques) ...
     const frases = ["un armario de IKEA Pax...", "un soporte de TV...", "unas cortinas...", "una cama canapé..."];
     let fraseIndex = 0;
     let charIndex = 0;
@@ -38,7 +34,7 @@ export default function HeroModerno({ onStartCotizacion }: HeroModernoProps) {
 
       if (!isDeleting && charIndex === currentFrase.length) {
         isDeleting = true;
-        typeSpeed = 2000; // Espera antes de borrar
+        typeSpeed = 2000;
       } else if (isDeleting && charIndex === 0) {
         isDeleting = false;
         fraseIndex = (fraseIndex + 1) % frases.length;
@@ -60,24 +56,34 @@ export default function HeroModerno({ onStartCotizacion }: HeroModernoProps) {
   return (
     <section className="relative w-full min-h-[85vh] flex flex-col items-center justify-center bg-white overflow-hidden px-4">
       
-      {/* Fondo sutil CSS (Excelente para LCP - Carga instantánea) */}
-      <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-30 pointer-events-none"></div>
+      {/* OPTIMIZACIÓN 1: El fondo de puntitos (radial-gradient) consume CPU.
+         SOLUCIÓN: 'hidden md:block'. Lo ocultamos en móvil para acelerar la pintura.
+      */}
+      <div className="hidden md:block absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-30 pointer-events-none"></div>
 
       <div className="z-10 w-full max-w-3xl text-center space-y-8 animate-in fade-in zoom-in duration-700">
         
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-gray-900">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">
+          {/* OPTIMIZACIÓN 2: El texto con gradiente (bg-clip-text) es lento de renderizar.
+             SOLUCIÓN: En móvil usamos 'text-blue-600' sólido. En desktop usamos el gradiente.
+          */}
+          <span className="text-blue-600 md:text-transparent md:bg-clip-text md:bg-gradient-to-r md:from-blue-600 md:to-violet-600">
             Kiq Montajes
           </span>
         </h1>
         
-        <p className="text-xl md:text-2xl text-gray-500 max-w-2xl mx-auto">
+        {/* Usamos text-gray-600 para asegurar contraste AA */}
+        <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto">
           Tu experto en montajes, potenciado por IA.
         </p>
 
         {/* INPUT TIPO GEMINI */}
         <div className="relative w-full group max-w-2xl mx-auto mt-8">
-          <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-violet-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
+          {/* OPTIMIZACIÓN 3: El brillo borroso (blur) detrás del input mata el rendimiento móvil.
+             SOLUCIÓN: 'hidden md:block'.
+          */}
+          <div className="hidden md:block absolute -inset-1 bg-gradient-to-r from-blue-400 to-violet-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
+          
           <div className="relative flex items-center bg-white border border-gray-200 rounded-2xl shadow-xl p-2 transition-all focus-within:shadow-2xl focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-50">
             
             <div className="pl-4 pr-3 text-violet-500 animate-pulse">
@@ -86,24 +92,23 @@ export default function HeroModerno({ onStartCotizacion }: HeroModernoProps) {
 
             <input
               type="text"
-              name="descripcion_trabajo" // Ayuda al autocompletado del navegador
-              aria-label="Describe qué necesitas montar" // CRÍTICO PARA ACCESIBILIDAD
+              name="descripcion_trabajo"
+              aria-label="Describe qué necesitas montar"
               className="w-full p-4 text-lg md:text-xl text-gray-800 outline-none placeholder-gray-400 bg-transparent"
               placeholder={`Necesito montar ${placeholder}`}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleStart()}
-              // autoFocus eliminado: Mejora UX en móvil y métrica CLS/Layout
             />
 
             <button 
               onClick={handleStart}
               disabled={!inputValue.trim()}
-              aria-label="Comenzar cotización automática" // CRÍTICO PARA ACCESIBILIDAD (Botón flecha)
+              aria-label="Comenzar cotización automática"
               className={`p-3 rounded-xl transition-all duration-300 ${
                 inputValue.trim().length > 0 
                   ? 'bg-blue-600 text-white shadow-lg hover:scale-105 hover:bg-blue-700' 
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed' // Contraste ajustado
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
               }`}
             >
               <FaArrowUp size={20} />
@@ -112,7 +117,6 @@ export default function HeroModerno({ onStartCotizacion }: HeroModernoProps) {
         </div>
 
         {/* Etiquetas rápidas */}
-        {/* CORRECCIÓN DE CONTRASTE: text-gray-600 -> text-gray-700 */}
         <div className="flex flex-wrap justify-center gap-3 mt-6 opacity-80">
             <span className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-700">📸 Sube fotos</span>
             <span className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-700">⚡ Precio inmediato</span>

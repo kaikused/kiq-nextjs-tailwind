@@ -8,6 +8,12 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  
+  // 🚀 NUEVO: Optimización para reducir peso de JS (LCP Móvil)
+  experimental: {
+    optimizePackageImports: ['react-icons', 'framer-motion', 'react-icons/fa'],
+  },
+
   // 3. Configuración de imágenes
   images: {
     remotePatterns: [
