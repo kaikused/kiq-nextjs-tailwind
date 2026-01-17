@@ -1,5 +1,7 @@
+'use client';
+
 import Image from 'next/image';
-import { FaMapMarkerAlt, FaUserCircle, FaCamera } from "react-icons/fa";
+import { FaMapMarkerAlt, FaUserCircle, FaCamera, FaArrowRight } from "react-icons/fa";
 
 interface ProductCardProps {
   title: string;
@@ -16,77 +18,76 @@ export default function ProductCard({
   title, price, image, location, sellerName, sellerAvatar, date, onContact
 }: ProductCardProps) {
   
-  const formatPrice = (n: number) => n.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+  const formatPrice = (n: number) => n.toLocaleString('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   return (
     <button 
-      type="button" // Convertimos el div en button para accesibilidad total (Keyboard navigable)
-      className="w-full text-left bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group cursor-pointer flex flex-col h-full focus:outline-none focus:ring-4 focus:ring-indigo-100"
+      type="button" 
       onClick={onContact}
       aria-label={`Ver detalles de ${title}, precio ${formatPrice(price)}`}
+      className="group w-full h-full text-left bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col focus:outline-none focus:ring-4 focus:ring-indigo-100"
     >
-      {/* 1. FOTO (Aspecto 4:3) - OPTIMIZADO CON NEXT/IMAGE */}
+      {/* 1. FOTO (Aspecto 4:3) */}
       <div className="relative w-full aspect-[4/3] bg-gray-100 overflow-hidden">
         {image ? (
           <Image 
             src={image} 
             alt={title} 
-            fill // Ocupa todo el contenedor padre
-            className="object-cover transition-transform duration-500 group-hover:scale-110"
-            // IMPORTANTE: 'sizes' ayuda al navegador a descargar la versión pequeña en móvil
+            fill 
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300">
-            <FaCamera size={30} aria-hidden="true" />
+          <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
+            <FaCamera size={32} aria-hidden="true" />
           </div>
         )}
         
-        {/* Badge de Precio Flotante */}
-        <div className="absolute bottom-2 right-2 bg-white/95 backdrop-blur-sm text-gray-900 font-black px-3 py-1 rounded-lg shadow-sm text-sm z-10">
+        {/* Badge de Precio (Glassmorphism) */}
+        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md text-gray-900 font-bold px-3 py-1.5 rounded-full shadow-sm text-sm z-10 border border-white/50">
           {formatPrice(price)}
         </div>
+
+        {/* Overlay gradiente sutil abajo para que resalte el contenido si fuera necesario */}
+        <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       </div>
 
       {/* 2. DETALLES */}
-      <div className="p-3 flex flex-col flex-grow">
-        <h3 className="font-bold text-gray-900 text-sm line-clamp-2 mb-1 leading-snug">
-          {title}
-        </h3>
+      <div className="p-5 flex flex-col flex-grow">
+        {/* Título y Fecha */}
+        <div className="flex justify-between items-start gap-2 mb-2">
+            <h3 className="font-bold text-gray-900 text-[15px] line-clamp-2 leading-snug group-hover:text-indigo-600 transition-colors">
+            {title}
+            </h3>
+        </div>
         
-        {/* CORRECCIÓN: text-gray-400 -> text-gray-500 (Contraste) */}
-        <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
+        {/* Ubicación y Fecha */}
+        <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-4 font-medium">
           <FaMapMarkerAlt className="text-indigo-500" aria-hidden="true" />
-          <span className="truncate max-w-[100px]">{location}</span>
-          <span className="mx-1" aria-hidden="true">•</span>
-          <span>{new Date(date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}</span>
+          <span className="truncate max-w-[120px]">{location}</span>
+          <span className="mx-1 text-gray-300" aria-hidden="true">|</span>
+          <span>{new Date(date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}</span>
         </div>
 
-        {/* 3. VENDEDOR (Footer de la tarjeta) */}
-        <div className="mt-auto pt-3 border-t border-gray-50 flex items-center gap-2">
-          {sellerAvatar ? (
-             <div className="relative w-6 h-6 rounded-full overflow-hidden bg-gray-100">
-                <Image 
-                    src={sellerAvatar} 
-                    alt="" // Decorativo porque el nombre ya está al lado
-                    fill
-                    className="object-cover"
-                    sizes="24px"
-                />
+        {/* 3. FOOTER (Vendedor + CTA) */}
+        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between gap-3">
+          
+          {/* Vendedor */}
+          <div className="flex items-center gap-2 min-w-0">
+             <div className="relative w-7 h-7 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+                {sellerAvatar ? (
+                    <Image src={sellerAvatar} alt="" fill className="object-cover" sizes="28px" />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400"><FaUserCircle /></div>
+                )}
              </div>
-          ) : (
-            <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center">
-               <FaUserCircle size={14} aria-hidden="true"/>
-            </div>
-          )}
+             <span className="text-xs font-medium text-gray-600 truncate">{sellerName}</span>
+          </div>
           
-          {/* CORRECCIÓN: text-gray-600 -> text-gray-700 */}
-          <span className="text-xs font-medium text-gray-700 truncate">{sellerName}</span>
-          
-          {/* FALSO BOTÓN (Visualmente es botón, pero semánticamente es span para no romper el button padre) */}
-          <span className="ml-auto text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-            LO QUIERO
-          </span>
+          {/* Botón CTA Falso */}
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 transform group-hover:rotate-[-45deg]">
+            <FaArrowRight size={12} />
+          </div>
         </div>
       </div>
     </button>
