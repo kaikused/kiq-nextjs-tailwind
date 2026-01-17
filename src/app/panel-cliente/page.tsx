@@ -371,7 +371,7 @@ function ContenidoPanelCliente() {
                                                     )}
                                                     
                                                     {trabajo.estado === 'cotizacion' && (
-                                                        <button onClick={() => abrirSelectorPago(trabajo)} className="flex-1 py-2 bg-pink-500 text-white font-bold rounded-xl hover:bg-pink-600 transition text-sm flex items-center justify-center gap-2">Pagar Ahora</button>
+                                                        <button onClick={() => abrirSelectorPago(trabajo)} className="flex-1 py-2 bg-indigo-700 text-white font-bold rounded-xl hover:bg-pink-600 transition text-sm flex items-center justify-center gap-2">Pagar Ahora</button>
                                                     )}
 
                                                     <button onClick={() => solicitarCancelacion(trabajo.trabajo_id)} className="px-3 py-2 text-red-400 font-bold text-xs hover:bg-red-50 rounded-xl transition">Cancelar</button>
