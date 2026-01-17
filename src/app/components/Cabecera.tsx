@@ -8,7 +8,6 @@ import { FaUserCircle, FaSignOutAlt, FaCog, FaChevronDown, FaGem, FaPlusCircle, 
 import GemStoreModal from './GemStoreModal'; 
 import { useInbox } from '../hooks/useInbox';
 
-
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 export default function Cabecera() {
@@ -69,8 +68,6 @@ export default function Cabecera() {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsUserDropdownOpen(false);
             }
-            // Nota: En móvil el inbox es modal, así que el click outside puede ser distinto, 
-            // pero mantenemos esto para desktop.
             if (isInboxOpen && inboxRef.current && !inboxRef.current.contains(event.target as Node)) {
                 setIsInboxOpen(false);
                 refreshInbox(); 
@@ -121,8 +118,8 @@ export default function Cabecera() {
                 <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
                     
-                    <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                        <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={90} height={35} className="h-8 w-auto" />
+                    <Link href="/" aria-label="Ir al inicio" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+                        <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={90} height={35} className="h-8 w-auto" priority />
                     </Link>
 
                     <div className="flex items-center gap-3 sm:gap-5">
@@ -131,6 +128,7 @@ export default function Cabecera() {
                         <div className="" ref={inboxRef}>
                             <button 
                                 onClick={() => setIsInboxOpen(!isInboxOpen)}
+                                aria-label={`Buzón de mensajes, ${unreadTotal} no leídos`} // ACCESIBILIDAD
                                 className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-indigo-600 transition relative"
                             >
                                 <FaEnvelope size={20} />
@@ -143,28 +141,28 @@ export default function Cabecera() {
 
                             {isInboxOpen && (
                                 <>
-                                    {/* 1. Fondo oscuro para móvil (Overlay) */}
+                                    {/* Overlay móvil */}
                                     <div className="fixed inset-0 bg-black/50 z-[60] md:hidden" onClick={() => setIsInboxOpen(false)}></div>
 
-                                    {/* 2. Contenedor del Buzón */}
-                                    {/* En móvil: Fixed, centrado o full width. En Desktop: Absolute dropdown */}
+                                    {/* Contenedor del Buzón */}
                                     <div className="
                                         fixed top-20 left-4 right-4 bottom-auto z-[70] bg-white rounded-xl shadow-2xl border border-gray-100 flex flex-col
                                         md:absolute md:top-full md:right-0 md:left-auto md:w-80 md:h-auto md:max-h-[500px]
                                     ">
-                                        {/* Cabecera del Buzón */}
                                         <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 rounded-t-xl">
                                             <div className="flex items-center gap-2">
                                                 <span className="font-bold text-gray-800 text-sm">Mensajes</span>
                                                 {unreadTotal > 0 && <span className="text-[10px] bg-indigo-100 text-indigo-600 font-bold px-2 py-0.5 rounded-full">{unreadTotal} nuevos</span>}
                                             </div>
-                                            {/* Botón cerrar solo visible en móvil para mejor UX */}
-                                            <button onClick={() => setIsInboxOpen(false)} className="md:hidden text-gray-400 hover:text-gray-600">
+                                            <button 
+                                                onClick={() => setIsInboxOpen(false)} 
+                                                aria-label="Cerrar buzón" // ACCESIBILIDAD
+                                                className="md:hidden text-gray-400 hover:text-gray-600"
+                                            >
                                                 <FaTimes />
                                             </button>
                                         </div>
                                         
-                                        {/* Lista Scrollable */}
                                         <div className="overflow-y-auto max-h-[60vh] md:max-h-[400px]">
                                             {conversations.length === 0 ? (
                                                 <div className="p-8 text-center text-gray-400 text-xs flex flex-col items-center gap-2">
@@ -209,6 +207,7 @@ export default function Cabecera() {
                         {/* GEMAS */}
                         <button 
                             onClick={openGemStore} 
+                            aria-label={`Tienda de gemas. Tienes ${userGems} gemas.`} // ACCESIBILIDAD
                             className="flex items-center gap-1.5 bg-indigo-50/80 backdrop-blur-sm text-indigo-900 px-3 py-1.5 rounded-full border border-indigo-100 shadow-sm hover:bg-indigo-100 transition group"
                         >
                             <FaGem className="text-indigo-500 text-sm group-hover:scale-110 transition-transform" />
@@ -220,10 +219,14 @@ export default function Cabecera() {
 
                         {/* AVATAR */}
                         <div className="relative" ref={dropdownRef}>
-                            <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} className="flex items-center gap-2 focus:outline-none group">
+                            <button 
+                                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} 
+                                aria-label="Menú de usuario" // ACCESIBILIDAD
+                                className="flex items-center gap-2 focus:outline-none group"
+                            >
                                 {userProfile.foto_url ? (
                                     <div className="h-9 w-9 rounded-full overflow-hidden shadow-md ring-2 ring-transparent group-hover:ring-indigo-300 transition-all">
-                                        <img src={userProfile.foto_url} alt="Avatar" className="w-full h-full object-cover" />
+                                        <img src={userProfile.foto_url} alt={`Foto de ${userProfile.nombre}`} className="w-full h-full object-cover" />
                                     </div>
                                 ) : (
                                     <div className="h-9 w-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-transparent group-hover:ring-indigo-100 transition-all">
@@ -272,17 +275,34 @@ export default function Cabecera() {
             <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all">
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
                     <div className="z-50">
-                        <Link href="/"><Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={100} height={40} className="h-9 w-auto hover:opacity-80 transition-opacity" /></Link>
+                        <Link href="/" aria-label="Ir al inicio">
+                            <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={100} height={40} className="h-9 w-auto hover:opacity-80 transition-opacity" priority />
+                        </Link>
                     </div>
                     <div className="flex items-center space-x-4">
                         <nav className="hidden md:flex">
                             <ul className="flex items-center space-x-4">
-                                <li><button onClick={handleOpenLogin} className="text-sm font-bold text-gray-600 hover:text-indigo-600 px-4 py-2">Iniciar Sesión</button></li>
-                                <li><button onClick={handleOpenRegister} className="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 shadow-lg">Hazte Kiqer</button></li>
-                                <li><button onClick={handleOpenCalculator} className="rounded-full bg-pink-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-pink-600 shadow-lg">Calcular Presupuesto</button></li>
+                                <li><button onClick={handleOpenLogin} className="text-sm font-bold text-gray-700 hover:text-indigo-600 px-4 py-2 transition-colors">Iniciar Sesión</button></li>
+                                <li><button onClick={handleOpenRegister} className="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 shadow-lg transition-transform hover:scale-105">Hazte Kiqer</button></li>
+                                <li>
+                                    {/* CORRECCIÓN: bg-pink-700 en lugar de 500 para contraste AA */}
+                                    <button 
+                                        onClick={handleOpenCalculator} 
+                                        className="rounded-full bg-pink-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-pink-800 shadow-lg transition-transform hover:scale-105"
+                                    >
+                                        Calcular Presupuesto
+                                    </button>
+                                </li>
                             </ul>
                         </nav>
-                        <div className="md:hidden cursor-pointer z-50 text-gray-700 p-2" onClick={() => setIsMenuOpen(true)}><FaBars size={24} /></div>
+                        {/* CORRECCIÓN: div cambiado a button con aria-label */}
+                        <button 
+                            className="md:hidden cursor-pointer z-50 text-gray-700 p-2 focus:outline-none focus:bg-gray-100 rounded-lg" 
+                            onClick={() => setIsMenuOpen(true)}
+                            aria-label="Abrir menú principal"
+                        >
+                            <FaBars size={24} />
+                        </button>
                     </div>
                 </div>
             </nav>
@@ -290,14 +310,30 @@ export default function Cabecera() {
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
                 <div className={`absolute top-0 right-0 h-full w-3/4 max-w-sm bg-white shadow-2xl p-6 transition-transform duration-300 ease-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                     <div className="flex items-center justify-between mb-8">
-                        <Link href="/" onClick={() => setIsMenuOpen(false)}><Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={90} height={35} className="h-8 w-auto"/></Link>
-                        <button className="text-gray-400 hover:text-red-500 transition-colors" onClick={() => setIsMenuOpen(false)}><FaTimes size={24} /></button>
+                        <Link href="/" onClick={() => setIsMenuOpen(false)} aria-label="Ir al inicio">
+                            <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={90} height={35} className="h-8 w-auto"/>
+                        </Link>
+                        <button 
+                            className="text-gray-400 hover:text-red-500 transition-colors" 
+                            onClick={() => setIsMenuOpen(false)}
+                            aria-label="Cerrar menú"
+                        >
+                            <FaTimes size={24} />
+                        </button>
                     </div>
                     <ul className="flex flex-col space-y-2">
                         <li><button onClick={handleOpenLogin} className="block w-full text-left p-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-xl">Iniciar Sesión</button></li>
                         <li><button onClick={handleOpenRegister} className="block w-full text-left p-3 text-base font-bold text-indigo-600 hover:bg-indigo-50 rounded-xl">Hazte Kiqer</button></li>
                         <div className="h-px bg-gray-100 my-2"></div>
-                        <li><button onClick={handleOpenCalculator} className="w-full text-center py-3.5 text-base font-bold text-white bg-pink-500 hover:bg-pink-600 rounded-xl shadow-md">Calcular Presupuesto</button></li>
+                        <li>
+                            {/* CORRECCIÓN MÓVIL TAMBIÉN: bg-pink-700 */}
+                            <button 
+                                onClick={handleOpenCalculator} 
+                                className="w-full text-center py-3.5 text-base font-bold text-white bg-pink-700 hover:bg-pink-800 rounded-xl shadow-md"
+                            >
+                                Calcular Presupuesto
+                            </button>
+                        </li>
                     </ul>
                 </div>
             </div>

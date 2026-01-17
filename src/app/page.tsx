@@ -1,19 +1,40 @@
 'use client';
 
 import { useState } from 'react';
+// Importamos dynamic para carga diferida (Lazy Loading)
+import dynamic from 'next/dynamic';
 
-// Componentes existentes
+// --- COMPONENTES CRÍTICOS (Se cargan al instante para el LCP) ---
 import HeroModerno from './components/HeroModerno'; 
-import ChatCalculadora from './components/ChatCalculadora';
 import CalculatorModal from './components/CalculatorModal'; 
-import SocialProof from './components/SocialProof';
-import Testimonios from './components/Testimonios'; 
-import FooterMinimal from './components/FooterMinimal';
+import ChatCalculadora from './components/ChatCalculadora';
 
+// --- COMPONENTES NO CRÍTICOS (Lazy Load para el 100/100 en Móvil) ---
+// ssr: false significa que no se renderizan en el servidor, ahorrando HTML inicial
+// loading: Muestra un esqueleto ligero mientras carga el componente real
+const SocialProof = dynamic(() => import('./components/SocialProof'), { 
+  loading: () => <div className="h-96 bg-gray-50 animate-pulse" />,
+  ssr: true 
+});
 
-// 👇 Nuevo Componente Modular (Mucho más limpio)
-import KiqOutletSection from './components/KiqOutletSection';
-import CtaFinal from './components/CtaFinal';
+const KiqOutletSection = dynamic(() => import('./components/KiqOutletSection'), {
+  loading: () => <div className="h-96 bg-gray-50 animate-pulse" />,
+  ssr: true
+});
+
+const Testimonios = dynamic(() => import('./components/Testimonios'), {
+  loading: () => <div className="h-96 bg-white animate-pulse" />,
+  ssr: true
+});
+
+const CtaFinal = dynamic(() => import('./components/CtaFinal'), {
+  ssr: true
+});
+
+const FooterMinimal = dynamic(() => import('./components/FooterMinimal'), {
+  ssr: true
+});
+
 
 export default function Home() {
   const [cotizacionActiva, setCotizacionActiva] = useState(false);
@@ -33,6 +54,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white selection:bg-blue-100">
       
+      {/* El modal siempre listo pero oculto */}
       <CalculatorModal />
 
       {!cotizacionActiva ? (
@@ -40,12 +62,13 @@ export default function Home() {
         <div className="animate-in fade-in duration-500 flex flex-col min-h-screen">
           
           <div className="flex-grow">
+            {/* El Hero es crítico, se carga normal */}
             <HeroModerno onStartCotizacion={handleStartCotizacion} />
+            
+            {/* El resto se carga progresivamente para no bloquear el móvil */}
             <SocialProof />
             <CtaFinal/>
-            {/* 👇 AQUÍ INSERTAMOS EL COMPONENTE LIMPIO */}
             <KiqOutletSection />
-            {/* ------------------------------------- */}
             <Testimonios />
           </div>
 
@@ -53,7 +76,7 @@ export default function Home() {
 
         </div>
       ) : (
-        /* VISTA B: EL CHAT ACTIVO (Sin cambios) */
+        /* VISTA B: EL CHAT ACTIVO */
         <section className="w-full min-h-screen flex flex-col items-center bg-gray-50 py-6 px-4 md:px-8 animate-in slide-in-from-bottom-10 fade-in duration-500">
             <div className="w-full max-w-4xl flex flex-col h-[90vh]">
             
@@ -77,7 +100,7 @@ export default function Home() {
             </div>
             
              <p className="text-center text-xs text-gray-400 mt-4">
-                Kiq Montajes AI• Cotizaciones precisas en segundos
+                Kiq Montajes AI • Cotizaciones precisas en segundos
             </p>
           </div>
         </section>
