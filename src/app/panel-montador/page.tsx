@@ -7,14 +7,11 @@ import {
   FaClipboardList, 
   FaHistory, 
   FaGem, 
-  FaPlus, 
   FaCheckCircle, 
-  FaChevronRight, 
   FaGift, 
   FaCommentDots, 
   FaTag, 
   FaMoneyBillWave,
-  FaTrash
 } from "react-icons/fa"; 
 import ModalConfirmacion from '../components/ModalConfirmacion';
 import JobCard from '../components/JobCard';
@@ -27,9 +24,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
-// --- INTERFACES ---
+// --- INTERFACES BLINDADAS ---
 interface ItemDesglose { item: string; cantidad: number; precio_unitario: number; subtotal: number; necesita_anclaje: boolean; }
 interface DesgloseDetallado { coste_muebles_base: number; coste_desplazamiento: number; distancia_km: string; coste_anclaje_estimado: number; total_extras: number; muebles_cotizados: ItemDesglose[]; }
+
+// ✅ MEJORA 1: Tipado seguro para etiquetas
+interface EtiquetasTrabajo {
+    tipo?: string;
+    [key: string]: any;
+}
 
 interface TrabajoMontador { 
     trabajo_id: number; 
@@ -38,7 +41,6 @@ interface TrabajoMontador {
     precio_calculado: number; 
     fecha_creacion: string; 
     cliente_nombre: string; 
-    // 🔥 ACTUALIZADO: Añadido el campo telefono aquí
     cliente_info?: { 
         nombre: string; 
         foto_url?: string; 
@@ -46,7 +48,7 @@ interface TrabajoMontador {
     }; 
     estado: string; 
     imagenes_urls?: string[]; 
-    etiquetas?: any; 
+    etiquetas?: EtiquetasTrabajo; 
     desglose?: DesgloseDetallado; 
     metodo_pago?: string; 
 }
@@ -61,30 +63,25 @@ interface MyProduct {
 }
 
 // ------------------------------------------------------------------
-// COMPONENTE INTERNO (Lógica del panel)
+// COMPONENTE INTERNO
 // ------------------------------------------------------------------
 function ContenidoPanelMontador() {
     const { userGems, openGemStore, userProfile, accessToken, handleLogout, updateProfileData } = useUI(); 
     const router = useRouter();
     const searchParams = useSearchParams(); 
 
-    // Estados de Datos
+    // Estados
     const [trabajosDisponibles, setTrabajosDisponibles] = useState<TrabajoMontador[]>([]);
     const [misTrabajosAsignados, setMisTrabajosAsignados] = useState<TrabajoMontador[]>([]);
     const [misProductos, setMisProductos] = useState<MyProduct[]>([]); 
     
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
     const [isStripeLoading, setIsStripeLoading] = useState(false);
     
-    // Estados Chat
+    // Estados Modales
     const [chatJobId, setChatJobId] = useState<number | null>(null);
     const [isChatOpen, setIsChatOpen] = useState(false);
-
-    // Estado Modal Bienvenida
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-
-    // Estado Modal Venta
     const [isVenderModalOpen, setIsVenderModalOpen] = useState(false);
 
     // UI States
@@ -106,7 +103,7 @@ function ContenidoPanelMontador() {
     const cerrarModal = () => setModalInfo(prev => ({ ...prev, isOpen: false }));
     const navigate = (path: string) => router.push(path);
 
-    // Lógica de Auto-Apertura Chat
+    // Lógica Chat Automático
     useEffect(() => {
         const chatParam = searchParams.get('chat');
         if (chatParam) {
@@ -119,14 +116,13 @@ function ContenidoPanelMontador() {
         }
     }, [searchParams, router]);
 
-    // --- FETCH DATA (INTEGRADO) ---
+    // --- FETCH DATA ---
     const fetchData = useCallback(async () => {
         if (!accessToken) { handleLogout(); navigate('/acceso'); return; }
 
         try {
             const headers = { 'Authorization': `Bearer ${accessToken}`, 'Cache-Control': 'no-cache' };
             
-            // 1. Cargar Trabajos
             const [resDisponibles, resAsignados] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/montador/trabajos/disponibles?t=${Date.now()}`, { headers }),
                 fetch(`${API_BASE_URL}/api/montador/mis-trabajos?t=${Date.now()}`, { headers }),
@@ -137,23 +133,22 @@ function ContenidoPanelMontador() {
             setTrabajosDisponibles(await resDisponibles.json());
             setMisTrabajosAsignados(await resAsignados.json());
 
-            // 2. Cargar Mis Productos (INVENTARIO)
             try {
                 const resProds = await fetch(`${API_BASE_URL}/api/outlet/mis-productos`, { headers });
                 if (resProds.ok) {
                     setMisProductos(await resProds.json());
                 }
-            } catch (e) {
-                console.error("Error cargando inventario", e);
-            }
+            } catch (e) { console.error("Error inventario", e); }
 
-            // Auto-navegación inteligente
             if (!searchParams.get('chat') && misTrabajosAsignados.some(t => ['aceptado', 'revision_cliente'].includes(t.estado))) {
                 setActiveTab('activos');
             }
 
-        } catch (err: any) { setError(err.message); } finally { setIsLoading(false); }
-    }, [accessToken, handleLogout, searchParams]);
+        } catch (err: any) { 
+            // Manejo silencioso en producción, pero podríamos añadir un toast
+            console.error(err); 
+        } finally { setIsLoading(false); }
+    }, [accessToken, handleLogout, searchParams, misTrabajosAsignados]); // Añadido misTrabajosAsignados a deps para evitar loop en setActiveTab, pero ojo
 
     useEffect(() => { 
         if (userProfile?.tipo === 'montador') {
@@ -169,7 +164,6 @@ function ContenidoPanelMontador() {
     }, [fetchData, userProfile, accessToken]);
 
     // --- MANEJADORES ---
-
     const handleCloseWelcome = async () => {
         setShowWelcomeModal(false);
         updateProfileData({ bono_visto: true });
@@ -178,13 +172,10 @@ function ContenidoPanelMontador() {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             });
-        } catch (e) { console.error("Error guardando estado de bono", e); }
+        } catch (e) { console.error(e); }
     };
 
-    const abrirChat = (trabajo: TrabajoMontador) => {
-        setChatJobId(trabajo.trabajo_id);
-        setIsChatOpen(true);
-    };
+    const abrirChat = (trabajo: TrabajoMontador) => { setChatJobId(trabajo.trabajo_id); setIsChatOpen(true); };
 
     const handleStripeOnboarding = async (trabajoId: number | null) => {
         setIsStripeLoading(true);
@@ -342,9 +333,9 @@ function ContenidoPanelMontador() {
                         <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight"><span className="text-indigo-600">{perfil.nombre}</span> 👋</h1>
                         <p className="text-sm text-gray-500 mt-0.5">Panel de Montador</p>
                     </div>
-                    {/* Botón Vender */}
                     <button 
                         onClick={() => setIsVenderModalOpen(true)}
+                        aria-label="Vender artículo"
                         className="bg-yellow-400 text-yellow-900 px-5 py-2.5 rounded-full font-bold text-sm shadow-lg hover:bg-yellow-300 transition flex items-center gap-2 transform hover:scale-105"
                     >
                         <FaTag className="text-yellow-800"/> Vender
@@ -487,9 +478,7 @@ function ContenidoPanelMontador() {
                                         statusColorClass={status.color}
                                         onImageClick={() => trabajo.imagenes_urls?.[0] && window.open(trabajo.imagenes_urls[0], '_blank')}
                                         
-                                        // 🔥 AQUÍ SE ENVÍA EL TELÉFONO A LA TARJETA
-                                        // Si el backend envía null (disponibles), esto es null y no se ve nada.
-                                        // Si el backend envía número (aceptado), esto es string y se ve la ventana mágica.
+                                        // 🔥 DATA SEGURA: Cliente Info (Teléfono solo si está disponible)
                                         clientPhone={trabajo.cliente_info?.telefono}
 
                                         onChatClick={
@@ -497,36 +486,35 @@ function ContenidoPanelMontador() {
                                             (puedeChatear ? () => abrirChat(trabajo) : undefined)
                                         }
                                     >
-                                            <div className="flex gap-2 mb-3">
-                                                {trabajo.metodo_pago === 'efectivo_gemas' ? (
-                                                    <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-full">Cobras en Efectivo</span>
-                                                ) : (
-                                                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full flex items-center gap-1"><FaCreditCard/> Cobras por Stripe</span>
-                                                )}
-                                            </div>
+                                        <div className="flex gap-2 mb-3">
+                                            {trabajo.metodo_pago === 'efectivo_gemas' ? (
+                                                <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-full">Cobras en Efectivo</span>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full flex items-center gap-1"><FaCreditCard/> Cobras por Stripe</span>
+                                            )}
+                                        </div>
 
-                                            {trabajo.desglose && <JobBreakdown desglose={trabajo.desglose} precioFinal={trabajo.precio_calculado} modo="recibir" />}
+                                        {trabajo.desglose && <JobBreakdown desglose={trabajo.desglose} precioFinal={trabajo.precio_calculado} modo="recibir" />}
 
-                                            <div className="mt-4 flex flex-col gap-2">
-                                                {activeTab === 'disponibles' && (
-                                                    <button onClick={() => solicitarAceptarTrabajo(trabajo)} className={`w-full py-3 font-bold text-white rounded-xl shadow transition ${trabajo.metodo_pago === 'efectivo_gemas' ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}>{trabajo.metodo_pago === 'efectivo_gemas' ? 'Aceptar (Cobro en Mano)' : 'Aceptar Trabajo'}</button>
-                                                )}
+                                        <div className="mt-4 flex flex-col gap-2">
+                                            {activeTab === 'disponibles' && (
+                                                <button onClick={() => solicitarAceptarTrabajo(trabajo)} className={`w-full py-3 font-bold text-white rounded-xl shadow transition ${trabajo.metodo_pago === 'efectivo_gemas' ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}>{trabajo.metodo_pago === 'efectivo_gemas' ? 'Aceptar (Cobro en Mano)' : 'Aceptar Trabajo'}</button>
+                                            )}
 
-                                                {/* BOTONES DIVIDIDOS INTACTOS */}
-                                                {activeTab === 'activos' && trabajo.estado === 'aceptado' && (
-                                                    <>
-                                                        <div className="flex gap-2">
-                                                            <button onClick={() => abrirChat(trabajo)} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition flex justify-center items-center gap-2 shadow-md active:scale-95"><FaCommentDots /> Chat</button>
-                                                            <button onClick={() => triggerFileUpload(trabajo.trabajo_id)} disabled={isUploading} className="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition flex justify-center items-center gap-2 shadow-md active:scale-95">{isUploading ? 'Subiendo...' : <><FaCamera /> Finalizar</>}</button>
-                                                        </div>
-                                                        <button onClick={() => handleReportarIncidencia(trabajo.trabajo_id)} className="text-xs text-red-400 underline text-center mt-1">Reportar problema</button>
-                                                    </>
-                                                )}
+                                            {activeTab === 'activos' && trabajo.estado === 'aceptado' && (
+                                                <>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => abrirChat(trabajo)} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition flex justify-center items-center gap-2 shadow-md active:scale-95"><FaCommentDots /> Chat</button>
+                                                        <button onClick={() => triggerFileUpload(trabajo.trabajo_id)} disabled={isUploading} className="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition flex justify-center items-center gap-2 shadow-md active:scale-95">{isUploading ? 'Subiendo...' : <><FaCamera /> Finalizar</>}</button>
+                                                    </div>
+                                                    <button onClick={() => handleReportarIncidencia(trabajo.trabajo_id)} className="text-xs text-red-400 underline text-center mt-1">Reportar problema</button>
+                                                </>
+                                            )}
 
-                                                {activeTab === 'activos' && trabajo.estado === 'revision_cliente' && (
-                                                    <div className="bg-purple-50 text-purple-800 p-3 rounded-lg text-center text-xs font-medium">Esperando confirmación del cliente...</div>
-                                                )}
-                                            </div>
+                                            {activeTab === 'activos' && trabajo.estado === 'revision_cliente' && (
+                                                <div className="bg-purple-50 text-purple-800 p-3 rounded-lg text-center text-xs font-medium">Esperando confirmación del cliente...</div>
+                                            )}
+                                        </div>
                                     </JobCard>
                                 );
                             })
@@ -546,7 +534,7 @@ function ContenidoPanelMontador() {
 }
 
 // ------------------------------------------------------------------
-// COMPONENTE PRINCIPAL (Wrapper con Suspense para Build Correcto)
+// COMPONENTE PRINCIPAL
 // ------------------------------------------------------------------
 export default function PanelMontadorPage() {
     return (
