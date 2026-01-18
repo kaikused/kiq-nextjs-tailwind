@@ -56,7 +56,7 @@ interface MyProduct {
 // COMPONENTE INTERNO
 // ------------------------------------------------------------------
 function ContenidoPanelMontador() {
-    const { userGems, openGemStore, userProfile, accessToken, handleLogout, updateProfileData } = useUI(); 
+    const { userGems, userProfile, accessToken, handleLogout, updateProfileData } = useUI(); 
     const router = useRouter();
     const searchParams = useSearchParams(); 
 
@@ -66,7 +66,6 @@ function ContenidoPanelMontador() {
     const [misProductos, setMisProductos] = useState<MyProduct[]>([]); 
     
     const [isLoading, setIsLoading] = useState(true);
-    const [isStripeLoading, setIsStripeLoading] = useState(false);
     
     // Estados Modales
     const [chatJobId, setChatJobId] = useState<number | null>(null);
@@ -91,8 +90,7 @@ function ContenidoPanelMontador() {
 
     const trabajoChatActivo = misTrabajosAsignados.find(t => t.trabajo_id === chatJobId);
     const cerrarModal = () => setModalInfo(prev => ({ ...prev, isOpen: false }));
-    const navigate = (path: string) => router.push(path);
-
+    
     // Lógica Chat Automático
     useEffect(() => {
         const chatParam = searchParams.get('chat');
@@ -106,31 +104,40 @@ function ContenidoPanelMontador() {
         }
     }, [searchParams, router]);
 
-// --- FETCH DATA ---
+    // --- FETCH DATA (CORREGIDO SIN BUCLES) ---
     const fetchData = useCallback(async () => {
-        if (!accessToken) { handleLogout(); navigate('/acceso'); return; }
+        if (!accessToken) return; // Si no hay token, el useEffect principal manejará el logout/redirect
 
         try {
             const headers = { 'Authorization': `Bearer ${accessToken}`, 'Cache-Control': 'no-cache' };
             
-            // ✅ AHORA TAMBIÉN PEDIMOS EL PERFIL PARA ACTUALIZAR LAS GEMAS
+            // 1. Pedimos datos
             const [resDisponibles, resAsignados, resPerfil] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/montador/trabajos/disponibles?t=${Date.now()}`, { headers }),
                 fetch(`${API_BASE_URL}/api/montador/mis-trabajos?t=${Date.now()}`, { headers }),
-                fetch(`${API_BASE_URL}/api/perfil?t=${Date.now()}`, { headers }) // <--- NUEVO
+                fetch(`${API_BASE_URL}/api/perfil?t=${Date.now()}`, { headers })
             ]);
 
             if (resDisponibles.status === 401 || resAsignados.status === 401) { handleLogout(); return; }
             
-            setTrabajosDisponibles(await resDisponibles.json());
-            setMisTrabajosAsignados(await resAsignados.json());
+            // 2. Procesamos JSON
+            const dataDisponibles = await resDisponibles.json();
+            const dataAsignados = await resAsignados.json();
 
-            // ✅ ACTUALIZAMOS EL CONTEXTO CON LAS GEMAS NUEVAS
+            // 3. Actualizamos Estados
+            setTrabajosDisponibles(resDisponibles.ok ? dataDisponibles : []);
+            setMisTrabajosAsignados(resAsignados.ok ? dataAsignados : []);
+
+            // 4. Actualizar Gemas (Solo si el perfil viene bien)
             if (resPerfil.ok) {
                 const perfilData = await resPerfil.json();
+                // Evitamos loop: Solo actualizamos si el saldo ha cambiado visualmente
+                // Pero updateProfileData suele ser seguro si el contexto está bien hecho.
+                // Lo importante es NO poner userProfile en las dependencias de este useCallback.
                 updateProfileData(perfilData); 
             }
 
+            // 5. Inventario
             try {
                 const resProds = await fetch(`${API_BASE_URL}/api/outlet/mis-productos`, { headers });
                 if (resProds.ok) {
@@ -138,14 +145,32 @@ function ContenidoPanelMontador() {
                 }
             } catch (e) { console.error("Error inventario", e); }
 
-            if (!searchParams.get('chat') && misTrabajosAsignados.some(t => ['aceptado', 'revision_cliente'].includes(t.estado))) {
-                setActiveTab('activos');
+            // 6. Lógica de Pestaña Activa (Usando la variable local dataAsignados, NO el estado)
+            if (!searchParams.get('chat') && Array.isArray(dataAsignados)) {
+                const tieneActivos = dataAsignados.some((t: any) => ['aceptado', 'revision_cliente'].includes(t.estado));
+                if (tieneActivos) setActiveTab('activos');
             }
 
         } catch (err: any) { 
             console.error(err); 
         } finally { setIsLoading(false); }
-    }, [accessToken, handleLogout, searchParams, misTrabajosAsignados, updateProfileData]); // Añadido updateProfileData a dependencias
+    }, [accessToken, handleLogout, searchParams, updateProfileData]); 
+    // ^^^ IMPORTANTE: Quitamos misTrabajosAsignados y userProfile de aquí
+
+    // --- EFECTO PRINCIPAL DE CARGA ---
+    useEffect(() => { 
+        if (accessToken) {
+            // Solo cargamos si hay token. El tipo de usuario ya lo valida el backend o la ruta protegida.
+            setIsLoading(true);
+            fetchData(); 
+            
+            if (userProfile?.bono_entregado && !userProfile.bono_visto) {
+                setShowWelcomeModal(true);
+            }
+        } else {
+            setIsLoading(false);
+        }
+    }, [fetchData, accessToken]); // Eliminamos userProfile de las dependencias principales para evitar bucle con updateProfileData
 
     // --- MANEJADORES ---
     const handleCloseWelcome = async () => {
@@ -162,7 +187,6 @@ function ContenidoPanelMontador() {
     const abrirChat = (trabajo: TrabajoMontador) => { setChatJobId(trabajo.trabajo_id); setIsChatOpen(true); };
 
     const handleStripeOnboarding = async (trabajoId: number | null) => {
-        setIsStripeLoading(true);
         if (!accessToken) return;
         try {
              if (trabajoId !== null) localStorage.setItem('kiq_pending_job_id', trabajoId.toString());
@@ -178,7 +202,6 @@ function ContenidoPanelMontador() {
              else throw new Error(data.error);
         } catch (err) {
              setModalInfo({ isOpen: true, type: 'danger', title: 'Error', message: 'Fallo conexión Stripe.', confirmText: 'Cerrar', onConfirm: undefined });
-             setIsStripeLoading(false);
         }
     };
 
@@ -199,7 +222,7 @@ function ContenidoPanelMontador() {
                 fetchData(); 
             } else {
                 if (res.status === 402) {
-                    setModalInfo({ isOpen: true, type: 'info', title: 'Recarga Necesaria', message: 'No tienes suficientes Gemas.', confirmText: 'Ir a la Tienda', onConfirm: () => { cerrarModal(); setTimeout(() => openGemStore(), 200); } });
+                    setModalInfo({ isOpen: true, type: 'info', title: 'Recarga Necesaria', message: 'No tienes suficientes Gemas.', confirmText: 'Ir a la Tienda', onConfirm: () => { cerrarModal(); setTimeout(() => (window as any).openGemStore?.(), 200); } });
                 } else {
                     setModalInfo({ isOpen: true, type: 'danger', title: 'Ups...', message: data.error, confirmText: 'Cerrar', onConfirm: undefined });
                 }
@@ -217,7 +240,7 @@ function ContenidoPanelMontador() {
             const costeReal = esPrimerTrabajo ? 0 : costeGemas;
 
             if (userGems < costeReal) {
-                setModalInfo({ isOpen: true, type: 'info', title: 'Recarga Necesaria', message: `Necesitas ${costeReal} gemas.`, confirmText: 'Conseguir Gemas', onConfirm: () => { cerrarModal(); setTimeout(() => openGemStore(), 200); } });
+                setModalInfo({ isOpen: true, type: 'info', title: 'Recarga Necesaria', message: `Necesitas ${costeReal} gemas.`, confirmText: 'Conseguir Gemas', onConfirm: () => { cerrarModal(); setTimeout(() => (window as any).openGemStore?.(), 200); } });
                 return;
             }
             const mensajeCoste = esPrimerTrabajo ? '¡Comisión GRATIS!' : `Se descontarán ${costeGemas} gemas.`;
@@ -315,7 +338,6 @@ function ContenidoPanelMontador() {
                 {/* --- HEADER PREMIUM --- */}
                 <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                     <div className="text-center md:text-left">
-                        {/* ✅ AQUI ESTÁ EL CAMBIO: Agregado "Hola, " y asegurado el nombre completo */}
                         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Hola, <span className="text-indigo-600">{perfil.nombre}</span> 👋</h1>
                         <p className="text-slate-500 text-sm mt-1 font-medium">Panel de Control para Montadores</p>
                     </div>
