@@ -1,17 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'; 
 import { 
-  FaCreditCard, 
-  FaCamera, 
-  FaSearch, 
-  FaClipboardList, 
-  FaHistory, 
-  FaGem, 
-  FaCheckCircle, 
-  FaGift, 
-  FaCommentDots, 
-  FaTag, 
-  FaMoneyBillWave,
+  FaCreditCard, FaCamera, FaSearch, FaClipboardList, FaHistory, FaGem, 
+  FaCheckCircle, FaGift, FaCommentDots, FaTag, FaMoneyBillWave, FaTools, FaExclamationTriangle 
 } from "react-icons/fa"; 
 import ModalConfirmacion from '../components/ModalConfirmacion';
 import JobCard from '../components/JobCard';
@@ -28,7 +19,6 @@ const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 interface ItemDesglose { item: string; cantidad: number; precio_unitario: number; subtotal: number; necesita_anclaje: boolean; }
 interface DesgloseDetallado { coste_muebles_base: number; coste_desplazamiento: number; distancia_km: string; coste_anclaje_estimado: number; total_extras: number; muebles_cotizados: ItemDesglose[]; }
 
-// ✅ MEJORA 1: Tipado seguro para etiquetas
 interface EtiquetasTrabajo {
     tipo?: string;
     [key: string]: any;
@@ -145,10 +135,9 @@ function ContenidoPanelMontador() {
             }
 
         } catch (err: any) { 
-            // Manejo silencioso en producción, pero podríamos añadir un toast
             console.error(err); 
         } finally { setIsLoading(false); }
-    }, [accessToken, handleLogout, searchParams, misTrabajosAsignados]); // Añadido misTrabajosAsignados a deps para evitar loop en setActiveTab, pero ojo
+    }, [accessToken, handleLogout, searchParams, misTrabajosAsignados]); 
 
     useEffect(() => { 
         if (userProfile?.tipo === 'montador') {
@@ -317,7 +306,8 @@ function ContenidoPanelMontador() {
         }
     }
 
-    if (isLoading || !userProfile) return <div className="flex justify-center items-center min-h-screen">Cargando...</div>;
+    if (isLoading || !userProfile) return <div className="flex justify-center items-center min-h-screen bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+    
     const perfil = userProfile;
     const showWelcomeBanner = userProfile.tipo === 'montador' && userProfile.bono_entregado;
 
@@ -325,110 +315,82 @@ function ContenidoPanelMontador() {
         <div className="bg-gray-50 min-h-screen font-sans pb-20">
             <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
 
-            <div className="max-w-5xl mx-auto py-8 px-6"> 
+            <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6"> 
                 
-                {/* Header */}
-                <div className="mb-8 flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight"><span className="text-indigo-600">{perfil.nombre}</span> 👋</h1>
-                        <p className="text-sm text-gray-500 mt-0.5">Panel de Montador</p>
+                {/* --- HEADER PREMIUM --- */}
+                <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                    <div className="text-center md:text-left">
+                        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight"><span className="text-indigo-600">{perfil.nombre}</span> 👋</h1>
+                        <p className="text-slate-500 text-sm mt-1 font-medium">Panel de Control para Montadores</p>
                     </div>
-                    <button 
-                        onClick={() => setIsVenderModalOpen(true)}
-                        aria-label="Vender artículo"
-                        className="bg-yellow-400 text-yellow-900 px-5 py-2.5 rounded-full font-bold text-sm shadow-lg hover:bg-yellow-300 transition flex items-center gap-2 transform hover:scale-105"
-                    >
-                        <FaTag className="text-yellow-800"/> Vender
-                    </button>
+                    
+                    <div className="flex flex-wrap justify-center gap-3">
+                        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100 text-indigo-700 font-bold text-sm">
+                            <FaGem className="text-indigo-500"/> {userGems}
+                        </div>
+                        <button 
+                            onClick={() => setIsVenderModalOpen(true)}
+                            aria-label="Vender artículo"
+                            className="bg-white text-slate-600 border border-gray-200 px-5 py-2.5 rounded-full font-bold text-sm shadow-sm hover:border-yellow-300 hover:text-yellow-700 hover:bg-yellow-50 transition flex items-center gap-2"
+                        >
+                            <FaTag /> Vender Muebles
+                        </button>
+                    </div>
                 </div>
 
+                {/* --- WELCOME BANNER (SI APLICA) --- */}
                 {showWelcomeBanner && (
-                    <div className="bg-yellow-50 border border-yellow-300 p-4 rounded-xl mb-6 shadow-md animate-in fade-in slide-in-from-top-4">
-                        <div className="flex items-center gap-3">
-                            <FaGift size={24} className="text-yellow-600 flex-shrink-0" />
-                            <div>
-                                <h3 className="font-bold text-yellow-800">¡Bono de Bienvenida Activado!</h3>
-                                <p className="text-sm text-yellow-700 mt-1">Hemos cargado gemas en tu saldo.</p>
-                            </div>
+                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 p-6 rounded-2xl mb-8 shadow-sm flex flex-col md:flex-row items-center gap-4 animate-in fade-in zoom-in-95">
+                        <div className="bg-yellow-100 p-3 rounded-full">
+                            <FaGift size={24} className="text-yellow-600" />
+                        </div>
+                        <div className="text-center md:text-left">
+                            <h3 className="font-extrabold text-lg text-yellow-900">¡Bono de Bienvenida Activado!</h3>
+                            <p className="text-sm text-yellow-800">Hemos cargado gemas en tu saldo para que puedas empezar a trabajar.</p>
                         </div>
                     </div>
                 )}
 
-                {/* --- PESTAÑAS --- */}
-                <div className="flex flex-wrap justify-center items-center gap-4 md:gap-8 py-2 mb-8">
-                    
-                    <button 
-                        onClick={() => setActiveTab('disponibles')}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-200 min-w-[100px] md:min-w-[120px] ${
-                            activeTab === 'disponibles' 
-                            ? 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.08)] scale-105 border border-transparent' 
-                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
-                        }`}
-                    >
-                        <FaSearch className={`text-2xl ${activeTab === 'disponibles' ? 'text-indigo-600' : 'inherit'}`} />
-                        <span className={`text-sm font-bold ${activeTab === 'disponibles' ? 'text-indigo-600' : 'inherit'}`}>
-                            Oportunidades
-                        </span>
-                    </button>
-
-                    <button 
-                        onClick={() => setActiveTab('activos')}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-200 min-w-[100px] md:min-w-[120px] ${
-                            activeTab === 'activos' 
-                            ? 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.08)] scale-105 border border-transparent' 
-                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
-                        }`}
-                    >
-                        <FaClipboardList className={`text-2xl ${activeTab === 'activos' ? 'text-indigo-600' : 'inherit'}`} />
-                        <span className={`text-sm font-bold ${activeTab === 'activos' ? 'text-indigo-600' : 'inherit'}`}>
-                            En Curso
-                        </span>
-                    </button>
-                    
-                    <button 
-                        onClick={() => setActiveTab('ventas')}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-200 min-w-[100px] md:min-w-[120px] ${
-                            activeTab === 'ventas' 
-                            ? 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.08)] scale-105 border border-transparent' 
-                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
-                        }`}
-                    >
-                        <FaTag className={`text-2xl ${activeTab === 'ventas' ? 'text-green-600' : 'inherit'}`} />
-                        <span className={`text-sm font-bold ${activeTab === 'ventas' ? 'text-green-600' : 'inherit'}`}>
-                            Mis Productos
-                        </span>
-                    </button>
-
-                    <button 
-                        onClick={() => setActiveTab('historial')}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-200 min-w-[100px] md:min-w-[120px] ${
-                            activeTab === 'historial' 
-                            ? 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.08)] scale-105 border border-transparent' 
-                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
-                        }`}
-                    >
-                        <FaHistory className={`text-2xl ${activeTab === 'historial' ? 'text-indigo-600' : 'inherit'}`} />
-                        <span className={`text-sm font-bold ${activeTab === 'historial' ? 'text-indigo-600' : 'inherit'}`}>
-                            Historial
-                        </span>
-                    </button>
+                {/* --- PESTAÑAS (TABS) PREMIUM --- */}
+                <div className="flex overflow-x-auto pb-4 mb-6 gap-2 no-scrollbar justify-start md:justify-center">
+                    {[
+                        { id: 'disponibles', label: 'Oportunidades', icon: FaSearch },
+                        { id: 'activos', label: 'En Curso', icon: FaTools },
+                        { id: 'ventas', label: 'Mis Ventas', icon: FaTag },
+                        { id: 'historial', label: 'Historial', icon: FaHistory },
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+                                activeTab === tab.id
+                                    ? 'bg-slate-900 text-white shadow-md transform scale-105'
+                                    : 'bg-white text-slate-500 hover:bg-gray-100 border border-gray-100'
+                            }`}
+                        >
+                            <tab.icon className={activeTab === tab.id ? 'text-indigo-400' : 'text-slate-400'} />
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
 
-                {/* --- CONTENIDO --- */}
+                {/* --- CONTENIDO DINÁMICO --- */}
 
                 {/* A. VISTA MIS PRODUCTOS (INVENTARIO) */}
                 {activeTab === 'ventas' && (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {misProductos.length === 0 ? (
-                            <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-gray-200">
-                                <FaTag className="mx-auto text-gray-300 text-4xl mb-3" />
-                                <p className="text-gray-500 font-medium">No tienes productos en venta.</p>
+                            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <FaTag className="text-slate-300 text-2xl" />
+                                </div>
+                                <p className="text-slate-500 font-medium">No tienes productos en venta.</p>
                                 <button onClick={() => setIsVenderModalOpen(true)} className="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-indigo-700 transition">
                                     ¡Vender mi primer artículo!
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {misProductos.map((prod) => {
                                     const st = getProductStatus(prod.estado);
                                     return (
@@ -443,8 +405,8 @@ function ContenidoPanelMontador() {
                                             statusColorClass={st.color}
                                             onImageClick={() => router.push(`/producto/${prod.id}`)}
                                         >
-                                            <div className="mt-2 text-xs text-gray-400 flex items-center gap-1">
-                                                <FaMoneyBillWave/> Gestiona este producto
+                                            <div className="mt-2 text-xs text-slate-400 flex items-center gap-1 font-medium bg-slate-50 p-2 rounded-lg justify-center">
+                                                <FaMoneyBillWave/> Gestiona este producto en el Outlet
                                             </div>
                                         </JobCard>
                                     )
@@ -456,68 +418,86 @@ function ContenidoPanelMontador() {
 
                 {/* B. VISTA TRABAJOS (SERVICIOS) */}
                 {activeTab !== 'ventas' && (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {displayedJobs.length === 0 ? (
-                            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-                                <p className="text-gray-400 font-medium">No hay trabajos en esta sección.</p>
+                            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <FaClipboardList className="text-slate-300 text-2xl" />
+                                </div>
+                                <p className="text-slate-500 font-medium">No hay trabajos en esta sección ahora mismo.</p>
                             </div>
                         ) : (
-                            displayedJobs.map((trabajo) => {
-                                const status = getStatusInfo(trabajo.estado);
-                                const puedeChatear = activeTab !== 'disponibles';
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {displayedJobs.map((trabajo) => {
+                                    const status = getStatusInfo(trabajo.estado);
+                                    const puedeChatear = activeTab !== 'disponibles';
 
-                                return (
-                                    <JobCard
-                                        key={trabajo.trabajo_id}
-                                        title={trabajo.descripcion}
-                                        price={trabajo.precio_calculado}
-                                        date={new Date(trabajo.fecha_creacion).toLocaleDateString()}
-                                        location={trabajo.direccion}
-                                        imageUrl={trabajo.imagenes_urls?.[0]}
-                                        statusLabel={status.label}
-                                        statusColorClass={status.color}
-                                        onImageClick={() => trabajo.imagenes_urls?.[0] && window.open(trabajo.imagenes_urls[0], '_blank')}
-                                        
-                                        // 🔥 DATA SEGURA: Cliente Info (Teléfono solo si está disponible)
-                                        clientPhone={trabajo.cliente_info?.telefono}
+                                    return (
+                                        <JobCard
+                                            key={trabajo.trabajo_id}
+                                            title={trabajo.descripcion}
+                                            price={trabajo.precio_calculado}
+                                            date={new Date(trabajo.fecha_creacion).toLocaleDateString()}
+                                            location={trabajo.direccion}
+                                            imageUrl={trabajo.imagenes_urls?.[0]}
+                                            statusLabel={status.label}
+                                            statusColorClass={status.color}
+                                            onImageClick={() => trabajo.imagenes_urls?.[0] && window.open(trabajo.imagenes_urls[0], '_blank')}
+                                            // En montador, el teléfono del cliente es el dato clave
+                                            clientPhone={trabajo.cliente_info?.telefono}
+                                            onChatClick={
+                                                (activeTab === 'activos' && trabajo.estado === 'aceptado') ? undefined : 
+                                                (puedeChatear ? () => abrirChat(trabajo) : undefined)
+                                            }
+                                        >
+                                            <div className="flex gap-2 mb-4">
+                                                {trabajo.metodo_pago === 'efectivo_gemas' ? (
+                                                    <span className="text-[10px] font-bold text-orange-700 bg-orange-100 px-3 py-1 rounded-full border border-orange-200 shadow-sm flex items-center gap-1">
+                                                        <FaMoneyBillWave/> Cobras en Efectivo
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full border border-indigo-200 shadow-sm flex items-center gap-1">
+                                                        <FaCreditCard/> Cobras por Stripe
+                                                    </span>
+                                                )}
+                                            </div>
 
-                                        onChatClick={
-                                            (activeTab === 'activos' && trabajo.estado === 'aceptado') ? undefined : 
-                                            (puedeChatear ? () => abrirChat(trabajo) : undefined)
-                                        }
-                                    >
-                                        <div className="flex gap-2 mb-3">
-                                            {trabajo.metodo_pago === 'efectivo_gemas' ? (
-                                                <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-full">Cobras en Efectivo</span>
-                                            ) : (
-                                                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full flex items-center gap-1"><FaCreditCard/> Cobras por Stripe</span>
-                                            )}
-                                        </div>
+                                            {trabajo.desglose && <JobBreakdown desglose={trabajo.desglose} precioFinal={trabajo.precio_calculado} modo="recibir" />}
 
-                                        {trabajo.desglose && <JobBreakdown desglose={trabajo.desglose} precioFinal={trabajo.precio_calculado} modo="recibir" />}
+                                            <div className="mt-5 flex flex-col gap-3">
+                                                {activeTab === 'disponibles' && (
+                                                    <button 
+                                                        onClick={() => solicitarAceptarTrabajo(trabajo)} 
+                                                        className={`w-full py-3 font-bold text-white rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex justify-center items-center gap-2 ${
+                                                            trabajo.metodo_pago === 'efectivo_gemas' 
+                                                            ? 'bg-gradient-to-r from-emerald-500 to-green-600' 
+                                                            : 'bg-gradient-to-r from-indigo-600 to-blue-600'
+                                                        }`}
+                                                    >
+                                                        {trabajo.metodo_pago === 'efectivo_gemas' ? <><FaMoneyBillWave/> Aceptar (Cobro en Mano)</> : 'Aceptar Trabajo'}
+                                                    </button>
+                                                )}
 
-                                        <div className="mt-4 flex flex-col gap-2">
-                                            {activeTab === 'disponibles' && (
-                                                <button onClick={() => solicitarAceptarTrabajo(trabajo)} className={`w-full py-3 font-bold text-white rounded-xl shadow transition ${trabajo.metodo_pago === 'efectivo_gemas' ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}>{trabajo.metodo_pago === 'efectivo_gemas' ? 'Aceptar (Cobro en Mano)' : 'Aceptar Trabajo'}</button>
-                                            )}
+                                                {activeTab === 'activos' && trabajo.estado === 'aceptado' && (
+                                                    <>
+                                                        <div className="flex gap-3">
+                                                            <button onClick={() => abrirChat(trabajo)} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition flex justify-center items-center gap-2 shadow-md active:scale-95"><FaCommentDots /> Chat</button>
+                                                            <button onClick={() => triggerFileUpload(trabajo.trabajo_id)} disabled={isUploading} className="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition flex justify-center items-center gap-2 shadow-md active:scale-95">{isUploading ? 'Subiendo...' : <><FaCamera /> Finalizar</>}</button>
+                                                        </div>
+                                                        <button onClick={() => handleReportarIncidencia(trabajo.trabajo_id)} className="text-xs text-red-400 underline text-center mt-1 flex items-center justify-center gap-1 hover:text-red-600"><FaExclamationTriangle/> Reportar problema</button>
+                                                    </>
+                                                )}
 
-                                            {activeTab === 'activos' && trabajo.estado === 'aceptado' && (
-                                                <>
-                                                    <div className="flex gap-2">
-                                                        <button onClick={() => abrirChat(trabajo)} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition flex justify-center items-center gap-2 shadow-md active:scale-95"><FaCommentDots /> Chat</button>
-                                                        <button onClick={() => triggerFileUpload(trabajo.trabajo_id)} disabled={isUploading} className="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition flex justify-center items-center gap-2 shadow-md active:scale-95">{isUploading ? 'Subiendo...' : <><FaCamera /> Finalizar</>}</button>
+                                                {activeTab === 'activos' && trabajo.estado === 'revision_cliente' && (
+                                                    <div className="bg-purple-50 text-purple-800 p-4 rounded-xl text-center text-xs font-bold border border-purple-100 shadow-sm">
+                                                        ⌛ Esperando confirmación del cliente...
                                                     </div>
-                                                    <button onClick={() => handleReportarIncidencia(trabajo.trabajo_id)} className="text-xs text-red-400 underline text-center mt-1">Reportar problema</button>
-                                                </>
-                                            )}
-
-                                            {activeTab === 'activos' && trabajo.estado === 'revision_cliente' && (
-                                                <div className="bg-purple-50 text-purple-800 p-3 rounded-lg text-center text-xs font-medium">Esperando confirmación del cliente...</div>
-                                            )}
-                                        </div>
-                                    </JobCard>
-                                );
-                            })
+                                                )}
+                                            </div>
+                                        </JobCard>
+                                    );
+                                })}
+                            </div>
                         )}
                     </div>
                 )}
@@ -538,7 +518,7 @@ function ContenidoPanelMontador() {
 // ------------------------------------------------------------------
 export default function PanelMontadorPage() {
     return (
-        <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Cargando panel...</div>}>
+        <Suspense fallback={<div className="flex justify-center items-center min-h-screen bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>}>
             <ContenidoPanelMontador />
         </Suspense>
     );
