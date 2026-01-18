@@ -1,60 +1,48 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { FaUser, FaCog, FaLock, FaSave, FaCamera, FaEnvelope, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
-// Importamos el contexto completo para leer datos y actualizar la foto
+import { FaUser, FaCog, FaLock, FaSave, FaCamera, FaEnvelope, FaCheckCircle, FaExclamationTriangle, FaArrowLeft } from 'react-icons/fa';
 import { useUI, UserProfile } from '../../context/UIContext'; 
 import { useRouter } from 'next/navigation';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 export default function ConfiguracionClientePage() {
-    // Leemos el perfil y las funciones de actualización del Contexto
     const { userProfile, updateProfilePhoto, updateProfileData, accessToken } = useUI();
     const router = useRouter();
 
     const [activeTab, setActiveTab] = useState<'perfil' | 'seguridad'>('perfil');
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false); // Estado para el botón de guardar
+    const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
     
-    // Referencia para el input de archivo invisible
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Datos del Formulario
     const [formData, setFormData] = useState({
         nombre: '',
     });
-    
-    // Datos Password (Placeholder para futura implementación)
-    const [passData, setPassData] = useState({ current: '', new: '', confirm: '' });
 
-    // --- 1. SINCRONIZAR CON EL CONTEXTO (Lee userProfile en lugar de hacer fetch) ---
+    // --- 1. SINCRONIZAR CON EL CONTEXTO ---
     useEffect(() => {
         if (userProfile && userProfile.tipo === 'cliente') {
-            // Rellenamos el formulario con los datos del Contexto
             setFormData({ 
                 nombre: userProfile.nombre || '',
             });
             setLoading(false);
         } else if (!accessToken) {
-            // Si no hay token, redirigimos
             router.push('/acceso');
         } else if (userProfile && userProfile.tipo !== 'cliente') {
-            // Si el perfil es de montador, redirigimos por seguridad
             router.push('/panel-montador');
         }
     }, [userProfile, accessToken]);
 
-    // --- 2. SUBIR FOTO (ACTUALIZA BACKEND Y CONTEXTO) ---
+    // --- 2. SUBIR FOTO ---
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0 || !accessToken) return;
-        
         const file = e.target.files[0];
         
         setMessage({ text: 'Subiendo foto...', type: 'info' });
 
         const uploadData = new FormData();
-        // CRÍTICO: El nombre de campo debe ser 'imagen' para el backend
         uploadData.append('imagen', file);
 
         try {
@@ -66,7 +54,6 @@ export default function ConfiguracionClientePage() {
             const data = await res.json();
 
             if (res.ok && data.foto_url) {
-                // 1. CRÍTICO: Actualizar el Contexto Global (para que la Cabecera sea reactiva)
                 updateProfilePhoto(data.foto_url); 
                 setMessage({ text: '¡Foto actualizada con éxito!', type: 'success' });
             } else {
@@ -74,10 +61,12 @@ export default function ConfiguracionClientePage() {
             }
         } catch (error: any) {
             setMessage({ text: 'Error al subir: ' + error.message, type: 'error' });
+        } finally {
+            setTimeout(() => setMessage({ text: '', type: '' }), 3000);
         }
     };
 
-    // --- 3. GUARDAR DATOS DE TEXTO (PUT) ---
+    // --- 3. GUARDAR PERFIL ---
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!accessToken) return;
@@ -94,11 +83,10 @@ export default function ConfiguracionClientePage() {
                     'Authorization': `Bearer ${accessToken}`, 
                     'Content-Type': 'application/json' 
                 },
-                body: JSON.stringify(payload) // Solo enviamos lo editable
+                body: JSON.stringify(payload)
             });
 
             if (res.ok) {
-                // CRÍTICO: Actualizar el Contexto con los nuevos datos (userProfile)
                 updateProfileData(payload); 
                 setMessage({ text: '¡Datos guardados correctamente!', type: 'success' });
             } else {
@@ -109,107 +97,138 @@ export default function ConfiguracionClientePage() {
             setMessage({ text: 'Error: ' + error.message, type: 'error' });
         } finally {
             setSaving(false);
-            setTimeout(() => setMessage({ text: '', type: '' }), 4000);
+            setTimeout(() => setMessage({ text: '', type: '' }), 3000);
         }
     };
 
-    if (loading || !userProfile) return <div className="flex justify-center items-center h-screen bg-gray-50">Cargando tus datos...</div>;
+    if (loading || !userProfile) return <div className="flex justify-center items-center h-screen bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-24 font-sans">
-          <div className="max-w-2xl mx-auto px-5 py-8">
+        <div className="min-h-screen bg-slate-50 pb-20 font-sans">
             
-            <h1 className="text-2xl font-extrabold text-gray-900 mb-6 flex items-center gap-2">
-                <FaCog className="text-indigo-600"/> Ajustes de Cuenta
-            </h1>
-
-            {/* TABS */}
-            <div className="grid grid-cols-2 gap-2 mb-6 bg-gray-200/50 p-1 rounded-2xl">
-                <button onClick={() => setActiveTab('perfil')} className={`py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'perfil' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}>Mis Datos</button>
-                <button onClick={() => setActiveTab('seguridad')} className={`py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'seguridad' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}>Seguridad</button>
+            {/* Header simple con botón volver */}
+            <div className="bg-white border-b border-slate-200 sticky top-0 z-20">
+                <div className="max-w-2xl mx-auto px-6 h-16 flex items-center gap-4">
+                    <button onClick={() => router.back()} className="p-2 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors">
+                        <FaArrowLeft />
+                    </button>
+                    <h1 className="text-lg font-bold text-slate-800">Ajustes de Cuenta</h1>
+                </div>
             </div>
 
-            {/* FEEDBACK MSG */}
-            {message.text && (
-                <div className={`mb-4 p-4 rounded-xl flex items-center gap-2 text-sm font-bold animate-in fade-in slide-in-from-top-2 ${message.type === 'success' ? 'bg-green-100 text-green-700' : message.type === 'info' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
-                    {message.type === 'success' ? <FaCheckCircle /> : <FaExclamationTriangle />}
-                    {message.text}
-                </div>
-            )}
-
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div className="max-w-2xl mx-auto px-6 py-8">
                 
-                {/* FORMULARIO PERFIL */}
-                {activeTab === 'perfil' && (
-                    <form onSubmit={handleSaveProfile} className="space-y-6">
-                        
-                        {/* AVATAR + SUBIDA */}
-                        <div className="flex flex-col items-center mb-6">
-                            <div 
-                                onClick={() => fileInputRef.current?.click()} 
-                                className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-3xl font-bold text-indigo-300 relative group cursor-pointer overflow-hidden border-4 border-white shadow-sm"
-                            >
-                                {/* Muestra la foto desde el userProfile del Contexto */}
-                                {userProfile.foto_url ? (
-                                    <img src={userProfile.foto_url} alt="Perfil" className="w-full h-full object-cover" />
-                                ) : (
-                                    userProfile.nombre.charAt(0).toUpperCase()
-                                )}
-                                
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white">
-                                    <FaCamera />
-                                </div>
-                            </div>
-                            <input 
-                                type="file" 
-                                ref={fileInputRef} 
-                                className="hidden" 
-                                accept="image/*"
-                                onChange={handlePhotoUpload} 
-                            />
-                            <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-indigo-500 font-bold mt-2 hover:underline">
-                                Cambiar foto
-                            </button>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Nombre Completo</label>
-                            <div className="relative">
-                                <FaUser className="absolute left-4 top-3.5 text-gray-400" />
-                                <input type="text" value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})}
-                                    className="w-full pl-11 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-gray-800" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Email</label>
-                            <div className="relative">
-                                <FaEnvelope className="absolute left-4 top-3.5 text-gray-400" />
-                                {/* Usamos el email directamente del Contexto (es inmutable) */}
-                                <input type="email" value={userProfile.email} disabled className="w-full pl-11 p-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed" />
-                            </div>
-                        </div>
-
-                        <button type="submit" disabled={saving} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg flex justify-center items-center gap-2">
-                            {saving ? 'Guardando...' : <><FaSave /> Guardar Cambios</>}
-                        </button>
-                    </form>
-                )}
-
-                {/* FORMULARIO SEGURIDAD (Simulado por ahora, funcional visualmente) */}
-                {activeTab === 'seguridad' && (
-                    <div className="space-y-6">
-                        <div className="p-4 bg-yellow-50 text-yellow-800 rounded-xl text-sm border border-yellow-200">
-                            Por seguridad, para cambiar tu contraseña te enviaremos un email de confirmación.
-                        </div>
-                        <button disabled className="w-full bg-gray-200 text-gray-500 py-3.5 rounded-xl font-bold cursor-not-allowed flex items-center justify-center gap-2">
-                            <FaLock/> Solicitar Cambio de Contraseña
-                        </button>
+                {/* TOAST DE MENSAJES (FLOTANTE) */}
+                {message.text && (
+                    <div className={`fixed top-20 right-6 z-50 px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-bold text-white animate-in slide-in-from-right-10 fade-in duration-300 ${message.type === 'success' ? 'bg-green-600' : message.type === 'error' ? 'bg-red-500' : 'bg-blue-600'}`}>
+                        {message.type === 'success' ? <FaCheckCircle size={18} /> : <FaExclamationTriangle size={18} />}
+                        {message.text}
                     </div>
                 )}
 
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                    
+                    {/* ZONA DE PERFIL (HERO) */}
+                    <div className="bg-slate-50 p-8 flex flex-col items-center border-b border-slate-100">
+                        <div className="relative group cursor-pointer">
+                            <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center p-1 shadow-md border border-slate-200 overflow-hidden">
+                                {userProfile.foto_url ? (
+                                    <img src={userProfile.foto_url} alt="Perfil" className="w-full h-full object-cover rounded-full" />
+                                ) : (
+                                    <div className="w-full h-full bg-slate-100 rounded-full flex items-center justify-center text-4xl font-bold text-slate-300">
+                                        {userProfile.nombre.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+                            <button 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute bottom-0 right-0 p-2.5 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-transform hover:scale-110 border-2 border-white"
+                                title="Cambiar foto"
+                            >
+                                <FaCamera size={14} />
+                            </button>
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                        </div>
+                        <h2 className="mt-4 text-xl font-bold text-slate-900">{userProfile.nombre}</h2>
+                        <p className="text-sm text-slate-500">{userProfile.email}</p>
+                    </div>
+
+                    {/* TABS DE NAVEGACIÓN INTERNA */}
+                    <div className="flex border-b border-slate-100">
+                        <button 
+                            onClick={() => setActiveTab('perfil')} 
+                            className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'perfil' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                        >
+                            Mis Datos
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('seguridad')} 
+                            className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'seguridad' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                        >
+                            Seguridad
+                        </button>
+                    </div>
+
+                    {/* CONTENIDO DEL FORMULARIO */}
+                    <div className="p-8">
+                        {activeTab === 'perfil' && (
+                            <form onSubmit={handleSaveProfile} className="space-y-6">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Nombre Completo</label>
+                                    <div className="relative">
+                                        <FaUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                                        <input 
+                                            type="text" 
+                                            value={formData.nombre} 
+                                            onChange={e => setFormData({...formData, nombre: e.target.value})}
+                                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none font-medium text-slate-800 transition-all" 
+                                            placeholder="Tu nombre"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Email (No editable)</label>
+                                    <div className="relative">
+                                        <FaEnvelope className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                                        <input 
+                                            type="email" 
+                                            value={userProfile.email} 
+                                            disabled 
+                                            className="w-full pl-11 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 cursor-not-allowed font-medium" 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-4">
+                                    <button 
+                                        type="submit" 
+                                        disabled={saving} 
+                                        className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        {saving ? <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"/> : <><FaSave /> Guardar Cambios</>}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
+                        {activeTab === 'seguridad' && (
+                            <div className="space-y-6 text-center py-4">
+                                <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <FaLock className="text-yellow-500 text-2xl" />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-800">Cambiar Contraseña</h3>
+                                <p className="text-sm text-slate-500 max-w-sm mx-auto">
+                                    Para proteger tu cuenta, te enviaremos un enlace seguro a tu correo electrónico para restablecer tu contraseña.
+                                </p>
+                                <button className="px-8 py-3 bg-yellow-100 text-yellow-700 font-bold rounded-xl hover:bg-yellow-200 transition-colors">
+                                    Enviar Email de Recuperación
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
     );
 }
