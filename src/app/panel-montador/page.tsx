@@ -320,7 +320,8 @@ function ContenidoPanelMontador() {
                 {/* --- HEADER PREMIUM --- */}
                 <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                     <div className="text-center md:text-left">
-                        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight"><span className="text-indigo-600">{perfil.nombre}</span> 👋</h1>
+                        {/* ✅ AQUI ESTÁ EL CAMBIO: Agregado "Hola, " y asegurado el nombre completo */}
+                        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Hola, <span className="text-indigo-600">{perfil.nombre}</span> 👋</h1>
                         <p className="text-slate-500 text-sm mt-1 font-medium">Panel de Control para Montadores</p>
                     </div>
                     
