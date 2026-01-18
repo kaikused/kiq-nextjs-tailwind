@@ -2,12 +2,12 @@
 import { useState, useEffect } from 'react';
 import { 
   FaLock, FaSync, FaBriefcase, FaUserTie, FaSearch, FaArrowUp, 
-  FaUsers, FaMoneyBillWave, FaChartLine, FaCheckCircle, FaClock, 
-  FaToolbox, FaUser, FaTrash, FaGem 
+  FaUsers, FaMoneyBillWave, FaChartLine, FaCheckCircle, FaExclamationCircle, 
+  FaClock, FaToolbox, FaUser, FaTrash, FaGem 
 } from 'react-icons/fa';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
-const ADMIN_TOKEN = 'kiq2025master'; // Token maestro
+const ADMIN_TOKEN = 'kiq2025master'; 
 
 export default function AdminDashboard() {
   const [isAuth, setIsAuth] = useState(false);
@@ -22,7 +22,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'trabajos' | 'usuarios'>('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Modal Gemas
+  // Modal Gemas (Nuevo)
   const [gemModal, setGemModal] = useState<{isOpen: boolean, userId: number, userName: string} | null>(null);
   const [gemAmount, setGemAmount] = useState(0);
 
@@ -36,7 +36,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // --- DATA FETCHING ---
+  // --- DATA FETCHING (Con corrección de caché ?t=...) ---
   const fetchAllData = () => {
     fetchTrabajos();
     fetchUsuarios();
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
   const fetchTrabajos = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/todos-los-trabajos`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/todos-los-trabajos?t=${Date.now()}`, {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ADMIN_TOKEN}` }
       });
       if (res.ok) setTrabajos(await res.json());
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
   const fetchUsuarios = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/usuarios`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/usuarios?t=${Date.now()}`, {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ADMIN_TOKEN}` }
       });
       if (res.ok) setUsuarios(await res.json());
@@ -80,10 +80,11 @@ export default function AdminDashboard() {
             })
         });
         if (res.ok) {
-            alert(`💎 ¡Éxito! Saldo actualizado para ${gemModal.userName}.`);
+            const data = await res.json();
+            alert(`💎 ¡Hecho! Nuevo saldo de ${gemModal.userName}: ${data.nuevo_saldo} Gemas.`);
             setGemModal(null);
             setGemAmount(0);
-            fetchUsuarios(); // Recargar para ver cambios si los hubiera
+            fetchUsuarios(); // Recargar tabla
         } else {
             alert("Error al asignar gemas.");
         }
@@ -99,6 +100,7 @@ export default function AdminDashboard() {
         });
         if (res.ok) {
             setTrabajos(prev => prev.filter(t => t.id !== id));
+            fetchTrabajos();
         } else {
             alert("No se pudo borrar el trabajo.");
         }
@@ -116,6 +118,7 @@ export default function AdminDashboard() {
         });
         if (res.ok) {
             setUsuarios(prev => prev.filter(u => u.id !== id));
+            fetchUsuarios();
             alert("Usuario eliminado del sistema.");
         } else {
             const data = await res.json();
@@ -360,6 +363,7 @@ export default function AdminDashboard() {
                                         <th className="px-6 py-4">Contacto</th>
                                         <th className="px-6 py-4">Rol</th>
                                         <th className="px-6 py-4">Zona</th>
+                                        <th className="px-6 py-4 text-center">Gemas</th>
                                         <th className="px-6 py-4 text-right">Acciones</th>
                                     </tr>
                                 </thead>
@@ -369,9 +373,12 @@ export default function AdminDashboard() {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${u.tipo === 'montador' ? 'bg-purple-500' : 'bg-blue-500'}`}>
-                                                        {u.nombre.charAt(0).toUpperCase()}
+                                                        {u.nombre ? u.nombre.charAt(0).toUpperCase() : '?'}
                                                     </div>
-                                                    <div className="font-bold text-slate-900">{u.nombre}</div>
+                                                    <div>
+                                                        <div className="font-bold text-slate-900">{u.nombre}</div>
+                                                        <div className="text-[10px] text-slate-400">{u.email}</div>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -391,6 +398,13 @@ export default function AdminDashboard() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="text-slate-500 font-medium text-xs bg-slate-100 px-2 py-1 rounded">{u.zona || 'N/A'}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {u.tipo === 'montador' ? (
+                                                    <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100 flex items-center justify-center gap-1 w-fit mx-auto">
+                                                        <FaGem size={10}/> {u.saldo || 0}
+                                                    </span>
+                                                ) : <span className="text-slate-300">-</span>}
                                             </td>
                                             <td className="px-6 py-4 text-right flex justify-end gap-2">
                                                 {u.tipo === 'montador' && (
@@ -458,7 +472,7 @@ export default function AdminDashboard() {
 // --- SUBCOMPONENTES ---
 
 function StatusBadge({ status }: { status: string }) {
-    const styles = {
+    const styles: any = {
         completado: 'bg-green-100 text-green-700 border-green-200',
         pendiente: 'bg-yellow-100 text-yellow-700 border-yellow-200',
         aceptado: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -466,13 +480,13 @@ function StatusBadge({ status }: { status: string }) {
         revision_cliente: 'bg-purple-100 text-purple-700 border-purple-200'
     };
     
-    // @ts-ignore
     const currentStyle = styles[status] || 'bg-slate-100 text-slate-600 border-slate-200';
     
     return (
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${currentStyle}`}>
             {status === 'completado' && <FaCheckCircle/>}
             {status === 'pendiente' && <FaClock/>}
+            {status === 'revision_cliente' && <FaExclamationCircle/>}
             {status}
         </span>
     );
