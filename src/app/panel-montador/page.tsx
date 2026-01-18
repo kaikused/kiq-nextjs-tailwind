@@ -91,13 +91,15 @@ function ContenidoPanelMontador() {
 
     // Refs para evitar bucles en dependencias
     const currentGemsRef = useRef(userGems);
+    
+    // Solo actualizamos la ref cuando cambian las gemas, sin disparar nada más
     useEffect(() => { currentGemsRef.current = userGems; }, [userGems]);
 
     const trabajoChatActivo = misTrabajosAsignados.find(t => t.trabajo_id === chatJobId);
     const cerrarModal = () => setModalInfo(prev => ({ ...prev, isOpen: false }));
     const navigate = (path: string) => router.push(path);
 
-    // Lógica Chat Automático
+    // Lógica Chat Automático (Una sola vez al montar si hay params)
     useEffect(() => {
         const chatParam = searchParams.get('chat');
         if (chatParam) {
@@ -108,16 +110,16 @@ function ContenidoPanelMontador() {
                 router.replace('/panel-montador', { scroll: false }); 
             }
         }
-    }, [searchParams, router]);
+    }, []); // Array vacío intencional para que solo corra al montar
 
-    // --- FETCH DATA (CORREGIDO: SIN DEPENDENCIAS CIRCULARES) ---
+    // --- FETCH DATA (Estable) ---
     const fetchData = useCallback(async () => {
-        if (!accessToken) { handleLogout(); navigate('/acceso'); return; }
+        if (!accessToken) return;
 
         try {
             const headers = { 'Authorization': `Bearer ${accessToken}`, 'Cache-Control': 'no-cache' };
             
-            // 1. Pedimos todos los datos
+            // 1. Pedimos datos
             const [resDisponibles, resAsignados, resPerfil] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/montador/trabajos/disponibles?t=${Date.now()}`, { headers }),
                 fetch(`${API_BASE_URL}/api/montador/mis-trabajos?t=${Date.now()}`, { headers }),
@@ -126,19 +128,18 @@ function ContenidoPanelMontador() {
 
             if (resDisponibles.status === 401 || resAsignados.status === 401) { handleLogout(); return; }
             
-            // 2. Procesamos y guardamos trabajos
             const dataDisponibles = resDisponibles.ok ? await resDisponibles.json() : [];
             const dataAsignados = resAsignados.ok ? await resAsignados.json() : [];
 
             setTrabajosDisponibles(dataDisponibles);
             setMisTrabajosAsignados(dataAsignados);
 
-            // 3. Actualizamos Perfil/Gemas SOLO si es necesario (Evita bucle)
+            // 3. Actualizamos Perfil SOLO si el saldo es diferente
             if (resPerfil.ok) {
                 const perfilData = await resPerfil.json();
-                // Verificamos si las gemas han cambiado respecto a lo que tenemos en memoria
-                // Usamos la ref para no meter userGems en dependencias
+                // Comparación estricta para evitar loops
                 if (perfilData.saldo_gemas !== currentGemsRef.current) {
+                    console.log("Actualizando gemas...", perfilData.saldo_gemas);
                     updateProfileData(perfilData); 
                 }
             }
@@ -149,11 +150,10 @@ function ContenidoPanelMontador() {
                 if (resProds.ok) {
                     setMisProductos(await resProds.json());
                 }
-            } catch (e) { console.error("Error inventario", e); }
+            } catch (e) { console.error(e); }
 
-            // 5. Autoselección de pestaña
-            if (!searchParams.get('chat') && Array.isArray(dataAsignados)) {
-                // Usamos la variable local dataAsignados, no el estado
+            // 5. Autoselección pestaña (Solo si no estamos chateando)
+            if (!location.search.includes('chat') && Array.isArray(dataAsignados)) {
                 if (dataAsignados.some((t: any) => ['aceptado', 'revision_cliente'].includes(t.estado))) {
                     setActiveTab('activos');
                 }
@@ -162,22 +162,37 @@ function ContenidoPanelMontador() {
         } catch (err: any) { 
             console.error(err); 
         } finally { setIsLoading(false); }
-    }, [accessToken, handleLogout, searchParams, updateProfileData]); // ✅ QUITADO misTrabajosAsignados
+    }, [accessToken]); // ÚNICA DEPENDENCIA REAL: accessToken
 
-    // --- EFECTO INICIAL ---
+    // --- EFECTO PRINCIPAL DE CARGA (NUCLEAR FIX) ---
     useEffect(() => { 
-        if (userProfile?.tipo === 'montador') {
+        if (accessToken) {
             setIsLoading(true);
-            fetchData(); 
-            if (userProfile.bono_entregado && !userProfile.bono_visto) {
-                setShowWelcomeModal(true);
-            }
-        } else if (!accessToken) {
+            fetchData();
+            
+            // Check bono solo una vez
+            const checkBono = async () => {
+                try {
+                    // Validamos localmente primero para no depender del estado que cambia
+                    const res = await fetch(`${API_BASE_URL}/api/perfil`, { 
+                        headers: { 'Authorization': `Bearer ${accessToken}` } 
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.bono_entregado && !data.bono_visto) {
+                            setShowWelcomeModal(true);
+                        }
+                    }
+                } catch(e) {}
+            };
+            checkBono();
+
+        } else {
             setIsLoading(false);
-        } else if (userProfile && userProfile.tipo === 'cliente') { 
-            navigate('/panel-cliente');
         }
-    }, [fetchData, userProfile?.tipo, accessToken]); // ✅ Dependencias controladas
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [accessToken]); 
+    // 👆👆👆 ESTE COMENTARIO ES CLAVE: Ignoramos fetchData y userProfile para romper el ciclo
 
     // --- MANEJADORES ---
     const handleCloseWelcome = async () => {
@@ -194,7 +209,6 @@ function ContenidoPanelMontador() {
     const abrirChat = (trabajo: TrabajoMontador) => { setChatJobId(trabajo.trabajo_id); setIsChatOpen(true); };
 
     const handleStripeOnboarding = async (trabajoId: number | null) => {
-        setIsStripeLoading(true);
         if (!accessToken) return;
         try {
              if (trabajoId !== null) localStorage.setItem('kiq_pending_job_id', trabajoId.toString());
@@ -210,7 +224,6 @@ function ContenidoPanelMontador() {
              else throw new Error(data.error);
         } catch (err) {
              setModalInfo({ isOpen: true, type: 'danger', title: 'Error', message: 'Fallo conexión Stripe.', confirmText: 'Cerrar', onConfirm: undefined });
-             setIsStripeLoading(false);
         }
     };
 
@@ -231,7 +244,7 @@ function ContenidoPanelMontador() {
                 fetchData(); 
             } else {
                 if (res.status === 402) {
-                    setModalInfo({ isOpen: true, type: 'info', title: 'Recarga Necesaria', message: 'No tienes suficientes Gemas.', confirmText: 'Ir a la Tienda', onConfirm: () => { cerrarModal(); setTimeout(() => openGemStore(), 200); } });
+                    setModalInfo({ isOpen: true, type: 'info', title: 'Recarga Necesaria', message: 'No tienes suficientes Gemas.', confirmText: 'Ir a la Tienda', onConfirm: () => { cerrarModal(); setTimeout(() => (window as any).openGemStore?.(), 200); } });
                 } else {
                     setModalInfo({ isOpen: true, type: 'danger', title: 'Ups...', message: data.error, confirmText: 'Cerrar', onConfirm: undefined });
                 }
@@ -249,7 +262,7 @@ function ContenidoPanelMontador() {
             const costeReal = esPrimerTrabajo ? 0 : costeGemas;
 
             if (userGems < costeReal) {
-                setModalInfo({ isOpen: true, type: 'info', title: 'Recarga Necesaria', message: `Necesitas ${costeReal} gemas.`, confirmText: 'Conseguir Gemas', onConfirm: () => { cerrarModal(); setTimeout(() => openGemStore(), 200); } });
+                setModalInfo({ isOpen: true, type: 'info', title: 'Recarga Necesaria', message: `Necesitas ${costeReal} gemas.`, confirmText: 'Conseguir Gemas', onConfirm: () => { cerrarModal(); setTimeout(() => (window as any).openGemStore?.(), 200); } });
                 return;
             }
             const mensajeCoste = esPrimerTrabajo ? '¡Comisión GRATIS!' : `Se descontarán ${costeGemas} gemas.`;
