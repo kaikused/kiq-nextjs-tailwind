@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react';
 import { 
   FaLock, FaSync, FaBriefcase, FaUserTie, FaSearch, FaArrowUp, 
-  FaUsers, FaMoneyBillWave, FaChartLine, FaCheckCircle, FaExclamationCircle, 
-  FaClock, FaToolbox, FaUser 
+  FaUsers, FaMoneyBillWave, FaChartLine, FaCheckCircle, FaClock, 
+  FaToolbox, FaUser, FaTrash, FaGem 
 } from 'react-icons/fa';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
+const ADMIN_TOKEN = 'kiq2025master'; // Token maestro
 
 export default function AdminDashboard() {
   const [isAuth, setIsAuth] = useState(false);
@@ -21,9 +22,13 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'trabajos' | 'usuarios'>('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Modal Gemas
+  const [gemModal, setGemModal] = useState<{isOpen: boolean, userId: number, userName: string} | null>(null);
+  const [gemAmount, setGemAmount] = useState(0);
+
   // --- AUTH ---
   const checkAuth = () => {
-    if (password === 'kiq2025master') {
+    if (password === ADMIN_TOKEN) {
       setIsAuth(true);
       fetchAllData();
     } else {
@@ -41,7 +46,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/todos-los-trabajos`, {
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer kiq2025master' }
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ADMIN_TOKEN}` }
       });
       if (res.ok) setTrabajos(await res.json());
     } catch (err) { console.error(err); } 
@@ -52,11 +57,71 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/usuarios`, {
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer kiq2025master' }
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ADMIN_TOKEN}` }
       });
       if (res.ok) setUsuarios(await res.json());
     } catch (err) { console.error(err); } 
     finally { setLoading(false); }
+  };
+
+  // --- ACCIONES DE DIOS (GOD MODE) ---
+  const handleGiveGems = async () => {
+    if (!gemModal) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/asignar-gemas`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${ADMIN_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                montador_id: gemModal.userId,
+                cantidad: gemAmount
+            })
+        });
+        if (res.ok) {
+            alert(`💎 ¡Éxito! Saldo actualizado para ${gemModal.userName}.`);
+            setGemModal(null);
+            setGemAmount(0);
+            fetchUsuarios(); // Recargar para ver cambios si los hubiera
+        } else {
+            alert("Error al asignar gemas.");
+        }
+    } catch (e) { alert("Error de red"); }
+  };
+
+  const handleDeleteJob = async (id: number) => {
+    if (!confirm("⚠️ ¿ESTÁS SEGURO? Esto borrará el trabajo, la cotización y el historial para siempre.")) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/borrar-trabajo/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }
+        });
+        if (res.ok) {
+            setTrabajos(prev => prev.filter(t => t.id !== id));
+        } else {
+            alert("No se pudo borrar el trabajo.");
+        }
+    } catch (e) { alert("Error al borrar"); }
+  };
+
+  const handleDeleteUser = async (id: number, tipo: string) => {
+    const confirmacion = prompt(`⚠️ PELIGRO: Vas a borrar al usuario ${id} (${tipo}). Escribe "BORRAR" para confirmar.`);
+    if (confirmacion !== "BORRAR") return;
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/borrar-usuario/${id}/${tipo}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }
+        });
+        if (res.ok) {
+            setUsuarios(prev => prev.filter(u => u.id !== id));
+            alert("Usuario eliminado del sistema.");
+        } else {
+            const data = await res.json();
+            alert("Error: " + (data.error || "No se pudo borrar."));
+        }
+    } catch (e) { alert("Error de red"); }
   };
 
   // --- CALCULATED METRICS ---
@@ -121,7 +186,7 @@ export default function AdminDashboard() {
           </div>
           
           <div className="flex items-center gap-4">
-             <span className="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-500">v3.0.2</span>
+             <span className="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-500">GOD MODE</span>
              <button onClick={fetchAllData} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all" title="Refrescar datos">
                 <FaSync className={loading ? "animate-spin" : ""} />
              </button>
@@ -240,6 +305,7 @@ export default function AdminDashboard() {
                                         <th className="px-6 py-4">Descripción</th>
                                         <th className="px-6 py-4 text-right">Precio</th>
                                         <th className="px-6 py-4 text-center">Estado</th>
+                                        <th className="px-6 py-4 text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
@@ -261,6 +327,15 @@ export default function AdminDashboard() {
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <StatusBadge status={t.estado} />
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <button 
+                                                    onClick={() => handleDeleteJob(t.id)}
+                                                    className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                    title="Borrar Trabajo (Irreversible)"
+                                                >
+                                                    <FaTrash />
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
@@ -285,7 +360,7 @@ export default function AdminDashboard() {
                                         <th className="px-6 py-4">Contacto</th>
                                         <th className="px-6 py-4">Rol</th>
                                         <th className="px-6 py-4">Zona</th>
-                                        <th className="px-6 py-4">Registro</th>
+                                        <th className="px-6 py-4 text-right">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
@@ -317,8 +392,23 @@ export default function AdminDashboard() {
                                             <td className="px-6 py-4">
                                                 <span className="text-slate-500 font-medium text-xs bg-slate-100 px-2 py-1 rounded">{u.zona || 'N/A'}</span>
                                             </td>
-                                            <td className="px-6 py-4 text-xs text-slate-400 font-mono">
-                                                {u.fecha}
+                                            <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                                {u.tipo === 'montador' && (
+                                                    <button 
+                                                        onClick={() => setGemModal({ isOpen: true, userId: u.id, userName: u.nombre })}
+                                                        className="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                                        title="Gestionar Gemas"
+                                                    >
+                                                        <FaGem />
+                                                    </button>
+                                                )}
+                                                <button 
+                                                    onClick={() => handleDeleteUser(u.id, u.tipo)}
+                                                    className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                    title="Eliminar Usuario"
+                                                >
+                                                    <FaTrash />
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
@@ -332,6 +422,35 @@ export default function AdminDashboard() {
             </div>
         </div>
       </div>
+
+      {/* MODAL GEMAS (DISEÑO LIGHT) */}
+      {gemModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-100">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-slate-800">💎 Asignar Gemas</h3>
+                    <div className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold">{gemModal.userName}</div>
+                </div>
+                
+                <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2 text-center">Cantidad (+ Añadir, - Quitar)</label>
+                    <input 
+                        type="number" 
+                        value={gemAmount} 
+                        onChange={e => setGemAmount(parseInt(e.target.value))}
+                        className="w-full bg-white border border-slate-200 rounded-xl p-3 text-3xl font-black text-slate-800 focus:border-indigo-500 focus:outline-none text-center"
+                        autoFocus
+                    />
+                </div>
+
+                <div className="flex gap-3">
+                    <button onClick={() => setGemModal(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">Cancelar</button>
+                    <button onClick={handleGiveGems} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition">Ejecutar</button>
+                </div>
+            </div>
+        </div>
+      )}
+
     </div>
   );
 }
