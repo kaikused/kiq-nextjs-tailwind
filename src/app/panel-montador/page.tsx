@@ -106,22 +106,30 @@ function ContenidoPanelMontador() {
         }
     }, [searchParams, router]);
 
-    // --- FETCH DATA ---
+// --- FETCH DATA ---
     const fetchData = useCallback(async () => {
         if (!accessToken) { handleLogout(); navigate('/acceso'); return; }
 
         try {
             const headers = { 'Authorization': `Bearer ${accessToken}`, 'Cache-Control': 'no-cache' };
             
-            const [resDisponibles, resAsignados] = await Promise.all([
+            // ✅ AHORA TAMBIÉN PEDIMOS EL PERFIL PARA ACTUALIZAR LAS GEMAS
+            const [resDisponibles, resAsignados, resPerfil] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/montador/trabajos/disponibles?t=${Date.now()}`, { headers }),
                 fetch(`${API_BASE_URL}/api/montador/mis-trabajos?t=${Date.now()}`, { headers }),
+                fetch(`${API_BASE_URL}/api/perfil?t=${Date.now()}`, { headers }) // <--- NUEVO
             ]);
 
             if (resDisponibles.status === 401 || resAsignados.status === 401) { handleLogout(); return; }
             
             setTrabajosDisponibles(await resDisponibles.json());
             setMisTrabajosAsignados(await resAsignados.json());
+
+            // ✅ ACTUALIZAMOS EL CONTEXTO CON LAS GEMAS NUEVAS
+            if (resPerfil.ok) {
+                const perfilData = await resPerfil.json();
+                updateProfileData(perfilData); 
+            }
 
             try {
                 const resProds = await fetch(`${API_BASE_URL}/api/outlet/mis-productos`, { headers });
@@ -137,20 +145,7 @@ function ContenidoPanelMontador() {
         } catch (err: any) { 
             console.error(err); 
         } finally { setIsLoading(false); }
-    }, [accessToken, handleLogout, searchParams, misTrabajosAsignados]); 
-
-    useEffect(() => { 
-        if (userProfile?.tipo === 'montador') {
-            fetchData(); 
-            if (userProfile.bono_entregado && !userProfile.bono_visto) {
-                setShowWelcomeModal(true);
-            }
-        } else if (!accessToken) {
-            setIsLoading(false);
-        } else if (userProfile && userProfile.tipo === 'cliente') { 
-            navigate('/panel-cliente');
-        }
-    }, [fetchData, userProfile, accessToken]);
+    }, [accessToken, handleLogout, searchParams, misTrabajosAsignados, updateProfileData]); // Añadido updateProfileData a dependencias
 
     // --- MANEJADORES ---
     const handleCloseWelcome = async () => {
