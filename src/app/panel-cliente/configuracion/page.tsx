@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { FaUser, FaCog, FaLock, FaSave, FaCamera, FaEnvelope, FaCheckCircle, FaExclamationTriangle, FaArrowLeft } from 'react-icons/fa';
-import { useUI, UserProfile } from '../../context/UIContext'; 
+import { FaUser, FaLock, FaSave, FaCamera, FaEnvelope, FaCheckCircle, FaExclamationTriangle, FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useUI, UserProfile } from '../../context/UIContext'; // Ajusta la ruta si es necesario (../../context...)
 import { useRouter } from 'next/navigation';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
@@ -15,6 +15,10 @@ export default function ConfiguracionClientePage() {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
     
+    // Estados para la contraseña
+    const [showPassword, setShowPassword] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
@@ -29,11 +33,12 @@ export default function ConfiguracionClientePage() {
             });
             setLoading(false);
         } else if (!accessToken) {
-            router.push('/acceso');
+            // router.push('/acceso'); // Comentado temporalmente para evitar loops si refrescas
+            setLoading(false); 
         } else if (userProfile && userProfile.tipo !== 'cliente') {
             router.push('/panel-montador');
         }
-    }, [userProfile, accessToken]);
+    }, [userProfile, accessToken, router]);
 
     // --- 2. SUBIR FOTO ---
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,15 +71,21 @@ export default function ConfiguracionClientePage() {
         }
     };
 
-    // --- 3. GUARDAR PERFIL ---
+    // --- 3. GUARDAR PERFIL (NOMBRE Y CONTRASEÑA) ---
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!accessToken) return;
         setSaving(true);
         
-        const payload: Partial<UserProfile> = {
+        // Preparamos los datos a enviar
+        const payload: any = {
             nombre: formData.nombre,
         };
+
+        // Si el usuario escribió una contraseña nueva, la añadimos al envío
+        if (newPassword.trim() !== '') {
+            payload.password = newPassword;
+        }
 
         try {
             const res = await fetch(`${API_BASE_URL}/api/perfil`, {
@@ -87,7 +98,12 @@ export default function ConfiguracionClientePage() {
             });
 
             if (res.ok) {
-                updateProfileData(payload); 
+                // Actualizamos el contexto (solo el nombre, la pass es interna)
+                updateProfileData({ nombre: formData.nombre }); 
+                
+                // Limpiamos el campo de contraseña
+                setNewPassword('');
+                
                 setMessage({ text: '¡Datos guardados correctamente!', type: 'success' });
             } else {
                 const data = await res.json();
@@ -101,7 +117,10 @@ export default function ConfiguracionClientePage() {
         }
     };
 
-    if (loading || !userProfile) return <div className="flex justify-center items-center h-screen bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+    if (loading) return <div className="flex justify-center items-center h-screen bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+    
+    // Si no hay perfil cargado pero tampoco estamos cargando, mostramos algo básico para no romper
+    if (!userProfile) return null;
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans">
@@ -171,7 +190,8 @@ export default function ConfiguracionClientePage() {
 
                     {/* CONTENIDO DEL FORMULARIO */}
                     <div className="p-8">
-                        {activeTab === 'perfil' && (
+                        {/* PESTAÑA 1: PERFIL */}
+                        <div className={activeTab === 'perfil' ? 'block' : 'hidden'}>
                             <form onSubmit={handleSaveProfile} className="space-y-6">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Nombre Completo</label>
@@ -210,22 +230,55 @@ export default function ConfiguracionClientePage() {
                                     </button>
                                 </div>
                             </form>
-                        )}
+                        </div>
 
-                        {activeTab === 'seguridad' && (
-                            <div className="space-y-6 text-center py-4">
-                                <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mx-auto mb-2">
-                                    <FaLock className="text-yellow-500 text-2xl" />
+                        {/* PESTAÑA 2: SEGURIDAD */}
+                        <div className={activeTab === 'seguridad' ? 'block' : 'hidden'}>
+                            <form onSubmit={handleSaveProfile} className="space-y-6">
+                                <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100 mb-6">
+                                    <div className="flex gap-3">
+                                        <FaExclamationTriangle className="text-yellow-600 mt-1 flex-shrink-0" />
+                                        <p className="text-sm text-yellow-800 leading-relaxed">
+                                            Si cambias tu contraseña, tendrás que volver a iniciar sesión en tus otros dispositivos.
+                                        </p>
+                                    </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-slate-800">Cambiar Contraseña</h3>
-                                <p className="text-sm text-slate-500 max-w-sm mx-auto">
-                                    Para proteger tu cuenta, te enviaremos un enlace seguro a tu correo electrónico para restablecer tu contraseña.
-                                </p>
-                                <button className="px-8 py-3 bg-yellow-100 text-yellow-700 font-bold rounded-xl hover:bg-yellow-200 transition-colors">
-                                    Enviar Email de Recuperación
-                                </button>
-                            </div>
-                        )}
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Nueva Contraseña</label>
+                                    <div className="relative">
+                                        <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                                        <input 
+                                            type={showPassword ? "text" : "password"} 
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            className="w-full pl-11 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none font-medium text-slate-800 transition-all" 
+                                            placeholder="Mínimo 6 caracteres"
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                        >
+                                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-slate-400 mt-2 ml-1">
+                                        Déjalo en blanco si no quieres cambiarla.
+                                    </p>
+                                </div>
+
+                                <div className="pt-4">
+                                    <button 
+                                        type="submit" 
+                                        disabled={saving || newPassword.length === 0} 
+                                        className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:transform-none"
+                                    >
+                                        {saving ? <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"/> : <><FaSave /> Actualizar Contraseña</>}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,19 +1,23 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { FaUser, FaMapMarkerAlt, FaPhone, FaSave, FaTruck, FaClock, FaCamera, FaEnvelope, FaCheckCircle, FaExclamationTriangle, FaToggleOn, FaArrowLeft } from 'react-icons/fa';
-import { useUI, UserProfile } from '../../context/UIContext'; 
+import { FaUser, FaMapMarkerAlt, FaPhone, FaSave, FaTruck, FaClock, FaCamera, FaEnvelope, FaCheckCircle, FaExclamationTriangle, FaToggleOn, FaArrowLeft, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useUI, UserProfile } from '../../context/UIContext'; // Ajusta la ruta si es necesario
 import { useRouter } from 'next/navigation';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
 export default function ConfiguracionMontadorPage() {
-    const { userProfile, updateProfilePhoto, updateProfileData, handleLogout, accessToken } = useUI();
+    const { userProfile, updateProfilePhoto, updateProfileData, accessToken } = useUI();
     const router = useRouter();
 
-    const [activeTab, setActiveTab] = useState<'perfil' | 'trabajo'>('perfil');
+    const [activeTab, setActiveTab] = useState<'perfil' | 'trabajo' | 'seguridad'>('perfil');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
+
+    // Estados para la contraseña
+    const [showPassword, setShowPassword] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,11 +37,12 @@ export default function ConfiguracionMontadorPage() {
             });
             setLoading(false);
         } else if (!accessToken) {
-            router.push('/acceso');
+            // router.push('/acceso'); // Comentado para evitar loops
+            setLoading(false);
         } else if (userProfile && userProfile.tipo !== 'montador') {
             router.push('/panel-cliente');
         }
-    }, [userProfile, accessToken]);
+    }, [userProfile, accessToken, router]);
 
     // --- 2. SUBIR FOTO ---
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,17 +75,23 @@ export default function ConfiguracionMontadorPage() {
         }
     };
 
-    // --- 3. GUARDAR PERFIL ---
+    // --- 3. GUARDAR PERFIL (DATOS + CONTRASEÑA) ---
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!accessToken) return;
         setSaving(true);
         
-        const payload: Partial<UserProfile> = {
+        // 1. Preparamos payload base
+        const payload: any = {
             nombre: formData.nombre,
             telefono: formData.telefono,
             zona_servicio: formData.zona_servicio
         };
+
+        // 2. Si hay contraseña nueva, la añadimos
+        if (newPassword.trim() !== '') {
+            payload.password = newPassword;
+        }
 
         try {
             const res = await fetch(`${API_BASE_URL}/api/perfil`, {
@@ -93,7 +104,16 @@ export default function ConfiguracionMontadorPage() {
             });
 
             if (res.ok) {
-                updateProfileData(payload); 
+                // Actualizamos contexto (sin password)
+                updateProfileData({
+                    nombre: formData.nombre,
+                    telefono: formData.telefono,
+                    zona_servicio: formData.zona_servicio
+                }); 
+                
+                // Limpiamos campo pass
+                setNewPassword('');
+                
                 setMessage({ text: '¡Perfil actualizado con éxito!', type: 'success' });
             } else {
                 const data = await res.json();
@@ -107,7 +127,8 @@ export default function ConfiguracionMontadorPage() {
         }
     };
 
-    if (loading || !userProfile) return <div className="flex justify-center items-center h-screen bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+    if (loading) return <div className="flex justify-center items-center h-screen bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+    if (!userProfile) return null;
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans">
@@ -146,7 +167,7 @@ export default function ConfiguracionMontadorPage() {
                                     </div>
                                 )}
                             </div>
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white rounded-full">
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white rounded-full pointer-events-none">
                                 <FaCamera size={24}/>
                             </div>
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
@@ -168,13 +189,19 @@ export default function ConfiguracionMontadorPage() {
                             onClick={() => setActiveTab('perfil')} 
                             className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'perfil' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
                         >
-                            Datos Personales
+                            Datos
                         </button>
                         <button 
                             onClick={() => setActiveTab('trabajo')} 
                             className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'trabajo' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
                         >
-                            Zona y Trabajo
+                            Zona
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('seguridad')} 
+                            className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'seguridad' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                        >
+                            Seguridad
                         </button>
                     </div>
 
@@ -232,7 +259,7 @@ export default function ConfiguracionMontadorPage() {
                                 <div className="space-y-8">
                                     <div>
                                         <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2 text-lg">Zona de Servicio</h3>
-                                        <p className="text-sm text-slate-500 mb-4">Define dónde quieres recibir trabajos para que te asignemos los correctos.</p>
+                                        <p className="text-sm text-slate-500 mb-4">Define dónde quieres recibir trabajos.</p>
                                         <div className="relative">
                                             <FaMapMarkerAlt className="absolute left-4 top-1/2 transform -translate-y-1/2 text-red-500" />
                                             <input 
@@ -255,19 +282,58 @@ export default function ConfiguracionMontadorPage() {
                                             <FaToggleOn size={32} className="text-green-500 cursor-pointer"/>
                                         </div>
                                         <div className="mt-2 p-3 bg-indigo-50 rounded-xl border border-indigo-100 text-sm text-indigo-700 flex items-center gap-2">
-                                            <FaClock /> Próximamente podrás gestionar tu calendario de disponibilidad.
+                                            <FaClock /> Próximamente podrás gestionar tu calendario.
                                         </div>
                                     </div>
                                 </div>
                             )}
 
+                            {/* PESTAÑA: SEGURIDAD */}
+                            {activeTab === 'seguridad' && (
+                                <div className="space-y-6">
+                                    <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100 mb-6">
+                                        <div className="flex gap-3">
+                                            <FaExclamationTriangle className="text-yellow-600 mt-1 flex-shrink-0" />
+                                            <p className="text-sm text-yellow-800 leading-relaxed">
+                                                Si cambias tu contraseña, tendrás que volver a iniciar sesión en tus otros dispositivos.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Nueva Contraseña</label>
+                                        <div className="relative">
+                                            <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                                            <input 
+                                                type={showPassword ? "text" : "password"} 
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                                className="w-full pl-11 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none font-medium text-slate-800 transition-all" 
+                                                placeholder="Mínimo 6 caracteres"
+                                            />
+                                            <button 
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                            >
+                                                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-slate-400 mt-2 ml-1">
+                                            Déjalo en blanco si no quieres cambiarla.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* BOTÓN GUARDAR (COMÚN) */}
                             <div className="mt-8 pt-6 border-t border-slate-100">
                                 <button 
                                     type="submit" 
-                                    disabled={saving} 
+                                    disabled={saving || (activeTab === 'seguridad' && newPassword.length === 0)} 
                                     className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
-                                    {saving ? <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"/> : <><FaSave /> Guardar Cambios</>}
+                                    {saving ? <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"/> : <><FaSave /> {activeTab === 'seguridad' ? 'Actualizar Contraseña' : 'Guardar Cambios'}</>}
                                 </button>
                             </div>
 
