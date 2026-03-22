@@ -562,4 +562,4 @@ export default function PanelMontadorPage() {
             <ContenidoPanelMontador />
         </Suspense>
     );
-}
+} 

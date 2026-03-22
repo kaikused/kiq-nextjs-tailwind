@@ -1,45 +1,19 @@
 'use client'; 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FaGoogle, FaStar } from 'react-icons/fa';
 
 // Definimos el tipo de dato
 type Review = {
   author_name: string;
-  profile_photo_url: string; // Usaremos avatares genéricos o iniciales
+  profile_photo_url: string; // Usaremos avatares genéricos o iniciales si no hay foto
   rating: number;
   text: string;
   relative_time_description: string;
 };
 
-// Enlace a tu ficha (aunque esté suspendida, el enlace suele funcionar o redirigir a búsqueda)
-// Si prefieres, puedes quitar el enlace temporalmente poniendo "#"
+// Enlace a tu ficha de Google Maps
 const REVIEWS_URL = "#"; 
-
-// --- DATOS ESTÁTICOS (Modo Seguridad) ---
-const STATIC_REVIEWS: Review[] = [
-  {
-    author_name: "Carlos M.",
-    profile_photo_url: "https://ui-avatars.com/api/?name=Carlos+M&background=random&color=fff",
-    rating: 5,
-    text: "Contacté con Kiq para montar un armario PAX de IKEA enorme. En una mañana lo tenían listo y anclado a la pared. Muy limpios y profesionales, nada que ver con hacerlo uno mismo.",
-    relative_time_description: "hace 2 semanas"
-  },
-  {
-    author_name: "Laura Benítez",
-    profile_photo_url: "https://ui-avatars.com/api/?name=Laura+B&background=random&color=fff",
-    rating: 5,
-    text: "Increíble servicio. Me montaron el mueble del salón y colgaron la TV de 65 pulgadas perfectamente nivelada. Se nota que llevan herramientas profesionales. Repetiré seguro.",
-    relative_time_description: "hace 1 mes"
-  },
-  {
-    author_name: "Alejandro Ruiz",
-    profile_photo_url: "https://ui-avatars.com/api/?name=Alejandro+R&background=random&color=fff",
-    rating: 5,
-    text: "Necesitaba montar 10 mesas para una oficina nueva en Málaga y les llamé de urgencia. Cumplieron con los plazos y el precio fue justo lo que calculó la web. 100% recomendables.",
-    relative_time_description: "hace 2 meses"
-  }
-];
 
 function StarRating({ rating }: { rating: number }) {
   const stars = [];
@@ -52,8 +26,71 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function Testimonios() {
-  // Ya no necesitamos estados de carga ni errores porque los datos son locales
-  const reviews = STATIC_REVIEWS;
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [globalRating, setGlobalRating] = useState<number | string>("5.0");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGoogleReviews = async () => {
+      try {
+        // Apuntamos a tu backend en Flask usando la variable de entorno
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+        const response = await fetch(`${apiUrl}/get-reviews`);
+        
+        if (!response.ok) throw new Error("Error en la respuesta del servidor");
+        
+        const data = await response.json();
+        
+        if (data.result && data.result.reviews) {
+          setReviews(data.result.reviews);
+          if (data.result.rating_global) {
+            setGlobalRating(data.result.rating_global);
+          }
+        }
+      } catch (error) {
+        console.error("Error cargando reseñas de Google:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGoogleReviews();
+  }, []);
+
+  // Si está cargando, mostramos unas tarjetas "fantasma" (Skeleton) para que la web no salte
+  if (isLoading) {
+    return (
+      <section className="py-24 bg-gray-50 px-4 border-t border-gray-100" id="testimonios">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-20 text-center max-w-4xl mx-auto animate-pulse">
+            <div className="h-12 bg-gray-200 rounded-full w-3/4 mx-auto mb-8"></div>
+            <div className="h-16 bg-gray-200 rounded-full w-64 mx-auto"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 h-64 animate-pulse">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gray-200 rounded-full"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Si no hay reseñas después de intentar cargar, no mostramos la sección para no dejar un hueco vacío
+  if (reviews.length === 0) return null;
 
   return (
     <section className="py-24 bg-gray-50 px-4 border-t border-gray-100" id="testimonios">
@@ -68,7 +105,7 @@ export default function Testimonios() {
           <div className="inline-flex flex-col md:flex-row items-center justify-center gap-6 text-lg text-gray-600 bg-white px-8 py-4 rounded-full shadow-sm border border-gray-100">
              <div className="flex items-center gap-3">
                 <span className="flex text-yellow-400 bg-yellow-50 p-2 rounded-full"><FaGoogle size={22}/></span>
-                <span className="font-medium text-gray-900"><strong>4.9/5</strong> valoración media</span>
+                <span className="font-medium text-gray-900"><strong>{globalRating}/5</strong> valoración media</span>
              </div>
              <span className="hidden md:block w-px h-6 bg-gray-200"></span>
              <span className="text-indigo-600 font-semibold text-base">
@@ -79,7 +116,8 @@ export default function Testimonios() {
 
         {/* GRID DE RESEÑAS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {reviews.map((review, i) => (
+          {/* Usamos .slice(0, 3) para asegurarnos de que solo se muestran 3 reseñas y no se rompe el diseño */}
+          {reviews.slice(0, 3).map((review, i) => (
             <div 
               key={i}
               className="bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full border border-gray-100 group cursor-default"
@@ -92,7 +130,7 @@ export default function Testimonios() {
                         alt={review.author_name} 
                         width={56} height={56} 
                         className="rounded-full bg-gray-100 border-2 border-white shadow-sm object-cover"
-                        unoptimized // Importante para ui-avatars.com
+                        unoptimized // Importante para urls externas de Google o ui-avatars
                     />
                     <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-sm">
                         <FaGoogle className="text-[#4285F4] text-xs" />
@@ -109,7 +147,7 @@ export default function Testimonios() {
               
               {/* Texto de la reseña */}
               <div className="flex-grow">
-                  <p className="text-gray-600 leading-relaxed text-[15px] mb-4 group-hover:text-gray-900 transition-colors">
+                  <p className="text-gray-600 leading-relaxed text-[15px] mb-4 group-hover:text-gray-900 transition-colors line-clamp-4">
                     "{review.text}"
                   </p>
               </div>
@@ -123,6 +161,18 @@ export default function Testimonios() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Botón para ver más reseñas */}
+        <div className="mt-16 text-center">
+            <a 
+                href={REVIEWS_URL} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full text-indigo-700 bg-indigo-100 hover:bg-indigo-200 transition-colors"
+            >
+                Ver todas las reseñas en Google
+            </a>
         </div>
 
       </div>
