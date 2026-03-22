@@ -10,7 +10,7 @@ type Review = {
   rating: number;
   text: string;
   relative_time_description: string;
-  google_maps_uri: string; // Campo nuevo del backend
+  google_maps_uri: string;
 };
 
 export default function Testimonios() {
@@ -18,9 +18,6 @@ export default function Testimonios() {
   const [rating, setRating] = useState<number>(5);
   const [visibleCount, setVisibleCount] = useState(3);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Enlace general por si falla el específico de la reseña
-  const GOOGLE_MAPS_GENERAL = "https://maps.app.goo.gl/ydq5cQoC4rbtL29D97";
 
   useEffect(() => {
     async function load() {
@@ -45,7 +42,6 @@ export default function Testimonios() {
       setVisibleCount(reviews.length);
     } else {
       setVisibleCount(3);
-      // Hace scroll suave hacia arriba al recoger las reseñas
       const element = document.getElementById('testimonios');
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
@@ -57,28 +53,23 @@ export default function Testimonios() {
 
   return (
     <section className="py-24 bg-white relative overflow-hidden" id="testimonios">
-      {/* MANTENEMOS TU SEO: Schema Markup para estrellas en Google */}
+      {/* SEO: Schema Markup */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org/",
         "@type": "AggregateRating",
-        "itemReviewed": {
-          "@type": "LocalBusiness",
-          "name": "Kiq Montajes Málaga",
-          "image": "https://kiq.es/logo.png"
-        },
+        "itemReviewed": { "@type": "LocalBusiness", "name": "Kiq Montajes Málaga" },
         "ratingValue": rating,
         "reviewCount": "7",
         "bestRating": "5"
       })}} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* MANTENEMOS TU CABECERA DE IMPACTO */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+        {/* Cabecera */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8 text-center md:text-left">
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="max-w-2xl"
           >
             <span className="inline-block px-4 py-1.5 mb-4 text-xs font-bold tracking-widest text-indigo-600 uppercase bg-indigo-50 rounded-full">
               Experiencias Reales
@@ -92,7 +83,7 @@ export default function Testimonios() {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="bg-gray-50 p-6 rounded-3xl border border-gray-100 flex items-center gap-6"
+            className="bg-gray-50 p-6 rounded-3xl border border-gray-100 flex items-center gap-6 mx-auto md:mx-0"
           >
             <div className="text-center">
               <div className="text-3xl font-black text-gray-900">{rating}</div>
@@ -105,18 +96,18 @@ export default function Testimonios() {
               <div className="flex items-center gap-2 font-bold text-gray-900 text-sm">
                 <FaGoogle className="text-[#4285F4]" /> Perfil de Empresa
               </div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1 font-bold">Verificado por Google</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1 font-bold italic">Verificado</p>
             </div>
           </motion.div>
         </div>
 
-        {/* Grid Animado con Layout Prop */}
+        {/* Grid de Reseñas */}
         <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <AnimatePresence mode="popLayout">
             {reviews.slice(0, visibleCount).map((r, i) => (
               <motion.a
                 key={r.author_name + i}
-                href={r.google_maps_uri} // USA EL LINK REAL DE CADA RESEÑA
+                href={r.google_maps_uri}
                 target="_blank"
                 rel="noopener noreferrer"
                 layout
@@ -124,7 +115,6 @@ export default function Testimonios() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 whileHover={{ y: -10 }}
-                transition={{ duration: 0.4, delay: (i % 3) * 0.1 }}
                 className="group flex flex-col justify-between p-8 bg-white rounded-[2rem] border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(79,70,229,0.15)] transition-all"
               >
                 <div>
@@ -140,50 +130,39 @@ export default function Testimonios() {
                       <p className="text-[10px] font-bold text-gray-400 uppercase">{r.relative_time_description}</p>
                     </div>
                   </div>
-                  <p className="text-gray-600 leading-relaxed text-[15px] mb-8 italic">
-                    "{r.text}"
-                  </p>
+                  <p className="text-gray-600 leading-relaxed text-[15px] mb-8 italic">"{r.text}"</p>
                 </div>
-
-                <div className="flex items-center justify-between pt-6 border-t border-gray-50">
-                  <div className="flex text-yellow-400 gap-0.5">
-                    {[...Array(5)].map((_, idx) => <FaStar key={idx} className="w-3.5 h-3.5" />)}
+                <div className="flex items-center justify-between pt-6 border-t border-gray-50 text-yellow-400">
+                  <div className="flex gap-0.5">
+                    {[...Array(5)].map((_, idx) => <FaStar key={idx} size={14} />)}
                   </div>
-                  <FaExternalLinkAlt className="text-gray-300 group-hover:text-indigo-400 transition-colors w-3 h-3" />
+                  <FaExternalLinkAlt className="text-gray-200 group-hover:text-indigo-400 transition-colors w-3 h-3" />
                 </div>
               </motion.a>
             ))}
           </AnimatePresence>
         </motion.div>
 
-        {/* MANTENEMOS TU BOTONERA PERO CON LÓGICA DE TOGGLE */}
-        <div className="mt-20 flex flex-col sm:flex-row items-center justify-center gap-6">
+        {/* Botonera de Control Simplificada */}
+        <div className="mt-20 flex flex-col items-center gap-6">
           <button 
             onClick={handleToggleVisible}
-            className="group flex items-center gap-3 px-10 py-5 bg-gray-900 text-white rounded-full font-black text-sm uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl hover:shadow-indigo-200"
+            className="group flex items-center gap-3 px-12 py-5 bg-gray-900 text-white rounded-full font-black text-sm uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl hover:shadow-indigo-200 active:scale-95"
           >
             {visibleCount < reviews.length ? (
-              <>Cargar más <FaChevronDown className="group-hover:translate-y-1 transition-transform" /></>
+              <>Ver más experiencias <FaChevronDown className="group-hover:translate-y-1 transition-transform" /></>
             ) : (
-              <>Ver menos <FaChevronUp className="group-hover:-translate-y-1 transition-transform" /></>
+              <>Mostrar menos <FaChevronUp className="group-hover:-translate-y-1 transition-transform" /></>
             )}
           </button>
 
           <a 
-            href={GOOGLE_MAPS_GENERAL} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 px-10 py-5 bg-white text-gray-900 border-2 border-gray-900 rounded-full font-black text-sm uppercase tracking-widest hover:bg-gray-900 hover:text-white transition-all shadow-md"
-          >
-            Ver todas en Maps <FaExternalLinkAlt />
-          </a>
-          
-          <a 
             href="https://search.google.com/local/writereview?placeid=ChIJ1XtcHYfyly4Re1sFUXqtre8"
             target="_blank" 
+            rel="noopener noreferrer"
             className="text-gray-400 font-bold hover:text-indigo-600 transition-colors underline underline-offset-8 decoration-gray-200 hover:decoration-indigo-200 text-sm"
           >
-            Deja tu propia reseña
+            ¿Has trabajado con nosotros? Deja tu reseña aquí
           </a>
         </div>
       </div>
