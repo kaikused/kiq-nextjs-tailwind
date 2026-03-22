@@ -53,7 +53,7 @@ export default function Testimonios() {
 
   return (
     <section className="py-24 bg-white relative overflow-hidden" id="testimonios">
-      {/* SEO: Schema Markup */}
+      {/* SE MANTIENE TU SEO INTACTO */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org/",
         "@type": "AggregateRating",
@@ -64,7 +64,7 @@ export default function Testimonios() {
       })}} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Cabecera */}
+        {/* SE MANTIENEN TUS ANIMACIONES DE CABECERA */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8 text-center md:text-left">
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
@@ -101,8 +101,8 @@ export default function Testimonios() {
           </motion.div>
         </div>
 
-        {/* Grid de Reseñas */}
-        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* OPTIMIZACIÓN: Quitamos 'layout' del div y de los items para fluidez en móvil */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <AnimatePresence mode="popLayout">
             {reviews.slice(0, visibleCount).map((r, i) => (
               <motion.a
@@ -110,11 +110,12 @@ export default function Testimonios() {
                 href={r.google_maps_uri}
                 target="_blank"
                 rel="noopener noreferrer"
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+                // Mantenemos la animación de entrada suave pero sin 'layout'
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
                 whileHover={{ y: -10 }}
+                transition={{ duration: 0.3, delay: i > 2 ? (i - 3) * 0.05 : i * 0.1 }}
                 className="group flex flex-col justify-between p-8 bg-white rounded-[2rem] border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(79,70,229,0.15)] transition-all"
               >
                 <div>
@@ -130,7 +131,9 @@ export default function Testimonios() {
                       <p className="text-[10px] font-bold text-gray-400 uppercase">{r.relative_time_description}</p>
                     </div>
                   </div>
-                  <p className="text-gray-600 leading-relaxed text-[15px] mb-8 italic">"{r.text}"</p>
+                  <p className="text-gray-600 leading-relaxed text-[15px] mb-8 italic line-clamp-4">
+                    "{r.text}"
+                  </p>
                 </div>
                 <div className="flex items-center justify-between pt-6 border-t border-gray-50 text-yellow-400">
                   <div className="flex gap-0.5">
@@ -141,16 +144,16 @@ export default function Testimonios() {
               </motion.a>
             ))}
           </AnimatePresence>
-        </motion.div>
+        </div>
 
-        {/* Botonera de Control Simplificada */}
+        {/* Botonera de Control */}
         <div className="mt-20 flex flex-col items-center gap-6">
           <button 
             onClick={handleToggleVisible}
-            className="group flex items-center gap-3 px-12 py-5 bg-gray-900 text-white rounded-full font-black text-sm uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl hover:shadow-indigo-200 active:scale-95"
+            className="group flex items-center gap-3 px-12 py-5 bg-gray-900 text-white rounded-full font-black text-sm uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl active:scale-95"
           >
             {visibleCount < reviews.length ? (
-              <>Ver más experiencias <FaChevronDown className="group-hover:translate-y-1 transition-transform" /></>
+              <>Ver más testimonios <FaChevronDown className="group-hover:translate-y-1 transition-transform" /></>
             ) : (
               <>Mostrar menos <FaChevronUp className="group-hover:-translate-y-1 transition-transform" /></>
             )}
