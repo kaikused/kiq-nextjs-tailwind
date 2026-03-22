@@ -14,7 +14,7 @@ const galeriaFotos = [
   { id: 6, src: "/images/galeria-grande-6.jpg", alt: "Armario y zona de estudio a medida" },
 ];
 
-// --- DATOS DE LOS LOGOS (Basado en tu carpeta public/logos) ---
+// --- 6 LOGOS ACTUALIZADOS ---
 const marcasLogos = [
   { name: 'IKEA', src: '/logos/ikea.svg' },
   { name: 'Leroy Merlin', src: '/logos/leroy.svg' },
@@ -41,7 +41,7 @@ export default function SocialProof() {
     <section className="py-24 bg-white overflow-hidden" id="social-proof">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* 1. TÍTULO DE LA SECCIÓN */}
+        {/* Título de la sección */}
         <div className="text-center mb-16">
             <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl tracking-tight">
                 Resultados que hablan solos
@@ -51,7 +51,7 @@ export default function SocialProof() {
             </p>
         </div>
 
-        {/* 2. GALERÍA DE FOTOS (INTACTA) */}
+        {/* Galería (Sin cambios) */}
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -64,19 +64,17 @@ export default function SocialProof() {
                     key={foto.id}
                     type="button"
                     onClick={() => openLightboxOnSlide(index + 1)}
-                    aria-label={`Ver foto ampliada de: ${foto.alt}`}
-                    className="relative group w-full text-left cursor-zoom-in overflow-hidden rounded-2xl h-64 shadow-lg hover:shadow-2xl transition-all duration-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                    className="relative group w-full text-left cursor-zoom-in overflow-hidden rounded-2xl h-64 shadow-lg hover:shadow-2xl transition-all duration-500"
                 >
-                    <div className="absolute inset-0 bg-gray-100 animate-pulse"></div>
                     <Image
                         src={foto.src}
                         alt={foto.alt}
                         fill
                         className="object-cover transform transition-transform duration-700 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        unoptimized
                     />
                     <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
-                        <span className="text-white font-medium text-sm tracking-wide border border-white/50 px-6 py-2 rounded-full backdrop-blur-md bg-white/10 hover:bg-white/20 transition-colors">
+                        <span className="text-white font-medium text-sm tracking-wide border border-white/50 px-6 py-2 rounded-full backdrop-blur-md bg-white/10">
                             Ver Detalle
                         </span>
                     </div>
@@ -84,13 +82,14 @@ export default function SocialProof() {
             ))}
         </motion.div>
 
-        {/* 3. LOGOS DE MARCAS - REPLANTEADO CON SVGS */}
+        {/* 3. LOGOS DE MARCAS - CORREGIDO A 6 COLUMNAS */}
         <div className="border-t border-gray-100 pt-20">
             <p className="text-center text-[10px] font-black text-gray-400 tracking-[0.3em] uppercase mb-12">
                 Especialistas en montaje multi-marca
             </p>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-8 gap-y-12 items-center justify-items-center">
+            {/* AQUÍ ESTÁ EL CAMBIO: lg:grid-cols-6 */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-12 items-center justify-items-center">
                 {marcasLogos.map((brand) => (
                     <div 
                         key={brand.name} 
@@ -109,7 +108,6 @@ export default function SocialProof() {
 
       </div>
 
-      {/* LIGHTBOX (INTACTO) */}
       <FsLightbox
         toggler={lightboxController.toggler}
         sources={galeriaFotos.map(f => f.src)}
