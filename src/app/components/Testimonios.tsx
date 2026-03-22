@@ -29,7 +29,7 @@ export default function Testimonios() {
           setRating(data.result.rating_global);
         }
       } catch (err) {
-        console.error("Error cargando testimonios:", err);
+        console.error("Error:", err);
       } finally {
         setIsLoading(false);
       }
@@ -53,7 +53,6 @@ export default function Testimonios() {
 
   return (
     <section className="py-24 bg-white relative overflow-hidden" id="testimonios">
-      {/* SE MANTIENE TU SEO INTACTO */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org/",
         "@type": "AggregateRating",
@@ -64,27 +63,18 @@ export default function Testimonios() {
       })}} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* SE MANTIENEN TUS ANIMACIONES DE CABECERA */}
+        {/* Cabecera optimizada: Menos animaciones simultáneas */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8 text-center md:text-left">
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-          >
+          <div>
             <span className="inline-block px-4 py-1.5 mb-4 text-xs font-bold tracking-widest text-indigo-600 uppercase bg-indigo-50 rounded-full">
               Experiencias Reales
             </span>
             <h2 className="text-4xl md:text-6xl font-black text-gray-900 leading-[1.1]">
-              Lo que nuestros clientes <span className="text-indigo-600 font-black">opinan</span>
+              Lo que opinan <span className="text-indigo-600 font-black text-nowrap italic">nuestros clientes</span>
             </h2>
-          </motion.div>
+          </div>
 
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="bg-gray-50 p-6 rounded-3xl border border-gray-100 flex items-center gap-6 mx-auto md:mx-0"
-          >
+          <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 flex items-center gap-6 mx-auto md:mx-0">
             <div className="text-center">
               <div className="text-3xl font-black text-gray-900">{rating}</div>
               <div className="flex text-yellow-400 text-xs">
@@ -98,25 +88,24 @@ export default function Testimonios() {
               </div>
               <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1 font-bold italic">Verificado</p>
             </div>
-          </motion.div>
+          </div>
         </div>
 
-        {/* OPTIMIZACIÓN: Quitamos 'layout' del div y de los items para fluidez en móvil */}
+        {/* ELIMINADO 'layout': El grid ahora es un div estándar para evitar lag */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {reviews.slice(0, visibleCount).map((r, i) => (
               <motion.a
                 key={r.author_name + i}
                 href={r.google_maps_uri}
                 target="_blank"
                 rel="noopener noreferrer"
-                // Mantenemos la animación de entrada suave pero sin 'layout'
-                initial={{ opacity: 0, y: 20 }}
+                // Animación simplificada: Solo opacidad y un desplazamiento Y muy corto
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                whileHover={{ y: -10 }}
-                transition={{ duration: 0.3, delay: i > 2 ? (i - 3) * 0.05 : i * 0.1 }}
-                className="group flex flex-col justify-between p-8 bg-white rounded-[2rem] border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(79,70,229,0.15)] transition-all"
+                exit={{ opacity: 0, y: 5 }}
+                transition={{ duration: 0.2, delay: i > 2 ? (i - 3) * 0.05 : 0 }}
+                className="group flex flex-col justify-between p-8 bg-white rounded-[2rem] border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] active:bg-gray-50 transition-colors"
               >
                 <div>
                   <div className="flex items-center gap-4 mb-6">
@@ -127,13 +116,11 @@ export default function Testimonios() {
                       </div>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors text-sm">{r.author_name}</h3>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase">{r.relative_time_description}</p>
+                      <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors text-sm leading-tight">{r.author_name}</h3>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">{r.relative_time_description}</p>
                     </div>
                   </div>
-                  <p className="text-gray-600 leading-relaxed text-[15px] mb-8 italic line-clamp-4">
-                    "{r.text}"
-                  </p>
+                  <p className="text-gray-600 leading-relaxed text-[15px] mb-8 italic line-clamp-4">"{r.text}"</p>
                 </div>
                 <div className="flex items-center justify-between pt-6 border-t border-gray-50 text-yellow-400">
                   <div className="flex gap-0.5">
@@ -146,16 +133,15 @@ export default function Testimonios() {
           </AnimatePresence>
         </div>
 
-        {/* Botonera de Control */}
-        <div className="mt-20 flex flex-col items-center gap-6">
+        <div className="mt-16 flex flex-col items-center gap-6">
           <button 
             onClick={handleToggleVisible}
-            className="group flex items-center gap-3 px-12 py-5 bg-gray-900 text-white rounded-full font-black text-sm uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl active:scale-95"
+            className="group flex items-center gap-3 px-12 py-5 bg-gray-900 text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-indigo-700 active:scale-95 transition-all shadow-xl"
           >
             {visibleCount < reviews.length ? (
-              <>Ver más testimonios <FaChevronDown className="group-hover:translate-y-1 transition-transform" /></>
+              <>Ver más experiencias <FaChevronDown /></>
             ) : (
-              <>Mostrar menos <FaChevronUp className="group-hover:-translate-y-1 transition-transform" /></>
+              <>Mostrar menos <FaChevronUp /></>
             )}
           </button>
 
@@ -163,9 +149,9 @@ export default function Testimonios() {
             href="https://search.google.com/local/writereview?placeid=ChIJ1XtcHYfyly4Re1sFUXqtre8"
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-gray-400 font-bold hover:text-indigo-600 transition-colors underline underline-offset-8 decoration-gray-200 hover:decoration-indigo-200 text-sm"
+            className="text-gray-400 font-bold hover:text-indigo-600 transition-colors underline underline-offset-8 decoration-gray-200 hover:decoration-indigo-200 text-xs tracking-wide"
           >
-            ¿Has trabajado con nosotros? Deja tu reseña aquí
+            Deja tu propia reseña aquí
           </a>
         </div>
       </div>
