@@ -1,53 +1,81 @@
-// En: src/app/components/CtaFinal.tsx
-import { FaWhatsapp, FaPhoneAlt } from "react-icons/fa";
+'use client'; 
+import { FaWhatsapp, FaPhoneAlt, FaClock } from "react-icons/fa";
+import { motion } from "framer-motion";
 
 export default function CtaFinal() {
+  
+  const WHATSAPP_LINK = "https://wa.me/34664497889";
+  const CALL_LINK = "tel:+34664497889";
+
   return (
-    <section id="contacto" className="bg-slate-900 py-20 px-6">
-      <div className="max-w-md mx-auto text-center">
+    <section id="contacto" className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 py-28 px-6 overflow-hidden">
+      
+      {/* Efecto de luz de fondo */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute -top-40 -left-40 w-80 h-80 bg-blue-500 rounded-full blur-[100px]"></div>
+        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-indigo-500 rounded-full blur-[100px]"></div>
+      </div>
+
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.5 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-2xl mx-auto text-center relative z-10"
+      >
         
-        {/* Título: Alto contraste (Blanco sobre Slate-900) */}
-        <h2 className="text-4xl font-bold text-white tracking-tight">
-          ¿Listo Para Montar?
+        <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-tight">
+          Montamos Tus Muebles. <span className="text-indigo-400 italic">Sin Estrés y Hoy Mismo.</span>
         </h2>
         
-        {/* Separador decorativo */}
-        <div className="w-20 h-1 bg-blue-500 mx-auto mt-4 mb-6 rounded-full"></div>
+        <div className="w-20 h-1 bg-indigo-500 mx-auto mt-6 mb-8 rounded-full"></div>
         
-        {/* Texto descriptivo: Gris claro para reducir fatiga visual pero manteniendo contraste */}
-        <p className="text-lg text-gray-300 mb-8 leading-relaxed">
-          Pide tu presupuesto sin compromiso. La forma más rápida es por WhatsApp.
-          ¡Envíanos una foto del mueble y te respondemos al instante!
+        <p className="text-xl text-gray-300 mb-12 leading-relaxed max-w-lg mx-auto">
+          Pide tu presupuesto <strong className="text-white">gratuito</strong> en minutos. <br />
+          Envíanos una foto del mueble por WhatsApp y <span className="text-white font-semibold">te respondemos al instante.</span>
         </p>
         
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
           
-          {/* BOTÓN WHATSAPP */}
-          {/* CORRECCIÓN: Usamos green-600 en lugar de 500 para pasar el test de accesibilidad */}
-          <a 
-            href="https://wa.me/34664497889" // <-- ¡RECUERDA CAMBIAR ESTE NÚMERO!
+          <motion.a 
+            href={WHATSAPP_LINK} 
             target="_blank" 
             rel="noopener noreferrer" 
-            aria-label="Contactar por WhatsApp para pedir presupuesto"
-            className="inline-flex items-center justify-center rounded-xl bg-green-700 px-8 py-3 font-bold text-white transition-all duration-300 hover:bg-green-700 hover:scale-105 shadow-lg shadow-green-900/20"
+            animate={{ 
+              boxShadow: [
+                "0 0 0 0px rgba(34, 197, 94, 0.4)", 
+                "0 0 0 15px rgba(34, 197, 94, 0.0)",
+                "0 0 0 0px rgba(34, 197, 94, 0.0)"
+              ]
+            }}
+            transition={{ 
+              duration: 1.5, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="group relative inline-flex items-center justify-center rounded-2xl bg-green-600 px-10 py-4 font-black text-white text-sm uppercase tracking-widest hover:bg-green-500 transition-colors shadow-2xl shadow-green-950/30 w-full sm:w-auto"
           >
-            <FaWhatsapp className="h-6 w-6 mr-2" />
-            WHATSAPP
-          </a>
+            <FaWhatsapp className="h-6 w-6 mr-3 group-hover:rotate-12 transition-transform" />
+            WHATSAPP INMEDIATO
+          </motion.a>
           
-          {/* BOTÓN LLAMADA */}
-          {/* Diseño moderno: Botón blanco para resaltar sobre el fondo oscuro */}
-          <a 
-            href="tel:+34664497889" // <-- ¡RECUERDA CAMBIAR ESTE NÚMERO!
-            aria-label="Llamar por teléfono ahora"
-            className="inline-flex items-center justify-center rounded-xl bg-white px-8 py-3 font-bold text-slate-900 transition-all duration-300 hover:bg-gray-100 hover:scale-105 shadow-lg"
+          <motion.a 
+            href={CALL_LINK} 
+            whileHover={{ y: -3 }}
+            whileTap={{ scale: 0.97 }}
+            className="inline-flex items-center justify-center rounded-2xl bg-white px-10 py-4 font-black text-slate-950 text-sm uppercase tracking-widest hover:bg-gray-50 transition-all shadow-lg w-full sm:w-auto"
           >
-            <FaPhoneAlt className="h-5 w-5 mr-2" />
+            <FaPhoneAlt className="h-5 w-5 mr-3 text-slate-600" />
             LLAMAR AHORA
-          </a>
-
+          </motion.a>
         </div>
-      </div>
+
+        <div className="mt-10 flex items-center justify-center gap-2 text-gray-500 text-xs font-semibold uppercase tracking-wider">
+            <FaClock className="text-indigo-600" /> Respuesta en <span className="text-gray-400">menos de 15 minutos</span> (L-V)
+        </div>
+      </motion.div>
     </section>
   );
 }
