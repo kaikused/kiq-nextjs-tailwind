@@ -16,10 +16,10 @@ const SocialProof = dynamic(() => import('./components/SocialProof'), {
   ssr: true 
 });
 
-const KiqOutletSection = dynamic(() => import('./components/KiqOutletSection'), {
+/*const KiqOutletSection = dynamic(() => import('./components/KiqOutletSection'), {
   loading: () => <div className="h-96 bg-gray-50 animate-pulse" />,
   ssr: true
-});
+});*/
 
 const Testimonios = dynamic(() => import('./components/Testimonios'), {
   loading: () => <div className="h-96 bg-white animate-pulse" />,
@@ -53,8 +53,7 @@ export default function Home() {
           <div id="servicios-section">
               <SocialProof />
           </div>
-          <CtaFinal/>
-          <KiqOutletSection />
+          <CtaFinal />
           <Testimonios />
         </div>
 
