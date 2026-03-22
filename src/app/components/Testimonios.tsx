@@ -18,8 +18,9 @@ export default function Testimonios() {
   const [rating, setRating] = useState<number>(5);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Enlace directo a la sección de reseñas de tu ficha
-  const GOOGLE_REVIEWS_URL = "https://www.google.com/maps/place/Kiq+montajes/@36.721272,-4.44422,17z/data=!4m8!3m7!1s0xd727c871d5c7b55:0xefadec7a51055bdb!8m2!3d36.721272!4d-4.44422!9m1!1b1!16s%2Fg%2F11y5p817m8?entry=ttu";
+  // --- ENLACES REALES CORREGIDOS ---
+  const GOOGLE_REVIEWS_URL = "https://search.google.com/local/reviews?placeid=ChIJ1XtcHYfyly4Re1sFUXqtre8";
+  const WRITE_REVIEW_URL = "https://search.google.com/local/writereview?placeid=ChIJ1XtcHYfyly4Re1sFUXqtre8";
 
   useEffect(() => {
     async function load() {
@@ -27,7 +28,7 @@ export default function Testimonios() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-reviews`);
         const data = await res.json();
         if (data.result?.reviews) {
-          // Solo mostramos las 3 más destacadas para mantener la web ligera
+          // Mostramos las 3 reseñas más potentes
           setReviews(data.result.reviews.slice(0, 3));
           setRating(data.result.rating_global);
         }
@@ -44,7 +45,7 @@ export default function Testimonios() {
 
   return (
     <section className="py-24 bg-white relative overflow-hidden" id="testimonios">
-      {/* SEO: Schema Markup */}
+      {/* SEO Markup */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org/",
         "@type": "AggregateRating",
@@ -55,7 +56,6 @@ export default function Testimonios() {
       })}} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Cabecera */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8 text-center md:text-left">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -63,10 +63,10 @@ export default function Testimonios() {
             viewport={{ once: true }}
           >
             <span className="inline-block px-4 py-1.5 mb-4 text-xs font-bold tracking-widest text-indigo-600 uppercase bg-indigo-50 rounded-full">
-              Opiniones de Clientes
+              Testimonios Reales
             </span>
             <h2 className="text-4xl md:text-6xl font-black text-gray-900 leading-[1.1]">
-              Lo que dicen de <span className="text-indigo-600 font-black">nosotros</span>
+              Lo que opinan de <span className="text-indigo-600 font-black italic">nosotros</span>
             </h2>
           </motion.div>
 
@@ -82,12 +82,11 @@ export default function Testimonios() {
               <div className="flex items-center gap-2 font-bold text-gray-900 text-sm">
                 <FaGoogle className="text-[#4285F4]" /> Google Maps
               </div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1 font-bold">Reseñas Verificadas</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1 font-bold">Verificado</p>
             </div>
           </div>
         </div>
 
-        {/* Grid Estático: 3 Reseñas Top */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           {reviews.map((r, i) => (
             <motion.a
@@ -110,7 +109,7 @@ export default function Testimonios() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors text-sm leading-tight">{r.author_name}</h3>
+                    <h3 className="font-bold text-gray-900 text-sm leading-tight">{r.author_name}</h3>
                     <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">{r.relative_time_description}</p>
                   </div>
                 </div>
@@ -128,7 +127,6 @@ export default function Testimonios() {
           ))}
         </div>
 
-        {/* Botonera Simplificada: Solo Navegación Directa */}
         <div className="flex flex-col items-center gap-6">
           <a 
             href={GOOGLE_REVIEWS_URL}
@@ -140,7 +138,7 @@ export default function Testimonios() {
           </a>
 
           <a 
-            href="https://search.google.com/local/writereview?placeid=ChIJ1XtcHYfyly4Re1sFUXqtre8"
+            href={WRITE_REVIEW_URL}
             target="_blank" 
             rel="noopener noreferrer"
             className="text-gray-400 font-bold hover:text-indigo-600 transition-colors underline underline-offset-8 decoration-gray-200 hover:decoration-indigo-200 text-sm"
