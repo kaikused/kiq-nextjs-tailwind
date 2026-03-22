@@ -14,6 +14,15 @@ const galeriaFotos = [
   { id: 6, src: "/images/galeria-grande-6.jpg", alt: "Armario y zona de estudio a medida" },
 ];
 
+// --- DATOS DE LOS LOGOS (Basado en tu carpeta public/logos) ---
+const marcasLogos = [
+  { name: 'IKEA', src: '/logos/ikea.svg' },
+  { name: 'Leroy Merlin', src: '/logos/leroy.svg' },
+  { name: 'Amazon', src: '/logos/amazon.svg' },
+  { name: 'JYSK', src: '/logos/jysk.svg' },
+  { name: 'Conforama', src: '/logos/conforama.svg' },
+];
+
 export default function SocialProof() {
   const [lightboxController, setLightboxController] = useState({
     toggler: false,
@@ -41,7 +50,7 @@ export default function SocialProof() {
             </p>
         </div>
 
-        {/* 2. GALERÍA DE FOTOS */}
+        {/* 2. GALERÍA DE FOTOS (INTACTA) */}
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -57,9 +66,7 @@ export default function SocialProof() {
                     aria-label={`Ver foto ampliada de: ${foto.alt}`}
                     className="relative group w-full text-left cursor-zoom-in overflow-hidden rounded-2xl h-64 shadow-lg hover:shadow-2xl transition-all duration-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                 >
-                    {/* Placeholder gris */}
                     <div className="absolute inset-0 bg-gray-100 animate-pulse"></div>
-                    
                     <Image
                         src={foto.src}
                         alt={foto.alt}
@@ -67,8 +74,6 @@ export default function SocialProof() {
                         className="object-cover transform transition-transform duration-700 group-hover:scale-105"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
-                    
-                    {/* Overlay al pasar el ratón - Estilo Apple */}
                     <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
                         <span className="text-white font-medium text-sm tracking-wide border border-white/50 px-6 py-2 rounded-full backdrop-blur-md bg-white/10 hover:bg-white/20 transition-colors">
                             Ver Detalle
@@ -78,25 +83,32 @@ export default function SocialProof() {
             ))}
         </motion.div>
 
-        {/* 3. LOGOS DE MARCAS - Estilo Minimalista */}
-        <div className="border-t border-gray-100 pt-16">
-            <p className="text-center text-xs font-bold text-gray-400 tracking-[0.2em] uppercase mb-10">
-                Expertos en montaje de todas las marcas
+        {/* 3. LOGOS DE MARCAS - REPLANTEADO CON SVGS */}
+        <div className="border-t border-gray-100 pt-20">
+            <p className="text-center text-[10px] font-black text-gray-400 tracking-[0.3em] uppercase mb-12">
+                Especialistas en montaje multi-marca
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center justify-items-center opacity-60 hover:opacity-100 transition-opacity duration-500">
-                {/* Usamos texto estilizado para simular logos (Rendimiento) */}
-                <span className="text-3xl font-black text-gray-800 tracking-tighter">IKEA</span>
-                <span className="text-2xl font-bold text-green-700 tracking-tight">Leroy Merlin</span>
-                <span className="text-2xl font-bold text-gray-900 italic">amazon</span>
-                <span className="text-3xl font-extrabold text-blue-900 tracking-tighter">JYSK</span>
-                <span className="text-2xl font-bold text-red-600 tracking-tight">Conforama</span>
-                <span className="text-2xl font-black text-red-700 tracking-wide">BAUHAUS</span>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-8 gap-y-12 items-center justify-items-center">
+                {marcasLogos.map((brand) => (
+                    <div 
+                        key={brand.name} 
+                        className="relative w-28 h-10 md:w-32 md:h-12 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-500 ease-in-out flex items-center justify-center"
+                    >
+                        <Image
+                            src={brand.src}
+                            alt={`Logo de ${brand.name}`}
+                            fill
+                            className="object-contain"
+                        />
+                    </div>
+                ))}
             </div>
         </div>
 
       </div>
 
-      {/* LIGHTBOX */}
+      {/* LIGHTBOX (INTACTO) */}
       <FsLightbox
         toggler={lightboxController.toggler}
         sources={galeriaFotos.map(f => f.src)}
