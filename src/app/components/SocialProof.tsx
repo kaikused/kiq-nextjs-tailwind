@@ -21,6 +21,7 @@ const marcasLogos = [
   { name: 'Amazon', src: '/logos/amazon.svg' },
   { name: 'JYSK', src: '/logos/jysk.svg' },
   { name: 'Conforama', src: '/logos/conforama.svg' },
+  { name: 'Bauhaus', src: '/logos/bauhaus.svg' },
 ];
 
 export default function SocialProof() {
