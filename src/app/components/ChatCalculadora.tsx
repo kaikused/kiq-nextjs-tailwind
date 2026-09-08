@@ -781,11 +781,6 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
     async function processInitialAnalysis(analysisData: { analisis: Analysis; image_urls: string[] | null; image_labels: string[] | null } | null) {
         if (!analysisData || !analysisData.analisis) {
-            console.error("Error: Análisis inicial no válido (falta clave 'analisis').", analysisData);
-            if (!needsClarity) { 
-                addBotMessage("Lo siento, hubo un error de análisis. Reiniciemos.");
-                setStage('describe');
-            }
             return;
         }
         setStoredAnalysis(analysisData.analisis);
