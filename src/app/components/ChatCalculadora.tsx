@@ -110,7 +110,7 @@ const T = {
     restartButton: "Calcular otro presupuesto",
 
     preRegister: "¡Genial, {name}! Tu precio estimado es de {priceText}. En un toque te lo mandamos por WhatsApp.",
-    preRegisterConsulta: "Esto no está en el tarifario automático, {name}. Te lo pasamos a Kiq para cotizarlo a mano. El PDF va con el precio en blanco.",
+    preRegisterConsulta: "{name}, voy a necesitar cotizar esto con un montador especializado: no entra en las categorías habituales. En un toque te lo mandamos por WhatsApp.",
     sendByWhatsapp: "Enviar por WhatsApp",
     quoteSentWhatsapp: "¡Listo! Se abre WhatsApp con tu presupuesto.",
     quoteSentWhatsappNoPdf: "WhatsApp se abre con el precio. El PDF no se pudo guardar en Google ahora mismo; te lo enviamos por correo a Kiq si el envío de email está activo.",
