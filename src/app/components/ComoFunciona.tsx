@@ -3,19 +3,16 @@ import { useUI } from '../context/UIContext';
 
 const pasos = [
   {
-    n: '1',
     titulo: 'Lo describes',
-    texto: 'Escribe qué hay que montar o adjunta una foto. La foto es solo referencia: cotizamos lo que pides.',
+    texto: 'Escribe qué hay que montar o adjunta una foto de referencia: cotizamos lo que pides.',
   },
   {
-    n: '2',
     titulo: 'Ves el precio',
-    texto: 'En minutos te damos un presupuesto con montaje y desplazamiento. Si no entra en tarifario, lo vemos a mano.',
+    texto: 'Te damos un presupuesto con nuestro cotizador inteligente en segundos. Si requieres algo especializado, te contacta un montador.',
   },
   {
-    n: '3',
     titulo: 'Lo cierras por WhatsApp',
-    texto: 'Sin crear cuenta. Se abre WhatsApp con el resumen y te confirmamos fecha.',
+    texto: 'Sin complicaciones molestas: recibes tu cotización en un mensaje resumido de WhatsApp y un PDF con los datos del montaje.',
   },
 ];
 
@@ -24,31 +21,31 @@ export default function ComoFunciona() {
 
   return (
     <section id="como-funciona" className="py-20 md:py-24 bg-slate-50 px-4">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <h2 className="font-titulo text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Tres pasos. Precio. WhatsApp.
+            Cotizamos tu montaje en segundos
           </h2>
           <p className="mt-4 text-slate-600 text-lg leading-relaxed">
-            Así pedimos presupuesto en Kiq. Sin registro y sin panel.
+            Así de simple lo hacemos en Kiq: sin compromiso ni complicaciones. Consultas e inmediatamente sabes el precio.
           </p>
         </div>
 
-        <ol className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {pasos.map((paso) => (
-            <li key={paso.n} className="text-center md:text-left">
-              <p className="font-titulo text-sm font-bold tracking-widest text-indigo-600 mb-3">
-                {paso.n}
-              </p>
-              <h3 className="font-titulo text-xl font-bold text-slate-900 mb-2">
+            <article
+              key={paso.titulo}
+              className="bg-white rounded-2xl p-8 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/80"
+            >
+              <h3 className="font-titulo text-xl font-bold text-slate-900 mb-3">
                 {paso.titulo}
               </h3>
               <p className="text-slate-600 text-[15px] leading-relaxed">
                 {paso.texto}
               </p>
-            </li>
+            </article>
           ))}
-        </ol>
+        </div>
 
         <div className="mt-14 text-center">
           <button
