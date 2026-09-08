@@ -110,6 +110,7 @@ const T = {
     restartButton: "Calcular otro presupuesto",
 
     preRegister: "¡Genial, {name}! Tu precio estimado es de {priceText}. En un toque te lo mandamos por WhatsApp.",
+    preRegisterConsulta: "Esto no está en el tarifario automático, {name}. Te lo pasamos a Kiq para cotizarlo a mano. El PDF va con el precio en blanco.",
     sendByWhatsapp: "Enviar por WhatsApp",
     quoteSentWhatsapp: "¡Listo! Se abre WhatsApp con tu presupuesto.",
     quoteSentWhatsappNoPdf: "WhatsApp se abre con el precio. El PDF no se pudo guardar en Google ahora mismo; te lo enviamos por correo a Kiq si el envío de email está activo.",
@@ -151,6 +152,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
     const [uploadedImageUrls, setUploadedImageUrls] = useState<string[] | null>(null);
     const [imageLabels, setImageLabels] = useState<string[] | null>(null);
     const [carpetaGcs, setCarpetaGcs] = useState<string | null>(null);
+    const [consultaManual, setConsultaManual] = useState(false);
     
     const [fullBreakdown, setFullBreakdown] = useState<DesgloseCompleto | null>(null); 
     const [needsClarity, setNeedsClarity] = useState<AclaracionRequerida | null>(null);
@@ -264,6 +266,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         setUploadedImageUrls(null);
         setImageLabels(null);
         setCarpetaGcs(null);
+        setConsultaManual(false);
         setIsTyping(false);
         setFullBreakdown(null);
         setNeedsClarity(null);
@@ -794,7 +797,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         addBotMessage(clarificationMessage);
     }
 
-    async function processInitialAnalysis(analysisData: { analisis: Analysis; image_urls: string[] | null; image_labels: string[] | null; carpeta_gcs?: string | null } | null) {
+    async function processInitialAnalysis(analysisData: { analisis: Analysis; image_urls: string[] | null; image_labels: string[] | null; carpeta_gcs?: string | null; consulta_manual?: boolean } | null) {
         if (!analysisData || !analysisData.analisis) {
             return;
         }
@@ -802,11 +805,14 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         setUploadedImageUrls(analysisData.image_urls);
         setImageLabels(analysisData.image_labels);
         if (analysisData.carpeta_gcs) setCarpetaGcs(analysisData.carpeta_gcs);
+        if (analysisData.consulta_manual) setConsultaManual(true);
 
         const items = analysisData.analisis.items || [];
-        const anclajeObvio = items.length > 0 && items.every((item: { tipo?: string }) => item.tipo === 'balda');
+        const esConsulta = Boolean(analysisData.consulta_manual) || items.some((item: { tipo?: string }) => item.tipo === 'consulta');
+        const anclajeSiempre = ['balda', 'espejo', 'cabecero', 'soporte_tv', 'cortinas', 'tendedero', 'cama_abatible', 'mueble_bano'];
+        const anclajeObvio = items.length > 0 && items.every((item: { tipo?: string }) => anclajeSiempre.includes(item.tipo || ''));
 
-        if (analysisData.analisis.necesita_anclaje_general && !anclajeObvio) {
+        if (!esConsulta && analysisData.analisis.necesita_anclaje_general && !anclajeObvio) {
             await askFinalQuestions();
         } else {
             setBudgetDetails(prev => [...prev, {
@@ -854,8 +860,9 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             
             setIsTyping(false);
             setFinalAddress(clientAddress);
-            setFinalPrice(data.total_presupuesto);
-            
+            setFinalPrice(data.total_presupuesto || 0);
+            if (data.consulta_manual) setConsultaManual(true);
+
             setFullBreakdown(data.desglose || null);
 
             const mueblesCotizados = (data.desglose?.muebles_cotizados || []).map(
@@ -873,7 +880,8 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 ]);
             }
 
-            const priceText = `${data.total_presupuesto}€`;
+            const esConsulta = Boolean(data.consulta_manual);
+            const priceText = esConsulta ? 'a confirmar' : `${data.total_presupuesto}€`;
 
             if (isAuthenticated) {
                 addBotMessage(T.confirmPublish.replace('{priceText}', priceText));
@@ -883,7 +891,8 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 ]);
                 setStage('confirm_publish_loggedin');
             } else {
-                addBotMessage(T.preRegister
+                addBotMessage(
+                    (esConsulta ? T.preRegisterConsulta : T.preRegister)
                     .replace('{name}', clientName)
                     .replace('{priceText}', priceText)
                 );
@@ -913,6 +922,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     descripcion: currentTextDescription,
                     direccion: finalAddress,
                     precio_calculado: finalPrice,
+                    consulta_manual: consultaManual,
                     desglose: fullBreakdown,
                     imagenes: uploadedImageUrls,
                     etiquetas: imageLabels,
