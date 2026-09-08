@@ -111,7 +111,7 @@ const T = {
 
     preRegister: "¡Genial, {name}! Tu precio estimado es de {priceText}. En un toque te lo mandamos por WhatsApp.",
     preRegisterConsulta: "{name}, voy a necesitar cotizar esto con un montador especializado: no entra en las categorías habituales. En un toque te lo mandamos por WhatsApp.",
-    sendByWhatsapp: "Enviar por WhatsApp",
+    sendByWhatsapp: "Cotizar por WhatsApp",
     quoteSentWhatsapp: "¡Listo! Se abre WhatsApp con tu presupuesto.",
     quoteSentWhatsappNoPdf: "WhatsApp se abre con el precio. El PDF no se pudo guardar en Google ahora mismo; te lo enviamos por correo a Kiq si el envío de email está activo.",
     quoteSendError: "No hemos podido abrir el envío. Pulsa de nuevo en WhatsApp.",
