@@ -4,11 +4,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useUI } from '../context/UIContext';
-import { FaUserCircle, FaSignOutAlt, FaCog, FaChevronDown, FaGem, FaPlusCircle, FaBars, FaTimes, FaEnvelope } from 'react-icons/fa';
+import { FaUserCircle, FaSignOutAlt, FaCog, FaChevronDown, FaGem, FaPlusCircle, FaBars, FaTimes, FaEnvelope, FaWhatsapp } from 'react-icons/fa';
 import GemStoreModal from './GemStoreModal'; 
 import { useInbox } from '../hooks/useInbox';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
+const WHATSAPP_LINK =
+    'https://wa.me/34664497889?text=' +
+    encodeURIComponent('Hola, vengo de kiq.es. Quiero un presupuesto de montaje.');
 
 export default function Cabecera() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -20,7 +23,7 @@ export default function Cabecera() {
     const pathname = usePathname();
 
     const { 
-        openLoginModal, openRegisterModal, openCalculatorModal, 
+        openLoginModal, openCalculatorModal, 
         userGems, isGemStoreOpen, openGemStore, closeGemStore,
         isLoggedIn, accessToken, userProfile, handleLogout, handleSuccessfulLogin 
     } = useUI();
@@ -72,7 +75,6 @@ export default function Cabecera() {
 
     const localHandleLogout = () => { handleLogout(); router.push('/'); setIsUserDropdownOpen(false); };
     const handleOpenLogin = () => { setIsMenuOpen(false); openLoginModal(); };
-    const handleOpenRegister = () => { setIsMenuOpen(false); openRegisterModal(); };
     const handleOpenCalculator = () => { setIsMenuOpen(false); openCalculatorModal('public'); };
 
     const goToPanel = () => {
@@ -120,11 +122,6 @@ export default function Cabecera() {
         : 'bg-indigo-600 text-white hover:bg-indigo-700';
 
     // Botón Pedir Precio: Translúcido vs Oscuro
-    const buttonPriceClass = isTransparent
-        ? 'bg-white/20 text-white backdrop-blur-md border border-white/30 hover:bg-white/30'
-        : 'bg-slate-900 text-white hover:bg-slate-800';
-
-
     // --------------------------------------------------------------------------------
     // RENDERIZADO
     // --------------------------------------------------------------------------------
@@ -231,14 +228,19 @@ export default function Cabecera() {
 
                     {/* MENU DESKTOP */}
                     <div className="hidden md:flex items-center space-x-2">
-                        <button onClick={handleOpenLogin} className={`px-4 py-2 rounded-full text-sm font-bold transition-colors ${buttonGhostClass}`}>
-                            Iniciar Sesión
-                        </button>
-                        <button onClick={handleOpenRegister} className={`px-5 py-2.5 rounded-full text-sm font-bold transition-transform hover:scale-105 shadow-md ${buttonActionClass}`}>
-                            Hazte Kiqer
-                        </button>
-                        <button onClick={handleOpenCalculator} className={`ml-2 px-5 py-2.5 rounded-full text-sm font-bold transition-transform hover:scale-105 shadow-md ${buttonPriceClass}`}>
+                        <button onClick={handleOpenCalculator} className={`px-5 py-2.5 rounded-full text-sm font-bold transition-transform hover:scale-105 shadow-md ${buttonActionClass}`}>
                             Pedir Precio
+                        </button>
+                        <a
+                            href={WHATSAPP_LINK}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-colors ${buttonGhostClass}`}
+                        >
+                            <FaWhatsapp /> WhatsApp
+                        </a>
+                        <button onClick={handleOpenLogin} className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${buttonGhostClass} opacity-80`}>
+                            Entrar
                         </button>
                     </div>
 
@@ -264,17 +266,20 @@ export default function Cabecera() {
                     </div>
 
                     <div className="space-y-4 flex-1">
-                        <button onClick={handleOpenLogin} className="w-full text-left p-4 text-lg font-semibold text-gray-700 hover:bg-gray-50 rounded-xl flex items-center justify-between group">
-                            Iniciar Sesión <FaChevronDown className="-rotate-90 text-gray-300 group-hover:text-indigo-500"/>
+                        <button onClick={handleOpenCalculator} className="w-full py-4 text-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-lg">
+                            Pedir Precio
                         </button>
-                        <button onClick={handleOpenRegister} className="w-full text-left p-4 text-lg font-bold text-indigo-600 hover:bg-indigo-50 rounded-xl border border-indigo-100">
-                            Hazte Kiqer
-                        </button>
-                    </div>
-
-                    <div className="mt-auto">
-                        <button onClick={handleOpenCalculator} className="w-full py-4 text-lg font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-lg transition-transform active:scale-95">
-                            Pedir Precio Ahora
+                        <a
+                            href={WHATSAPP_LINK}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="w-full text-left p-4 text-lg font-semibold text-gray-700 hover:bg-gray-50 rounded-xl flex items-center gap-3"
+                        >
+                            <FaWhatsapp className="text-green-600" /> WhatsApp
+                        </a>
+                        <button onClick={handleOpenLogin} className="w-full text-left p-3 text-sm font-medium text-gray-500 hover:bg-gray-50 rounded-xl">
+                            Entrar
                         </button>
                     </div>
                 </div>

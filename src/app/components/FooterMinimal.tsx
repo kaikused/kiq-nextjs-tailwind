@@ -43,7 +43,7 @@ export default function FooterMinimal() {
                 <FaTiktok size={20} />
               </a>
               {/* WHATSAPP */}
-              <a href="https://wa.me/34664497889" 
+              <a href={"https://wa.me/34664497889?text=" + encodeURIComponent("Hola, vengo de kiq.es. Quiero un presupuesto de montaje.")} 
                  target="_blank" rel="noopener noreferrer" aria-label="Contacto directo WhatsApp" 
                  className="hover:text-green-500 transition-colors">
                 <FaWhatsapp size={22} />

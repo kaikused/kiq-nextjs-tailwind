@@ -130,7 +130,19 @@ export function UIProvider({ children }: { children: ReactNode }) {
         setIsRegisterModalOpen(true);
     };
 
+    const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
+
+    const warmupCalculatorApi = () => {
+        fetch(`${API_BASE_URL}/calcular_presupuesto/tarifario`).catch(() => {});
+        fetch(`${API_BASE_URL}/health`).catch(() => {});
+    };
+
+    useEffect(() => {
+        warmupCalculatorApi();
+    }, []);
+
     const openCalculatorModal = (mode: 'public' | 'lite' = 'public') => {
+        warmupCalculatorApi();
         closeModals();
         setCalculatorMode(mode);
         setIsCalculatorModalOpen(true);

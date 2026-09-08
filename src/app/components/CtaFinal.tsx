@@ -1,11 +1,15 @@
 'use client'; 
-import { FaWhatsapp, FaPhoneAlt, FaClock } from "react-icons/fa";
+import { FaWhatsapp, FaPhoneAlt, FaClock, FaCalculator } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { useUI } from '../context/UIContext';
+
+const WHATSAPP_LINK =
+  "https://wa.me/34664497889?text=" +
+  encodeURIComponent("Hola, vengo de kiq.es. Quiero un presupuesto de montaje.");
+const CALL_LINK = "tel:+34664497889";
 
 export default function CtaFinal() {
-  
-  const WHATSAPP_LINK = "https://wa.me/34664497889";
-  const CALL_LINK = "tel:+34664497889";
+  const { openCalculatorModal } = useUI();
 
   return (
     <section id="contacto" className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 py-28 px-6 overflow-hidden">
@@ -32,20 +36,19 @@ export default function CtaFinal() {
         
         <p className="text-xl text-gray-300 mb-12 leading-relaxed max-w-lg mx-auto">
           Pide tu presupuesto <strong className="text-white">gratuito</strong> en minutos. <br />
-          Envíanos una foto del mueble por WhatsApp y <span className="text-white font-semibold">te respondemos al instante.</span>
+          Describe el mueble o sube una foto. Te damos precio y lo cerramos por WhatsApp.
         </p>
         
         <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
           
-          <motion.a 
-            href={WHATSAPP_LINK} 
-            target="_blank" 
-            rel="noopener noreferrer" 
+          <motion.button 
+            type="button"
+            onClick={() => openCalculatorModal('public')}
             animate={{ 
               boxShadow: [
-                "0 0 0 0px rgba(34, 197, 94, 0.4)", 
-                "0 0 0 15px rgba(34, 197, 94, 0.0)",
-                "0 0 0 0px rgba(34, 197, 94, 0.0)"
+                "0 0 0 0px rgba(99, 102, 241, 0.4)", 
+                "0 0 0 15px rgba(99, 102, 241, 0.0)",
+                "0 0 0 0px rgba(99, 102, 241, 0.0)"
               ]
             }}
             transition={{ 
@@ -55,10 +58,22 @@ export default function CtaFinal() {
             }}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
+            className="group relative inline-flex items-center justify-center rounded-2xl bg-indigo-600 px-10 py-4 font-black text-white text-sm uppercase tracking-widest hover:bg-indigo-500 transition-colors shadow-2xl w-full sm:w-auto"
+          >
+            <FaCalculator className="h-6 w-6 mr-3" />
+            Pedir precio
+          </motion.button>
+
+          <motion.a 
+            href={WHATSAPP_LINK} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             className="group relative inline-flex items-center justify-center rounded-2xl bg-green-600 px-10 py-4 font-black text-white text-sm uppercase tracking-widest hover:bg-green-500 transition-colors shadow-2xl shadow-green-950/30 w-full sm:w-auto"
           >
             <FaWhatsapp className="h-6 w-6 mr-3 group-hover:rotate-12 transition-transform" />
-            WHATSAPP INMEDIATO
+            WhatsApp
           </motion.a>
           
           <motion.a 
@@ -68,7 +83,7 @@ export default function CtaFinal() {
             className="inline-flex items-center justify-center rounded-2xl bg-white px-10 py-4 font-black text-slate-950 text-sm uppercase tracking-widest hover:bg-gray-50 transition-all shadow-lg w-full sm:w-auto"
           >
             <FaPhoneAlt className="h-5 w-5 mr-3 text-slate-600" />
-            LLAMAR AHORA
+            Llamar
           </motion.a>
         </div>
 

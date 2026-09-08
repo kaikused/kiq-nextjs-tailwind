@@ -71,22 +71,20 @@ const HeroAspiracional = ({ onOpenCalculator }: HeroAspiracionalProps) => {
         </p>
 
         <div className="mt-12 flex flex-col space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-400">
-          {/* Botón Principal: Scroll a servicios */}
           <button
-            onClick={handleScrollToServices}
+            onClick={onOpenCalculator}
             className="group flex items-center justify-center rounded-full bg-indigo-600 px-8 py-4 text-lg font-bold text-white transition-all hover:bg-indigo-500 hover:scale-105 shadow-lg hover:shadow-indigo-500/30"
           >
-            Descubre nuestros servicios
+            <FaCalculator className="mr-3 h-5 w-5" />
+            Pedir precio
             <FaChevronRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
           </button>
 
-          {/* Botón Secundario: Abre la Calculadora/Chat */}
           <button
-            onClick={onOpenCalculator}
+            onClick={handleScrollToServices}
             className="flex items-center justify-center rounded-full bg-white/10 px-8 py-4 text-lg font-bold text-white backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105 border border-white/30"
           >
-            <FaCalculator className="mr-3 h-5 w-5 text-indigo-300" />
-            Calcular presupuesto con IA
+            Ver montajes
           </button>
         </div>
       </div>

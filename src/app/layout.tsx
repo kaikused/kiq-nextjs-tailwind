@@ -30,8 +30,8 @@ const permanentMarker = Permanent_Marker({
 });
 
 export const metadata: Metadata = {
-  title: 'KIQ - Montaje de Muebles',
-  description: 'El marketplace de montadores de muebles en Málaga.',
+  title: 'KIQ - Montaje de muebles en Málaga',
+  description: 'Presupuesto de montaje en minutos. Foto o descripción, precio y WhatsApp. Málaga y Costa del Sol.',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
   themeColor: '#ffffff', // Mejor blanco para que combine con el header transparente/blanco
 };

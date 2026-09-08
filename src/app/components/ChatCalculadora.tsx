@@ -63,6 +63,7 @@ interface ChatCalculadoraProps {
 const T = {
     inputPlaceholderName: "Escribe tu nombre...",
     welcomeName: "¡Hola! Soy el asistente virtual de KIQ. Para empezar, ¿cómo te llamas?",
+    welcomePublic: "¡Hola! ¿Qué necesitas montar? Escríbelo o adjunta una foto.",
     welcomeUser: "¡Genial, {name}! Ahora cuéntame qué necesitas montar. Puedes describirlo o subir una foto.",
     inputPlaceholderDescription: "Ej: Montar un armario PAX de 2 puertas y una cómoda",
     welcomeBack: "¡Hola de nuevo, {name}! Cuéntame qué necesitas montar para tu nuevo trabajo.",
@@ -109,8 +110,8 @@ const T = {
     loginSuccess: "¡Contraseña correcta! Guardando cotización...",
     restartButton: "Calcular otro presupuesto",
 
-    preRegister: "¡Genial, {name}! Tu precio estimado es de {priceText}. En un toque te lo mandamos por WhatsApp.",
-    preRegisterConsulta: "{name}, voy a necesitar cotizar esto con un montador especializado: no entra en las categorías habituales. En un toque te lo mandamos por WhatsApp.",
+    preRegister: "Tu precio estimado es de {priceText}. En un toque te lo mandamos por WhatsApp.",
+    preRegisterConsulta: "Voy a necesitar cotizar esto con un montador especializado: no entra en las categorías habituales. En un toque te lo mandamos por WhatsApp.",
     sendByWhatsapp: "Cotizar por WhatsApp",
     quoteSentWhatsapp: "¡Listo! Se abre WhatsApp con tu presupuesto.",
     quoteSentWhatsappNoPdf: "WhatsApp se abre con el precio. El PDF no se pudo guardar en Google ahora mismo; te lo enviamos por correo a Kiq si el envío de email está activo.",
@@ -278,23 +279,27 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
         if (nombreUsuario && mode === 'lite') {
             setIsAuthenticated(true);
-            addBotMessage(T.welcomeBack.replace('{name}', nombreUsuario), 800);
+            addBotMessage(T.welcomeBack.replace('{name}', nombreUsuario), 400);
             setStage('describe');
         } else {
             setIsAuthenticated(false);
             if (promptInicial && !esSaludo) {
-                addBotMessage(`¡Hola! Veo que quieres cotizar: "${promptInicial}". Para darte el precio exacto, primero dime: ¿cómo te llamas?`, 600);
-                setStage('ask_name'); 
+                addBotMessage(`Vamos a cotizar: "${promptInicial}".`, 400);
+                setStage('describe');
+                setTimeout(() => {
+                    sendDataToBackend(promptInicial, null).then((analysisData) => {
+                        if (analysisData) processInitialAnalysis(analysisData);
+                    });
+                }, 500);
             } else {
-                // Si no hay prompt o es solo un saludo, empezamos normal
-                addBotMessage(T.welcomeName, 800);
-                setStage('ask_name');
+                addBotMessage(T.welcomePublic, 400);
+                setStage('describe');
             }
         }
     }
 
     const showOptions = (newOptions: Option[]) => {
-        setTimeout(() => setOptions(newOptions), 1200);
+        setTimeout(() => setOptions(newOptions), 400);
     };
 
     const addUserMessage = (text: string) => {
@@ -331,18 +336,9 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
         } else if (stage === 'describe') {
             setCurrentTextDescription(text);
-            if (currentImageFiles && currentImageFiles.length > 0) {
-                const analysisData = await sendDataToBackend(text, currentImageFiles);
-                if (analysisData) {
-                    await processInitialAnalysis(analysisData);
-                }
-            } else {
-                addBotMessage(T.askForPhoto);
-                showOptions([
-                    { text: T.yesAddPhoto, value: 'yes_photo' },
-                    { text: T.noContinue, value: 'no_photo' }
-                ]);
-                setStage('awaiting_photo_option');
+            const analysisData = await sendDataToBackend(text, currentImageFiles);
+            if (analysisData) {
+                await processInitialAnalysis(analysisData);
             }
         } else if (stage === 'awaiting_description_after_photo') {
             setCurrentTextDescription(text);
@@ -687,7 +683,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         formData.append('descripcion', text);              // Nombre moderno
         
         formData.append('language', 'es');
-        formData.append('client_name', clientName);
+        formData.append('client_name', clientName || 'Cliente');
         if (carpetaGcs) {
             formData.append('carpeta_gcs', carpetaGcs);
         }
@@ -811,16 +807,13 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         const esConsulta = Boolean(analysisData.consulta_manual) || items.some((item: { tipo?: string }) => item.tipo === 'consulta');
         const anclajeSiempre = ['balda', 'espejo', 'cabecero', 'soporte_tv', 'cortinas', 'tendedero', 'cama_abatible', 'mueble_bano'];
         const anclajeObvio = items.length > 0 && items.every((item: { tipo?: string }) => anclajeSiempre.includes(item.tipo || ''));
+        const anclajeSi = !esConsulta && Boolean(analysisData.analisis.necesita_anclaje_general || anclajeObvio);
 
-        if (!esConsulta && analysisData.analisis.necesita_anclaje_general && !anclajeObvio) {
-            await askFinalQuestions();
-        } else {
-            setBudgetDetails(prev => [...prev, {
-                label: T.summaryLabels.anchoring,
-                value: anclajeObvio ? T.si : T.no,
-            }]);
-            await askForAddress();
-        }
+        setBudgetDetails(prev => [...prev, {
+            label: T.summaryLabels.anchoring,
+            value: anclajeSi ? T.si : T.no,
+        }]);
+        await askForAddress();
     }
 
     async function askFinalQuestions() {
@@ -851,7 +844,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     // 🔧 FIX: AÑADIDO ESTE CAMPO CRÍTICO QUE FALTABA
                     descripcion_texto_mueble: currentTextDescription, 
                     descripcion: currentTextDescription, // Por si acaso
-                    client_name: clientName,
+                    client_name: clientName || 'Cliente',
                     carpeta_gcs: carpetaGcs,
                 })
             });
@@ -893,7 +886,6 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             } else {
                 addBotMessage(
                     (esConsulta ? T.preRegisterConsulta : T.preRegister)
-                    .replace('{name}', clientName)
                     .replace('{priceText}', priceText)
                 );
                 showOptions([
@@ -918,7 +910,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     canal: 'whatsapp',
-                    nombre: clientName,
+                    nombre: clientName || 'Cliente',
                     descripcion: currentTextDescription,
                     direccion: finalAddress,
                     precio_calculado: finalPrice,
@@ -1077,6 +1069,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                         <button
                             key={opt.value}
                             className={`font-bold py-2 px-4 rounded-full transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5 ${
+                                opt.value === 'send_by_whatsapp' ? 'bg-green-500 text-white hover:bg-green-600' :
                                 opt.value === 'confirm_yes' || opt.value === 'open_register_modal' ? 'bg-acento text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                             onClick={() => handleOptionClick(opt)}
@@ -1091,7 +1084,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 <button
                     id="kiq-attach-button"
                     className="p-2 text-gray-400 hover:text-acento transition-colors"
-                    style={{ display: (stage === 'describe' || stage === 'awaiting_photo_option' || (stage === 'describe' && isAuthenticated)) ? 'block' : 'none' }}
+                    style={{ display: (stage === 'describe' || stage === 'awaiting_photo_option' || stage === 'awaiting_description_after_photo' || (stage === 'describe' && isAuthenticated)) ? 'block' : 'none' }}
                     onClick={() => fileInputRef.current?.click()}
                 >
                     <FaPaperclip className="w-5 h-5" />
