@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { FaPaperclip, FaPaperPlane, FaRobot, FaImage } from "react-icons/fa";
+import { FaPaperclip, FaPaperPlane, FaImage } from "react-icons/fa";
 import { useRouter } from 'next/navigation';
 import RegisterInChatModal from './RegisterInChatModal';
 
@@ -134,9 +134,9 @@ const getToken = () => {
 
 const TypingIndicator = () => (
     <div className="flex space-x-1 p-2">
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
     </div>
 );
 
@@ -964,21 +964,21 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
 
     return (
-        <div className="bg-superficie shadow-xl rounded-lg overflow-hidden flex flex-col h-full relative">
+        <div className="bg-white flex flex-col h-full relative font-sans">
 
             <div
                 ref={messagesContainerRef}
                 id="kiq-chat-messages-full"
-                className="h-96 p-6 overflow-y-auto space-y-4 bg-gray-50"
+                className="flex-1 min-h-0 p-6 overflow-y-auto space-y-4 bg-slate-50"
             >
                 {messages.map((msg, index) => {
                     if (msg.type === 'ia-analysis') {
                         return (
                             <div key={index} className="flex justify-start w-full mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4 w-full max-w-sm">
-                                    <div className="flex items-center gap-2 mb-3 border-b border-gray-100 pb-2">
-                                        <FaRobot className="text-acento w-5 h-5" />
-                                        <span className="font-semibold text-gray-800 text-sm">Análisis de IA</span>
+                                <div className="bg-white rounded-2xl ring-1 ring-slate-200/80 p-4 w-full max-w-sm">
+                                    <div className="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2">
+                                        <FaImage className="text-indigo-600 w-4 h-5" />
+                                        <span className="font-titulo font-semibold text-slate-800 text-sm">Foto de referencia</span>
                                     </div>
 
                                     <div className="flex gap-4">
@@ -1015,10 +1015,10 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     return (
                         <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                             <div
-                                className={`rounded-2xl px-4 py-3 max-w-xs shadow-sm ${
+                                className={`rounded-2xl px-4 py-3 max-w-[min(100%,20rem)] ${
                                     msg.type === 'user'
-                                        ? 'bg-primario-oscuro text-white rounded-tr-none'
-                                        : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
+                                        ? 'bg-indigo-600 text-white rounded-tr-none'
+                                        : 'bg-white text-slate-800 rounded-tl-none ring-1 ring-slate-100'
                                 }`}
                             >
                                 {msg.text}
@@ -1029,7 +1029,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
                 {isTyping && (
                     <div className="flex justify-start animate-in fade-in zoom-in duration-200">
-                        <div className="rounded-2xl rounded-tl-none px-4 py-3 bg-white border border-gray-100 shadow-sm">
+                        <div className="rounded-2xl rounded-tl-none px-4 py-3 bg-white ring-1 ring-slate-100">
                             <TypingIndicator />
                         </div>
                     </div>
@@ -1060,17 +1060,18 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
             </div>
 
-            <div id="kiq-chat-options-full" className="p-4 bg-white border-t border-gray-100 flex flex-wrap gap-2 justify-center min-h-[80px]">
+            {options.length > 0 && (
+            <div id="kiq-chat-options-full" className="p-4 bg-white border-t border-slate-100 flex flex-wrap gap-2 justify-center">
                 {options.map((opt) => {
                     if (opt.href) {
-                        return (<a key={opt.value} href={opt.href} target={opt.isExternal ? '_blank' : '_self'} rel="noopener noreferrer" className="bg-green-500 text-white font-bold py-2 px-4 rounded-full transition-transform hover:scale-105 inline-flex items-center gap-2 shadow-md"> {opt.text} </a>)
+                        return (<a key={opt.value} href={opt.href} target={opt.isExternal ? '_blank' : '_self'} rel="noopener noreferrer" className="bg-green-600 text-white font-semibold py-2.5 px-5 rounded-full inline-flex items-center gap-2"> {opt.text} </a>)
                     }
                     return (
                         <button
                             key={opt.value}
-                            className={`font-bold py-2 px-4 rounded-full transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5 ${
-                                opt.value === 'send_by_whatsapp' ? 'bg-green-500 text-white hover:bg-green-600' :
-                                opt.value === 'confirm_yes' || opt.value === 'open_register_modal' ? 'bg-acento text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            className={`font-semibold py-2.5 px-5 rounded-full transition-colors ${
+                                opt.value === 'send_by_whatsapp' ? 'bg-green-600 text-white hover:bg-green-500' :
+                                opt.value === 'confirm_yes' || opt.value === 'open_register_modal' ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                             }`}
                             onClick={() => handleOptionClick(opt)}
                         >
@@ -1079,11 +1080,12 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     )
                 })}
             </div>
+            )}
 
-            <div className="p-4 bg-white border-t border-gray-200 flex items-center">
+            <div className="p-4 bg-white border-t border-slate-200 flex items-center">
                 <button
                     id="kiq-attach-button"
-                    className="p-2 text-gray-400 hover:text-acento transition-colors"
+                    className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
                     style={{ display: (stage === 'describe' || stage === 'awaiting_photo_option' || stage === 'awaiting_description_after_photo' || (stage === 'describe' && isAuthenticated)) ? 'block' : 'none' }}
                     onClick={() => fileInputRef.current?.click()}
                 >
@@ -1099,13 +1101,13 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                     placeholder={inputPlaceholder}
-                    className="flex-grow px-4 py-3 mx-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-acento focus:border-transparent transition-all"
+                    className="flex-grow px-4 py-3 mx-2 bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-sans"
                     disabled={isInputDisabled}
                 />
 
                 <button
                     id="kiq-send-button"
-                    className="p-3 bg-acento text-white rounded-full shadow-md hover:shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleSend}
                     disabled={isSendButtonDisabled}
                 >
