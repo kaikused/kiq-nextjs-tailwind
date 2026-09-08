@@ -320,22 +320,29 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 }, 800);
             } else {
                 // Si veníamos de un saludo, ahora pedimos la descripción
-                addBotMessage(`¡Encantado, ${text}! ¿Qué necesitas montar hoy? (Ej: Un armario, una mesa...)`);
+                addBotMessage(`¡Encantado, ${text}! ¿Qué necesitas montar hoy? (Ej: Un armario, una balda, una mesa...)`);
                 setStage('describe');
             }
 
         } else if (stage === 'describe') {
             setCurrentTextDescription(text);
-            addBotMessage(T.askForPhoto);
-            showOptions([
-                { text: T.yesAddPhoto, value: 'yes_photo' },
-                { text: T.noContinue, value: 'no_photo' }
-            ]);
-            setStage('awaiting_photo_option');
+            if (currentImageFiles && currentImageFiles.length > 0) {
+                const analysisData = await sendDataToBackend(text, currentImageFiles);
+                if (analysisData) {
+                    await processInitialAnalysis(analysisData);
+                }
+            } else {
+                addBotMessage(T.askForPhoto);
+                showOptions([
+                    { text: T.yesAddPhoto, value: 'yes_photo' },
+                    { text: T.noContinue, value: 'no_photo' }
+                ]);
+                setStage('awaiting_photo_option');
+            }
         } else if (stage === 'awaiting_description_after_photo') {
             setCurrentTextDescription(text);
             const analysisData = await sendDataToBackend(text, currentImageFiles);
-            
+
             if (analysisData) { 
                 await processInitialAnalysis(analysisData);
             } else if (!needsClarity) {
@@ -726,7 +733,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         }
         // 2. DESCONOCIDO
         if (muebleKey === 'desconocido') {
-            addBotMessage("Lo siento, no he entendido qué mueble es ese. ¿Podrías intentar describirlo de otra forma?");
+            addBotMessage("No he reconocido ese mueble. Prueba con el nombre habitual: balda, canapé, armario, mesa, cómoda...");
             setStage('describe');
             setCurrentTextDescription('');
             return;
@@ -788,11 +795,17 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         setStoredAnalysis(analysisData.analisis);
         setUploadedImageUrls(analysisData.image_urls);
         setImageLabels(analysisData.image_labels);
-        
-        if (analysisData.analisis.necesita_anclaje_general) {
+
+        const items = analysisData.analisis.items || [];
+        const anclajeObvio = items.length > 0 && items.every((item: { tipo?: string }) => item.tipo === 'balda');
+
+        if (analysisData.analisis.necesita_anclaje_general && !anclajeObvio) {
             await askFinalQuestions();
         } else {
-            setBudgetDetails(prev => [...prev, { label: T.summaryLabels.anchoring, value: T.no }]);
+            setBudgetDetails(prev => [...prev, {
+                label: T.summaryLabels.anchoring,
+                value: anclajeObvio ? T.si : T.no,
+            }]);
             await askForAddress();
         }
     }
