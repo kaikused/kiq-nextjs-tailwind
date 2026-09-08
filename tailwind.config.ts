@@ -12,7 +12,7 @@ const config: Config = {
       fontFamily: {
         sans: 'var(--font-family-base)',
         titulo: 'var(--font-family-titulo)',
-        especial: 'var(--font-family-especial)',
+        especial: 'var(--font-family-titulo)',
       },
       // --- 2. Conectamos los colores (que definiremos en el siguiente paso) ---
       colors: {

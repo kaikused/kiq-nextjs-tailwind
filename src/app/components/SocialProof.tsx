@@ -43,7 +43,7 @@ export default function SocialProof() {
         
         {/* Título de la sección */}
         <div className="text-center mb-16">
-            <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl tracking-tight">
+            <h2 className="font-titulo text-4xl font-extrabold text-gray-900 sm:text-5xl tracking-tight">
                 Resultados que hablan solos
             </h2>
             <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto font-light leading-relaxed">

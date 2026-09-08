@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Manrope, Permanent_Marker, Work_Sans } from 'next/font/google';
+import { Manrope, Work_Sans } from 'next/font/google';
 import './globals.css';
 import { UIProvider } from './context/UIContext'; 
 import Cabecera from './components/Cabecera'; // ✅ Correcto: Usamos el componente potente
@@ -17,15 +17,8 @@ const workSans = Work_Sans({
 
 const manrope = Manrope({ 
   subsets: ['latin'], 
-  weight: ['600', '800'],
+  weight: ['600', '700', '800'],
   variable: '--font-family-titulo',
-  display: 'swap',
-});
-
-const permanentMarker = Permanent_Marker({ 
-  subsets: ['latin'], 
-  weight: '400',
-  variable: '--font-family-especial',
   display: 'swap',
 });
 
@@ -43,13 +36,13 @@ export default function RootLayout({
 }) {
   return (
     // ✨ MEJORA: scroll-smooth para que los botones de ancla (Hero) funcionen elegante
-    <html lang="es" className={`${workSans.variable} ${manrope.variable} ${permanentMarker.variable} scroll-smooth`}>
+    <html lang="es" className={`${workSans.variable} ${manrope.variable} scroll-smooth`}>
       <head>
         <link rel="preconnect" href="https://kiq-calculadora.onrender.com" />
         <link rel="dns-prefetch" href="https://kiq-calculadora.onrender.com" />
       </head>
       {/* ✨ MEJORA: bg-white y text-slate-900 definen la base del diseño Apple */}
-      <body className="antialiased bg-white text-slate-900">
+      <body className="font-sans antialiased bg-white text-slate-900">
         <UIProvider>
           <Cabecera />
           <main className="relative z-0">

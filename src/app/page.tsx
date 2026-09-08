@@ -11,15 +11,14 @@ import HeroAspiracional from './components/HeroAspiracional';
 // Ya no importamos ChatCalculadora aquí, porque vivirá dentro del Modal Global
 
 // --- COMPONENTES NO CRÍTICOS (Lazy Load) ---
+const ComoFunciona = dynamic(() => import('./components/ComoFunciona'), {
+  ssr: true
+});
+
 const SocialProof = dynamic(() => import('./components/SocialProof'), { 
   loading: () => <div className="h-96 bg-gray-50 animate-pulse" />,
   ssr: true 
 });
-
-/*const KiqOutletSection = dynamic(() => import('./components/KiqOutletSection'), {
-  loading: () => <div className="h-96 bg-gray-50 animate-pulse" />,
-  ssr: true
-});*/
 
 const Testimonios = dynamic(() => import('./components/Testimonios'), {
   loading: () => <div className="h-96 bg-white animate-pulse" />,
@@ -39,27 +38,15 @@ export default function Home() {
   const { openCalculatorModal } = useUI();
 
   return (
-    <main className="min-h-screen bg-white selection:bg-indigo-100">
-      
-      <div className="animate-in fade-in duration-500 flex flex-col min-h-screen">
-        
-        <div className="flex-grow">
-          {/* 🚀 CAMBIO CLAVE: 
-             Cuando el usuario pulse el botón del Hero, llamamos a openCalculatorModal('public').
-             Esto abrirá EL MISMO MODAL que usas en la cabecera. Adiós problemas de solapamiento.
-          */}
-          <HeroAspiracional onOpenCalculator={() => openCalculatorModal('public')} />
-          
-          <div id="servicios-section">
-              <SocialProof />
-          </div>
-          <CtaFinal />
-          <Testimonios />
-        </div>
-
-        <FooterMinimal />
-
+    <div className="min-h-screen bg-white selection:bg-indigo-100">
+      <HeroAspiracional onOpenCalculator={() => openCalculatorModal('public')} />
+      <ComoFunciona />
+      <div id="servicios-section">
+        <SocialProof />
       </div>
-    </main>
+      <Testimonios />
+      <CtaFinal />
+      <FooterMinimal />
+    </div>
   );
 }

@@ -65,8 +65,8 @@ export default function Testimonios() {
             <span className="inline-block px-4 py-1.5 mb-4 text-xs font-bold tracking-widest text-indigo-600 uppercase bg-indigo-50 rounded-full">
               Testimonios Reales
             </span>
-            <h2 className="text-4xl md:text-6xl font-black text-gray-900 leading-[1.1]">
-              Lo que opinan de <span className="text-indigo-600 font-black italic">nosotros</span>
+            <h2 className="font-titulo text-4xl md:text-5xl font-extrabold text-gray-900 leading-[1.15] tracking-tight">
+              Lo que opinan de <span className="text-indigo-600">nosotros</span>
             </h2>
           </motion.div>
 
@@ -132,7 +132,7 @@ export default function Testimonios() {
             href={GOOGLE_REVIEWS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-3 px-12 py-5 bg-gray-900 text-white rounded-full font-black text-sm uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl hover:shadow-indigo-200 active:scale-95"
+            className="group flex items-center gap-3 px-8 py-3.5 bg-gray-900 text-white rounded-full font-semibold text-sm hover:bg-indigo-600 transition-colors"
           >
             Ver más experiencias <FaExternalLinkAlt className="group-hover:translate-x-1 transition-transform" />
           </a>

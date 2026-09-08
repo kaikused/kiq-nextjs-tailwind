@@ -29,7 +29,7 @@
 body {
   background-color: var(--color-fondo);
   color: var(--color-texto-principal);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-family-base), system-ui, sans-serif;
 }
 
 /* --- UTILIDADES DE GRADIENTE (La Magia Visual) --- */

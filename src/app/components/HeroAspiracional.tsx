@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { FaChevronRight, FaCalculator } from 'react-icons/fa';
+import { FaChevronRight } from 'react-icons/fa';
 
 // Definimos la interfaz para recibir la función del padre
 interface HeroAspiracionalProps {
@@ -61,13 +61,12 @@ const HeroAspiracional = ({ onOpenCalculator }: HeroAspiracionalProps) => {
       {/* --- Contenido Principal --- */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center text-white sm:px-6 lg:px-8 max-w-5xl mx-auto">
         
-        <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl md:text-7xl leading-tight animate-in fade-in slide-in-from-bottom-4 duration-700">
-          Tu hogar, <span className="text-indigo-400">listo para vivir</span>.
+        <h1 className="font-titulo text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl leading-tight animate-in fade-in slide-in-from-bottom-4 duration-700">
+          Montaje de muebles en <span className="text-indigo-300">Málaga</span>.
         </h1>
         
-        <p className="mt-6 max-w-3xl text-xl sm:text-2xl text-gray-200 font-light animate-in fade-in slide-in-from-bottom-5 duration-700 delay-200 leading-relaxed">
-          Olvídate de las cajas, las instrucciones confusas y las herramientas. 
-          <strong className="font-semibold text-white"> Profesionales verificados</strong> para un acabado de revista, garantizado.
+        <p className="mt-6 max-w-2xl text-lg sm:text-xl text-gray-200 font-normal animate-in fade-in slide-in-from-bottom-5 duration-700 delay-200 leading-relaxed">
+          Foto o descripción, precio en minutos, lo cerramos por WhatsApp.
         </p>
 
         <div className="mt-12 flex flex-col space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-400">
@@ -75,7 +74,6 @@ const HeroAspiracional = ({ onOpenCalculator }: HeroAspiracionalProps) => {
             onClick={onOpenCalculator}
             className="group flex items-center justify-center rounded-full bg-indigo-600 px-8 py-4 text-lg font-bold text-white transition-all hover:bg-indigo-500 hover:scale-105 shadow-lg hover:shadow-indigo-500/30"
           >
-            <FaCalculator className="mr-3 h-5 w-5" />
             Pedir precio
             <FaChevronRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
           </button>
