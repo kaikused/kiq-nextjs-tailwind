@@ -111,7 +111,8 @@ const T = {
 
     preRegister: "¡Genial, {name}! Tu precio estimado es de {priceText}. En un toque te lo mandamos por WhatsApp.",
     sendByWhatsapp: "Enviar por WhatsApp",
-    quoteSentWhatsapp: "¡Listo! Se abre WhatsApp con tu presupuesto. Nos llega también a Kiq.",
+    quoteSentWhatsapp: "¡Listo! Se abre WhatsApp con tu presupuesto.",
+    quoteSentWhatsappNoPdf: "WhatsApp se abre con el precio. El PDF no se pudo guardar en Google ahora mismo; te lo enviamos por correo a Kiq si el envío de email está activo.",
     quoteSendError: "No hemos podido abrir el envío. Pulsa de nuevo en WhatsApp.",
 };
 
@@ -846,9 +847,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 ]);
             }
 
-            const priceRangeStart = data.total_presupuesto;
-            const priceRangeEnd = priceRangeStart + 20;
-            const priceText = `€${priceRangeStart} - €${priceRangeEnd}`;
+            const priceText = `${data.total_presupuesto}€`;
 
             if (isAuthenticated) {
                 addBotMessage(T.confirmPublish.replace('{priceText}', priceText));
@@ -897,7 +896,14 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             setIsTyping(false);
             if (!response.ok) throw new Error(data.error || 'Error al enviar');
 
-            addBotMessage(T.quoteSentWhatsapp);
+            if (data.pdf_url) {
+                addBotMessage(T.quoteSentWhatsapp);
+            } else {
+                addBotMessage(T.quoteSentWhatsappNoPdf);
+                if (data.gcs_error) {
+                    console.warn("GCS PDF:", data.gcs_error);
+                }
+            }
             if (data.whatsapp_url) {
                 window.open(data.whatsapp_url, '_blank');
             }
