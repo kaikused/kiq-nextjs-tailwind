@@ -695,6 +695,8 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             
             if (data.ACLARACION_REQUERIDA) {
                 setIsTyping(false);
+                if (data.image_urls) setUploadedImageUrls(data.image_urls);
+                if (data.image_labels) setImageLabels(data.image_labels);
                 setNeedsClarity(data as AclaracionRequerida); 
                 await askForQuantityClarity(data.MUEBLE_PROBABLE, data.CAMPOS_FALTANTES); 
                 return null; 
