@@ -109,7 +109,10 @@ const T = {
     loginSuccess: "¡Contraseña correcta! Guardando cotización...",
     restartButton: "Calcular otro presupuesto",
 
-    preRegister: "¡Genial, {name}! Tu precio estimado es de {priceText}. Haz clic en 'Aceptar' para guardar tu presupuesto y que un montador te contacte."
+    preRegister: "¡Genial, {name}! Tu precio estimado es de {priceText}. En un toque te lo mandamos por WhatsApp.",
+    sendByWhatsapp: "Enviar por WhatsApp",
+    quoteSentWhatsapp: "¡Listo! Se abre WhatsApp con tu presupuesto. Nos llega también a Kiq.",
+    quoteSendError: "No hemos podido abrir el envío. Pulsa de nuevo en WhatsApp.",
 };
 
 
@@ -596,6 +599,12 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             return;
         }
         
+        if (option.value === 'send_by_whatsapp') {
+            addUserMessage(option.text);
+            setOptions([]);
+            await handleDeliverQuote();
+            return;
+        }
         // D) BOTÓN DE ACEPTAR PRECIO (ABRIR REGISTRO)
         if (option.value === 'open_register_modal') {
             setIsRegisterModalOpen(true);
@@ -855,14 +864,14 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 ]);
                 setStage('confirm_publish_loggedin');
             } else {
-                // --- CAMBIO PARA EL POPUP ---
                 addBotMessage(T.preRegister
                     .replace('{name}', clientName)
                     .replace('{priceText}', priceText)
                 );
-                // YA NO ABRIMOS EL MODAL AUTOMÁTICAMENTE
-                showOptions([{ text: "Aceptar y Continuar", value: "open_register_modal" }]);
-                setStage('modal_open'); 
+                showOptions([
+                    { text: T.sendByWhatsapp, value: 'send_by_whatsapp' },
+                ]);
+                setStage('ask_delivery');
             }
         } catch (error) {
             console.error("Error en sendQuoteToBackend:", error);
@@ -872,7 +881,46 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         }
     }
 
-    const isInputDisabled = isTyping || options.length > 0 || stage === 'done' || stage === 'confirm_publish_loggedin' || stage === 'modal_open';
+    async function handleDeliverQuote() {
+        setIsTyping(true);
+        setOptions([]);
+        try {
+            const response = await fetch(`${API_BASE_URL}/enviar_presupuesto`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    canal: 'whatsapp',
+                    nombre: clientName,
+                    descripcion: currentTextDescription,
+                    direccion: finalAddress,
+                    precio_calculado: finalPrice,
+                    desglose: fullBreakdown,
+                    imagenes: uploadedImageUrls,
+                    etiquetas: imageLabels,
+                })
+            });
+            const data = await response.json();
+            setIsTyping(false);
+            if (!response.ok) throw new Error(data.error || 'Error al enviar');
+
+            addBotMessage(T.quoteSentWhatsapp);
+            if (data.whatsapp_url) {
+                window.open(data.whatsapp_url, '_blank');
+            }
+            showOptions([{ text: T.restartButton, value: 'restart' }]);
+            setStage('quote_sent');
+        } catch (error) {
+            console.error('Error enviando presupuesto:', error);
+            setIsTyping(false);
+            addBotMessage(T.quoteSendError);
+            showOptions([
+                { text: T.sendByWhatsapp, value: 'send_by_whatsapp' },
+            ]);
+            setStage('ask_delivery');
+        }
+    }
+
+    const isInputDisabled = isTyping || options.length > 0 || stage === 'done' || stage === 'confirm_publish_loggedin' || stage === 'quote_sent';
     
     const inputPlaceholder = 
         stage === 'ask_name' ? T.inputPlaceholderName :
