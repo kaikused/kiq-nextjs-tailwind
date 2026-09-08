@@ -586,10 +586,10 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
         // C) MEDIDA (CANAPÉS / CAMAS)  <-- NUEVA LÓGICA AGREGADA
         if (option.value.startsWith('clarify_size_')) {
-            const size = option.value.split('_')[2]; // pequeno, mediano, grande
+            const size = option.value.split('_')[2];
+            const medidaCm = { pequeno: '90', mediano: '150', grande: '180' }[size] || size;
             const muebleName = needsClarity?.MUEBLE_PROBABLE || 'canape';
-            // Concatenamos para que el backend reconozca la medida
-            const newDescription = `${muebleName} medida ${size}`;
+            const newDescription = `${muebleName} ${medidaCm}`;
 
             addUserMessage(option.text);
             setOptions([]); setNeedsClarity(null); setCurrentTextDescription(newDescription);
