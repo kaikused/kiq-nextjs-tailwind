@@ -82,8 +82,8 @@ const T = {
     finalQuestion: "Entendido. Una última pregunta: ¿el mueble (o alguno de ellos) necesita anclarse a la pared?",
     si: "Sí",
     no: "No",
-    askAddressMessage: "Perfecto. Por último, para calcular el desplazamiento, ¿podrías indicarme tu código postal o la zona/barrio de Málaga?",
-    inputPlaceholderAddress: "Ej: 29010 o Teatinos",
+    askAddressMessage: "Perfecto. Por último, para calcular el desplazamiento, ¿podrías indicarme tu código postal o la zona (Málaga, Marbella, Ronda...)",
+    inputPlaceholderAddress: "Ej: 29010, Teatinos o Ronda",
     inputPlaceholderQuantity: "Ej: 3", 
     processingAddress: "Calculando la ruta...",
     summaryLabels: {
@@ -837,14 +837,17 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             
             setFullBreakdown(data.desglose || null);
 
-            if (uploadedImageUrls && uploadedImageUrls.length > 0 && imageLabels && imageLabels.length > 0) {
+            const mueblesCotizados = (data.desglose?.muebles_cotizados || []).map(
+                (item: ItemDesglose) => item.item
+            );
+            if (uploadedImageUrls && uploadedImageUrls.length > 0) {
                 setMessages(prev => [
                     ...prev,
                     {
                         type: 'ia-analysis',
                         text: '',
                         imageUrl: uploadedImageUrls[0],
-                        labels: imageLabels
+                        labels: mueblesCotizados.length ? mueblesCotizados : ['Foto de referencia']
                     }
                 ]);
             }
