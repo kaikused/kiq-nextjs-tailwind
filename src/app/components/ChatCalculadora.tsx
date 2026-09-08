@@ -964,12 +964,12 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
 
     return (
-        <div className="bg-white flex flex-col h-full relative font-sans">
+        <div className="bg-white flex flex-col h-full min-h-0 relative font-sans">
 
             <div
                 ref={messagesContainerRef}
                 id="kiq-chat-messages-full"
-                className="flex-1 min-h-0 p-6 overflow-y-auto space-y-4 bg-slate-50"
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 bg-slate-50"
             >
                 {messages.map((msg, index) => {
                     if (msg.type === 'ia-analysis') {
@@ -1015,7 +1015,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     return (
                         <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                             <div
-                                className={`rounded-2xl px-4 py-3 max-w-[min(100%,20rem)] ${
+                                className={`rounded-2xl px-4 py-3 max-w-[85%] md:max-w-[min(100%,20rem)] ${
                                     msg.type === 'user'
                                         ? 'bg-indigo-600 text-white rounded-tr-none'
                                         : 'bg-white text-slate-800 rounded-tl-none ring-1 ring-slate-100'
@@ -1061,15 +1061,15 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             </div>
 
             {options.length > 0 && (
-            <div id="kiq-chat-options-full" className="p-4 bg-white border-t border-slate-100 flex flex-wrap gap-2 justify-center">
+            <div id="kiq-chat-options-full" className="shrink-0 p-3 md:p-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
                 {options.map((opt) => {
                     if (opt.href) {
-                        return (<a key={opt.value} href={opt.href} target={opt.isExternal ? '_blank' : '_self'} rel="noopener noreferrer" className="bg-green-600 text-white font-semibold py-2.5 px-5 rounded-full inline-flex items-center gap-2"> {opt.text} </a>)
+                        return (<a key={opt.value} href={opt.href} target={opt.isExternal ? '_blank' : '_self'} rel="noopener noreferrer" className="w-full sm:w-auto bg-green-600 text-white font-semibold py-3 sm:py-2.5 px-5 rounded-full inline-flex items-center justify-center gap-2 min-h-[44px]"> {opt.text} </a>)
                     }
                     return (
                         <button
                             key={opt.value}
-                            className={`font-semibold py-2.5 px-5 rounded-full transition-colors ${
+                            className={`w-full sm:w-auto font-semibold py-3 sm:py-2.5 px-5 rounded-full transition-colors min-h-[44px] touch-manipulation ${
                                 opt.value === 'send_by_whatsapp' ? 'bg-green-600 text-white hover:bg-green-500' :
                                 opt.value === 'confirm_yes' || opt.value === 'open_register_modal' ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                             }`}
@@ -1082,10 +1082,10 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             </div>
             )}
 
-            <div className="p-4 bg-white border-t border-slate-200 flex items-center">
+            <div className="shrink-0 p-3 md:p-4 bg-white border-t border-slate-200 flex items-center gap-1 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <button
                     id="kiq-attach-button"
-                    className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                    className="p-2.5 text-slate-400 hover:text-indigo-600 transition-colors shrink-0 touch-manipulation"
                     style={{ display: (stage === 'describe' || stage === 'awaiting_photo_option' || stage === 'awaiting_description_after_photo' || (stage === 'describe' && isAuthenticated)) ? 'block' : 'none' }}
                     onClick={() => fileInputRef.current?.click()}
                 >
@@ -1101,13 +1101,13 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                     placeholder={inputPlaceholder}
-                    className="flex-grow px-4 py-3 mx-2 bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-sans"
+                    className="flex-grow min-w-0 px-4 py-3 mx-1 bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-sans text-base"
                     disabled={isInputDisabled}
                 />
 
                 <button
                     id="kiq-send-button"
-                    className="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 touch-manipulation"
                     onClick={handleSend}
                     disabled={isSendButtonDisabled}
                 >

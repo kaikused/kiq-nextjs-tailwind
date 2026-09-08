@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Manrope, Work_Sans } from 'next/font/google';
 import './globals.css';
 import { UIProvider } from './context/UIContext'; 
@@ -25,8 +25,14 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: 'KIQ - Montaje de muebles en Málaga',
   description: 'Presupuesto de montaje en minutos. Foto o descripción, precio y WhatsApp. Málaga y Costa del Sol.',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
-  themeColor: '#ffffff', // Mejor blanco para que combine con el header transparente/blanco
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
+  themeColor: '#ffffff',
 };
 
 export default function RootLayout({
