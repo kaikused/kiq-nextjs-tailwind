@@ -150,6 +150,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
     const [storedAnalysis, setStoredAnalysis] = useState<Analysis | null>(null);
     const [uploadedImageUrls, setUploadedImageUrls] = useState<string[] | null>(null);
     const [imageLabels, setImageLabels] = useState<string[] | null>(null);
+    const [carpetaGcs, setCarpetaGcs] = useState<string | null>(null);
     
     const [fullBreakdown, setFullBreakdown] = useState<DesgloseCompleto | null>(null); 
     const [needsClarity, setNeedsClarity] = useState<AclaracionRequerida | null>(null);
@@ -262,6 +263,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         setStoredAnalysis(null);
         setUploadedImageUrls(null);
         setImageLabels(null);
+        setCarpetaGcs(null);
         setIsTyping(false);
         setFullBreakdown(null);
         setNeedsClarity(null);
@@ -683,6 +685,9 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         
         formData.append('language', 'es');
         formData.append('client_name', clientName);
+        if (carpetaGcs) {
+            formData.append('carpeta_gcs', carpetaGcs);
+        }
         
         if (files && files.length > 0) {
             for (let i = 0; i < files.length; i++) {
@@ -704,6 +709,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 setIsTyping(false);
                 if (data.image_urls) setUploadedImageUrls(data.image_urls);
                 if (data.image_labels) setImageLabels(data.image_labels);
+                if (data.carpeta_gcs) setCarpetaGcs(data.carpeta_gcs);
                 setNeedsClarity(data as AclaracionRequerida); 
                 await askForQuantityClarity(data.MUEBLE_PROBABLE, data.CAMPOS_FALTANTES); 
                 return null; 
@@ -788,13 +794,14 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         addBotMessage(clarificationMessage);
     }
 
-    async function processInitialAnalysis(analysisData: { analisis: Analysis; image_urls: string[] | null; image_labels: string[] | null } | null) {
+    async function processInitialAnalysis(analysisData: { analisis: Analysis; image_urls: string[] | null; image_labels: string[] | null; carpeta_gcs?: string | null } | null) {
         if (!analysisData || !analysisData.analisis) {
             return;
         }
         setStoredAnalysis(analysisData.analisis);
         setUploadedImageUrls(analysisData.image_urls);
         setImageLabels(analysisData.image_labels);
+        if (analysisData.carpeta_gcs) setCarpetaGcs(analysisData.carpeta_gcs);
 
         const items = analysisData.analisis.items || [];
         const anclajeObvio = items.length > 0 && items.every((item: { tipo?: string }) => item.tipo === 'balda');
@@ -838,7 +845,8 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     // 🔧 FIX: AÑADIDO ESTE CAMPO CRÍTICO QUE FALTABA
                     descripcion_texto_mueble: currentTextDescription, 
                     descripcion: currentTextDescription, // Por si acaso
-                    client_name: clientName
+                    client_name: clientName,
+                    carpeta_gcs: carpetaGcs,
                 })
             });
             if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
@@ -908,6 +916,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     desglose: fullBreakdown,
                     imagenes: uploadedImageUrls,
                     etiquetas: imageLabels,
+                    carpeta_gcs: carpetaGcs,
                 })
             });
             const data = await response.json();
