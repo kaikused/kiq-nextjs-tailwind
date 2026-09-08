@@ -692,10 +692,9 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
             const data = await response.json();
             
-            if (response.status === 422 && data.ACLARACION_REQUERIDA) {
+            if (data.ACLARACION_REQUERIDA) {
                 setIsTyping(false);
                 setNeedsClarity(data as AclaracionRequerida); 
-                // Pasamos los campos faltantes a la función
                 await askForQuantityClarity(data.MUEBLE_PROBABLE, data.CAMPOS_FALTANTES); 
                 return null; 
             }
