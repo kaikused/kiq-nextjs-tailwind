@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent, KeyboardEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import Image from 'next/image';
 import { useUI } from '../context/UIContext';
 import { PlusIcon, SendArrowIcon } from './ChatComposerIcons';
@@ -41,13 +41,6 @@ const HeroAspiracional = () => {
     abrirCotizador(heroPrompt);
   };
 
-  const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      abrirCotizador(heroPrompt);
-    }
-  };
-
   return (
     <section className="relative h-dvh min-h-[100svh] w-full overflow-hidden bg-gray-900 font-sans">
       <div className="absolute inset-0">
@@ -79,12 +72,12 @@ const HeroAspiracional = () => {
 
           <form
             onSubmit={handlePedirPrecio}
-            className="flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_12px_40px_rgba(0,0,0,0.28)] ring-1 ring-inset ring-white/30 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/12"
+            className="flex h-12 items-center overflow-hidden rounded-full bg-white/15 px-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_12px_40px_rgba(0,0,0,0.28)] ring-1 ring-inset ring-white/30 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/12"
           >
             <button
               type="button"
               onClick={() => abrirCotizador(heroPrompt)}
-              className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full text-white/75 hover:bg-white/15 hover:text-white transition-colors"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white/75 hover:bg-white/15 hover:text-white transition-colors"
               aria-label="Adjuntar foto en el cotizador"
             >
               <PlusIcon className="h-5 w-5" />
@@ -92,22 +85,21 @@ const HeroAspiracional = () => {
             <label htmlFor="hero-cotizar" className="sr-only">
               Mensaje para cotizar
             </label>
-            <textarea
+            <input
               id="hero-cotizar"
-              rows={1}
+              type="text"
               value={heroPrompt}
               onChange={(event) => setHeroPrompt(event.target.value)}
-              onKeyDown={handleComposerKeyDown}
-              placeholder="Un armario PAX de 2 puertas…"
+              placeholder="Armario PAX de 2 puertas…"
               autoComplete="off"
-              className="min-h-11 sm:min-h-12 max-h-24 flex-1 resize-none bg-transparent py-3 text-[16px] leading-snug text-white placeholder:text-white/45 focus:outline-none"
+              className="h-11 min-w-0 flex-1 overflow-hidden bg-transparent px-1 text-[16px] leading-none text-white placeholder:truncate placeholder:text-white/45 focus:outline-none"
             />
             <button
               type="submit"
-              className="flex h-10 w-11 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-white hover:bg-indigo-400 transition-colors"
+              className="flex h-11 w-11 shrink-0 items-center justify-center text-white/80 hover:text-white transition-colors"
               aria-label="Enviar y pedir precio"
             >
-              <SendArrowIcon className="h-4 w-4" />
+              <SendArrowIcon className="h-5 w-5" />
             </button>
           </form>
 
