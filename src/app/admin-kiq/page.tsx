@@ -4,7 +4,7 @@ import {
   FaLock, FaSync, FaBriefcase, FaUserTie, FaSearch, 
   FaUsers, FaMoneyBillWave, FaCheckCircle, FaExclamationCircle, 
   FaClock, FaToolbox, FaUser, FaTrash, FaGem, FaKey, FaSignOutAlt,
-  FaPencilAlt, FaPaperPlane, FaInbox, FaFilePdf
+  FaPencilAlt, FaPaperPlane, FaInbox, FaFilePdf, FaPlus, FaCalculator
 } from 'react-icons/fa';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   
   // UI
-  const [activeTab, setActiveTab] = useState<'inbox' | 'trabajos' | 'usuarios'>('inbox');
+  const [activeTab, setActiveTab] = useState<'inbox' | 'trabajos' | 'usuarios' | 'cotizar'>('inbox');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modal Gemas (Nuevo)
@@ -482,6 +482,12 @@ export default function AdminDashboard() {
                         )}
                     </button>
                     <button 
+                        onClick={() => setActiveTab('cotizar')} 
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'cotizar' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                    >
+                        <FaCalculator /> Cotizar a mano
+                    </button>
+                    <button 
                         onClick={() => setActiveTab('trabajos')} 
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'trabajos' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
                     >
@@ -513,10 +519,22 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest hidden md:block">
                         {activeTab === 'inbox' ? `${inboxTrabajos.length} por revisar` :
+                         activeTab === 'cotizar' ? 'Llamada / tarifario' :
                          activeTab === 'trabajos' ? `${filteredTrabajos.length} Resultados` : 
                          activeTab === 'usuarios' ? `${filteredUsuarios.length} Resultados` : 'Vista General'}
                     </div>
                 </div>
+
+                {activeTab === 'cotizar' && (
+                  <CotizarManualPanel
+                    adminHeaders={adminHeaders}
+                    onCreated={(t) => {
+                      setTrabajos((prev) => [t, ...prev.filter((j) => j.id !== t.id)]);
+                      openJobModal(t);
+                      setActiveTab('inbox');
+                    }}
+                  />
+                )}
 
                 {/* INBOX KIQ */}
                 {activeTab === 'inbox' && (
@@ -1059,5 +1077,231 @@ function EmptyState({ text }: { text: string }) {
             <FaSearch className="text-4xl mb-3 opacity-20" />
             <p className="text-sm font-medium">{text}</p>
         </div>
+    );
+}
+
+function nuevaLinea() {
+  return { id: `${Date.now()}-${Math.random()}`, tipo: 'canape', cantidad: 1, tipo_puerta: 'batiente', num_puertas: 2, medida: '150' };
+}
+
+function CotizarManualPanel({
+  adminHeaders,
+  onCreated,
+}: {
+  adminHeaders: () => Record<string, string>;
+  onCreated: (t: any) => void;
+}) {
+  const [catalogo, setCatalogo] = useState<{ tipo: string; nombre: string; precio_desde: number; necesita_anclaje: boolean }[]>([]);
+  const [nombre, setNombre] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [email, setEmail] = useState('');
+  const [zona, setZona] = useState('');
+  const [fechaVisita, setFechaVisita] = useState('');
+  const [metodoPago, setMetodoPago] = useState('efectivo');
+  const [descripcion, setDescripcion] = useState('');
+  const [anclaje, setAnclaje] = useState<boolean | null>(null);
+  const [lineas, setLineas] = useState([nuevaLinea()]);
+  const [preview, setPreview] = useState<any>(null);
+  const [mensaje, setMensaje] = useState('');
+  const [guardando, setGuardando] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/calcular_presupuesto/tarifario`)
+      .then((r) => r.json())
+      .then((d) => setCatalogo(d.items || []))
+      .catch(() => setCatalogo([]));
+  }, []);
+
+  const cuerpo = () => ({
+    nombre,
+    telefono,
+    email,
+    direccion: zona,
+    zona,
+    descripcion,
+    metodo_pago: metodoPago,
+    fecha_visita: fechaVisita || null,
+    anclaje,
+    items: lineas.map((l) => ({
+      tipo: l.tipo,
+      cantidad: l.cantidad,
+      tipo_puerta: l.tipo_puerta,
+      num_puertas: l.num_puertas,
+      medida: l.medida,
+    })),
+  });
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      fetch(`${API_BASE_URL}/api/admin/cotizar-manual`, {
+        method: 'POST',
+        headers: adminHeaders(),
+        body: JSON.stringify({ ...cuerpo(), guardar: false }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.error) setPreview(null);
+          else setPreview(d);
+        })
+        .catch(() => setPreview(null));
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nombre, telefono, email, zona, descripcion, metodoPago, fechaVisita, anclaje, JSON.stringify(lineas)]);
+
+  const guardar = async () => {
+    setMensaje('');
+    setGuardando(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/cotizar-manual`, {
+        method: 'POST',
+        headers: adminHeaders(),
+        body: JSON.stringify({ ...cuerpo(), guardar: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMensaje(data.error || 'No se pudo guardar');
+        return;
+      }
+      onCreated(data);
+    } catch {
+      setMensaje('Error de red');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const inputCls = 'w-full border border-slate-200 rounded-xl p-3 text-sm';
+
+  return (
+    <div className="grid lg:grid-cols-5 gap-6 mb-8">
+      <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-100 p-6">
+        <h2 className="font-bold text-slate-800 mb-1">Cotizar a mano</h2>
+        <p className="text-xs text-slate-500 mb-5">Para llamadas. Usa el tarifario, genera PDF y deja la ficha como visitante.</p>
+        <div className="grid sm:grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nombre</label>
+            <input className={inputCls} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Quien llama" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Teléfono / WhatsApp</label>
+            <input className={inputCls} value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="664..." />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Email (opcional)</label>
+            <input className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Zona</label>
+            <input className={inputCls} value={zona} onChange={(e) => setZona(e.target.value)} placeholder="Marbella, Málaga..." />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Fecha y hora</label>
+            <input type="datetime-local" className={inputCls} value={fechaVisita} onChange={(e) => setFechaVisita(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Pago</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setMetodoPago('bizum')} className={`py-2.5 rounded-xl text-sm font-bold border ${metodoPago === 'bizum' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white border-slate-200'}`}>Bizum</button>
+              <button type="button" onClick={() => setMetodoPago('efectivo')} className={`py-2.5 rounded-xl text-sm font-bold border ${metodoPago === 'efectivo' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white border-slate-200'}`}>Efectivo</button>
+            </div>
+          </div>
+        </div>
+        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Qué hay que montar</label>
+        <textarea className={`${inputCls} mb-4`} rows={2} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Si lo dejas vacío, se arma con las líneas del tarifario" />
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-bold text-slate-400 uppercase">Tarifario</p>
+          <button type="button" onClick={() => setLineas((prev) => [...prev, nuevaLinea()])} className="text-sm font-bold text-indigo-600 flex items-center gap-1">
+            <FaPlus /> Añadir mueble
+          </button>
+        </div>
+        <div className="space-y-3">
+          {lineas.map((linea, idx) => {
+            const item = catalogo.find((c) => c.tipo === linea.tipo);
+            return (
+              <div key={linea.id} className="border border-slate-100 rounded-xl p-3 bg-slate-50/80">
+                <div className="grid sm:grid-cols-12 gap-2 items-end">
+                  <div className="sm:col-span-6">
+                    <select
+                      className={inputCls}
+                      value={linea.tipo}
+                      onChange={(e) => setLineas((prev) => prev.map((l) => l.id === linea.id ? { ...l, tipo: e.target.value } : l))}
+                    >
+                      {catalogo.map((c) => (
+                        <option key={c.tipo} value={c.tipo}>{c.nombre} · desde {c.precio_desde}€</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-3">
+                    <input type="number" min={1} className={inputCls} value={linea.cantidad} onChange={(e) => setLineas((prev) => prev.map((l) => l.id === linea.id ? { ...l, cantidad: Number(e.target.value) || 1 } : l))} />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <button type="button" onClick={() => setLineas((prev) => prev.filter((l) => l.id !== linea.id || prev.length === 1))} className="w-full py-3 text-sm text-slate-500">Quitar</button>
+                  </div>
+                </div>
+                {linea.tipo === 'armario' && (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <select className={inputCls} value={linea.tipo_puerta} onChange={(e) => setLineas((prev) => prev.map((l) => l.id === linea.id ? { ...l, tipo_puerta: e.target.value } : l))}>
+                      <option value="batiente">Puerta batiente</option>
+                      <option value="corredera">Corredera</option>
+                    </select>
+                    <input type="number" min={2} className={inputCls} value={linea.num_puertas} onChange={(e) => setLineas((prev) => prev.map((l) => l.id === linea.id ? { ...l, num_puertas: Number(e.target.value) || 2 } : l))} placeholder="Puertas" />
+                  </div>
+                )}
+                {(linea.tipo === 'canape' || linea.tipo === 'cama') && (
+                  <select className={`${inputCls} mt-2`} value={linea.medida} onChange={(e) => setLineas((prev) => prev.map((l) => l.id === linea.id ? { ...l, medida: e.target.value } : l))}>
+                    <option value="90">90 cm</option>
+                    <option value="105">105 cm</option>
+                    <option value="135">135 cm</option>
+                    <option value="150">150 cm</option>
+                    <option value="180">180 cm</option>
+                  </select>
+                )}
+                {item?.necesita_anclaje && idx === 0 && (
+                  <p className="text-[11px] text-slate-400 mt-2">Este tipo suele llevar anclaje (15€) si lo dejas en automático.</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-4">
+          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Anclaje</label>
+          <div className="grid grid-cols-3 gap-2">
+            <button type="button" onClick={() => setAnclaje(null)} className={`py-2 rounded-xl text-xs font-bold border ${anclaje === null ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200'}`}>Auto</button>
+            <button type="button" onClick={() => setAnclaje(true)} className={`py-2 rounded-xl text-xs font-bold border ${anclaje === true ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200'}`}>Sí</button>
+            <button type="button" onClick={() => setAnclaje(false)} className={`py-2 rounded-xl text-xs font-bold border ${anclaje === false ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200'}`}>No</button>
+          </div>
+        </div>
+      </div>
+      <div className="lg:col-span-2">
+        <div className="bg-white rounded-2xl border border-slate-100 p-6 sticky top-24">
+          <p className="text-xs font-bold text-slate-400 uppercase mb-2">Total tarifario</p>
+          <p className="text-4xl font-black text-slate-900 mb-4">{preview?.total != null ? `${Math.round(preview.total)}€` : '—'}</p>
+          {preview && (
+            <ul className="text-sm text-slate-600 space-y-1 mb-4">
+              <li>Muebles {Math.round(preview.muebles || 0)}€</li>
+              <li>Extras {Math.round(preview.extras || 0)}€</li>
+              <li>Desplazamiento {Math.round(preview.desplazamiento || 0)}€ ({preview.distancia_km || 0} km)</li>
+              <li>Anclaje {Math.round(preview.anclaje || 0)}€</li>
+            </ul>
+          )}
+          {Array.isArray(preview?.detalles) && preview.detalles.length > 0 && (
+            <p className="text-xs text-slate-400 mb-4">{preview.detalles.join(' · ')}</p>
+          )}
+          {mensaje && <p className="text-sm text-indigo-600 mb-3">{mensaje}</p>}
+          <button
+            type="button"
+            onClick={guardar}
+            disabled={guardando || !preview?.total}
+            className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black disabled:opacity-40"
+          >
+            {guardando ? 'Guardando…' : 'Crear ficha y PDF'}
+          </button>
+          <p className="text-xs text-slate-400 mt-3">Entra en Por revisar como visitante. Luego confirmas y envías el PDF por Aquí cotiza.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
     );
 }
