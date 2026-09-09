@@ -44,6 +44,8 @@ interface TrabajoCliente {
   etiquetas?: { tipo?: string; [key: string]: unknown };
   metodo_pago?: string;
   cobrado?: boolean;
+  zona?: string;
+  fecha_visita?: string;
 }
 
 function waMontador(phone?: string) {
@@ -133,7 +135,7 @@ function ContenidoPanelCliente() {
     }
   };
 
-  const activosEstados = ['pendiente', 'aceptado', 'revision_cliente', 'aprobado_cliente_stripe'];
+  const activosEstados = ['cotizacion', 'pendiente', 'aceptado', 'revision_cliente', 'aprobado_cliente_stripe'];
   const hechosEstados = ['completado', 'cancelado', 'cancelado_incidencia'];
 
   const lista = trabajos.filter((t) => t.etiquetas?.tipo !== 'outlet');
@@ -144,6 +146,8 @@ function ContenidoPanelCliente() {
 
   const getStatusInfo = (estado: string) => {
     switch (estado) {
+      case 'cotizacion':
+        return { label: 'Kiq está revisando', color: 'bg-amber-100 text-amber-800 border-amber-200' };
       case 'pendiente':
         return { label: 'En espera de montador', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
       case 'aceptado':
@@ -180,8 +184,8 @@ function ContenidoPanelCliente() {
   }
 
   const emptyActivos = {
-    title: 'Aún no hay montajes en el tablero',
-    body: 'Cuando Kiq publique tu montaje, lo verás aquí hasta que un montador lo acepte.',
+    title: 'Aún no hay montajes aquí',
+    body: 'Si pides precio con la cuenta, verás la ficha en revisión de Kiq. Cuando la publiquemos, pasará a espera de montador.',
   };
 
   return (
@@ -193,8 +197,7 @@ function ContenidoPanelCliente() {
               Hola, {userProfile.nombre}
             </h1>
             <p className="text-slate-500 text-sm mt-1">
-              El precio te llega por WhatsApp. Aquí verás el montaje cuando lo
-              publiquemos en el tablero.{' '}
+              El precio te llega por WhatsApp. Aquí ves si Kiq está revisando tu montaje y, cuando se publique, si hay montador.{' '}
               <Link href="/panel-cliente/configuracion" className="text-indigo-600 font-semibold hover:underline">
                 Teléfono y datos
               </Link>
@@ -273,8 +276,17 @@ function ContenidoPanelCliente() {
                   key={trabajo.trabajo_id}
                   title={trabajo.descripcion}
                   price={trabajo.precio_calculado}
-                  date={new Date(trabajo.fecha_creacion).toLocaleDateString('es-ES')}
-                  location={trabajo.direccion}
+                  date={
+                    trabajo.fecha_visita
+                      ? new Date(trabajo.fecha_visita).toLocaleString('es-ES', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : new Date(trabajo.fecha_creacion).toLocaleDateString('es-ES')
+                  }
+                  location={trabajo.zona || trabajo.direccion}
                   imageUrl={trabajo.imagenes_urls?.[0]}
                   statusLabel={status.label}
                   statusColorClass={status.color}
@@ -288,6 +300,7 @@ function ContenidoPanelCliente() {
                     />
                   )}
                   <div className="mt-4 flex flex-col gap-3">
+                    {trabajo.estado !== 'cotizacion' && (
                     <p className="text-sm text-slate-600">
                       {trabajo.cobrado
                         ? 'Pagado al montador.'
@@ -295,6 +308,7 @@ function ContenidoPanelCliente() {
                           ? 'Pago: Bizum al montador (fuera de la app).'
                           : 'Pago: efectivo al montador (fuera de la app).'}
                     </p>
+                    )}
                     {wa && trabajo.estado === 'aceptado' && (
                       <a
                         href={wa}

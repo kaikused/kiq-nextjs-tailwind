@@ -38,6 +38,16 @@ const nextConfig = {
     ],
   },
   // 4. 🛡️ CABECERAS DE SEGURIDAD (Esto te dará el 100/100 en Best Practices)
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.kiq.es' }],
+        destination: 'https://kiq.es/:path*',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

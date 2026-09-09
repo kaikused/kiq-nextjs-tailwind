@@ -46,6 +46,8 @@ interface TrabajoMontador {
   desglose?: DesgloseDetallado;
   metodo_pago?: string;
   cobrado?: boolean;
+  zona?: string;
+  fecha_visita?: string;
 }
 
 function waLink(phone?: string) {
@@ -370,7 +372,7 @@ function ContenidoPanelMontador() {
   const emptyCopy = {
     disponibles: {
       title: 'Aún no hay montajes publicados',
-      body: 'Cuando Kiq publique un trabajo en el tablero, te aparecerá aquí con zona y precio. Completa tu zona y teléfono para estar listo.',
+      body: 'Si no hay nada, o no coincide con tu zona. Pon la zona en ajustes (ej. Málaga) para ver los montajes de ahí.',
     },
     activos: {
       title: 'Nada en curso',
@@ -474,11 +476,18 @@ function ContenidoPanelMontador() {
                   title={trabajo.descripcion}
                   price={trabajo.precio_calculado}
                   date={
-                    trabajo.fecha_creacion
-                      ? new Date(trabajo.fecha_creacion).toLocaleDateString('es-ES')
-                      : ''
+                    trabajo.fecha_visita
+                      ? new Date(trabajo.fecha_visita).toLocaleString('es-ES', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : trabajo.fecha_creacion
+                        ? new Date(trabajo.fecha_creacion).toLocaleDateString('es-ES')
+                        : ''
                   }
-                  location={trabajo.direccion}
+                  location={trabajo.zona || trabajo.direccion}
                   imageUrl={trabajo.imagenes_urls?.[0]}
                   statusLabel={status.label}
                   statusColorClass={status.color}

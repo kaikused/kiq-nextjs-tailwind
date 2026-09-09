@@ -35,7 +35,7 @@ export default function AdminDashboard() {
   const [resetMessage, setResetMessage] = useState('');
   const [jobModal, setJobModal] = useState<any | null>(null);
   const [jobForm, setJobForm] = useState({
-    descripcion: '', direccion: '', precio: '', telefono: '', metodo_pago: 'efectivo', cobrado: false,
+    descripcion: '', direccion: '', precio: '', telefono: '', metodo_pago: 'efectivo', cobrado: false, zona: '', fecha_visita: '',
   });
   const [jobMessage, setJobMessage] = useState('');
 
@@ -187,6 +187,8 @@ export default function AdminDashboard() {
       telefono: t.telefono_cliente || '',
       metodo_pago: t.metodo_pago === 'bizum' ? 'bizum' : 'efectivo',
       cobrado: Boolean(t.cobrado),
+      zona: t.zona || '',
+      fecha_visita: t.fecha_visita ? String(t.fecha_visita).slice(0, 16) : '',
     });
   };
 
@@ -204,6 +206,8 @@ export default function AdminDashboard() {
           telefono: jobForm.telefono,
           metodo_pago: jobForm.metodo_pago,
           cobrado: jobForm.cobrado,
+          zona: jobForm.zona,
+          fecha_visita: jobForm.fecha_visita || null,
         }),
       });
       const data = await res.json();
@@ -233,6 +237,8 @@ export default function AdminDashboard() {
             telefono: jobForm.telefono,
             metodo_pago: jobForm.metodo_pago,
             cobrado: jobForm.cobrado,
+            zona: jobForm.zona,
+            fecha_visita: jobForm.fecha_visita || null,
           }),
         });
         const saved = await saveRes.json();
@@ -784,6 +790,21 @@ export default function AdminDashboard() {
                     type="text"
                     value={jobForm.direccion}
                     onChange={(e) => setJobForm({ ...jobForm, direccion: e.target.value })}
+                    className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm"
+                />
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Zona (filtro montadores)</label>
+                <input
+                    type="text"
+                    value={jobForm.zona}
+                    onChange={(e) => setJobForm({ ...jobForm, zona: e.target.value })}
+                    placeholder="Ej. Sevilla"
+                    className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm"
+                />
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Fecha y hora de visita</label>
+                <input
+                    type="datetime-local"
+                    value={jobForm.fecha_visita}
+                    onChange={(e) => setJobForm({ ...jobForm, fecha_visita: e.target.value })}
                     className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm"
                 />
                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Teléfono</label>
