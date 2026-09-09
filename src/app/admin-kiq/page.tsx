@@ -210,6 +210,18 @@ export default function AdminDashboard() {
     });
   };
 
+  const copyPdfLink = async () => {
+    if (!jobModal?.pdf_code) return;
+    const url = pdfHref(jobModal.pdf_code);
+    const texto = `Presupuesto Kiq #${jobModal.id}\n${url}`;
+    try {
+      await navigator.clipboard.writeText(texto);
+      setJobMessage('Enlace copiado. Pégalo en Aquí cotiza.');
+    } catch {
+      setJobMessage(url);
+    }
+  };
+
   const handleSaveJob = async () => {
     if (!jobModal) return;
     setJobMessage('');
@@ -939,14 +951,23 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 {jobModal.pdf_code ? (
+                  <div className="grid grid-cols-2 gap-2 mb-3">
                   <a
                     href={pdfHref(jobModal.pdf_code)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mb-3 w-full py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm flex items-center justify-center gap-2 text-slate-800"
+                    className="py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm flex items-center justify-center gap-2 text-slate-800"
                   >
                     <FaFilePdf /> Descargar PDF
                   </a>
+                  <button
+                    type="button"
+                    onClick={copyPdfLink}
+                    className="py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm text-slate-800"
+                  >
+                    Copiar enlace
+                  </button>
+                  </div>
                 ) : (
                   <p className="text-xs text-slate-400 mb-3">Al guardar se genera el PDF para enviárselo al cliente.</p>
                 )}

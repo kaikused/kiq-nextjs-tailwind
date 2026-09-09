@@ -197,7 +197,7 @@ function ContenidoPanelCliente() {
               Hola, {userProfile.nombre}
             </h1>
             <p className="text-slate-500 text-sm mt-1">
-              El precio te llega por WhatsApp. Aquí ves si Kiq está revisando tu montaje y, cuando se publique, si hay montador.{' '}
+              El precio en el chat es orientativo. Kiq te confirma el presupuesto por WhatsApp y te manda el PDF afinado.{' '}
               <Link href="/panel-cliente/configuracion" className="text-indigo-600 font-semibold hover:underline">
                 Teléfono y datos
               </Link>

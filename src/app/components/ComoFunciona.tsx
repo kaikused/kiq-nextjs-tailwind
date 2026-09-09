@@ -12,7 +12,7 @@ const pasos = [
   },
   {
     titulo: 'Lo cierras por WhatsApp',
-    texto: 'Sin complicaciones molestas: recibes tu cotización en un mensaje resumido de WhatsApp y un PDF con los datos del montaje.',
+    texto: 'Escribes a Kiq por WhatsApp. Te confirmamos el presupuesto y te enviamos el PDF afinado en ese mismo chat.',
   },
 ];
 
