@@ -140,10 +140,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
         fetch(`${API_BASE_URL}/health`).catch(() => {});
     };
 
-    useEffect(() => {
-        warmupCalculatorApi();
-    }, []);
-
     const openCalculatorModal = (mode: 'public' | 'lite' = 'public') => {
         warmupCalculatorApi();
         closeModals();

@@ -1,8 +1,17 @@
 'use client';
 import { useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useUI } from '../context/UIContext';
 import { FaTimes } from 'react-icons/fa';
-import ChatCalculadora from './ChatCalculadora';
+
+const ChatCalculadora = dynamic(() => import('./ChatCalculadora'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center text-slate-500 text-sm">
+      Cargando cotizador…
+    </div>
+  ),
+});
 
 export default function CalculatorModal() {
   const { isCalculatorModalOpen, closeModals, calculatorMode, userProfile } = useUI();

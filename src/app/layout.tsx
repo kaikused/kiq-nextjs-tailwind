@@ -43,11 +43,6 @@ export default function RootLayout({
   return (
     // ✨ MEJORA: scroll-smooth para que los botones de ancla (Hero) funcionen elegante
     <html lang="es" className={`${workSans.variable} ${manrope.variable} scroll-smooth`}>
-      <head>
-        <link rel="preconnect" href="https://kiq-calculadora.onrender.com" />
-        <link rel="dns-prefetch" href="https://kiq-calculadora.onrender.com" />
-      </head>
-      {/* ✨ MEJORA: bg-white y text-slate-900 definen la base del diseño Apple */}
       <body className="font-sans antialiased bg-white text-slate-900">
         <UIProvider>
           <Cabecera />

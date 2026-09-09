@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FaGoogle, FaStar, FaExternalLinkAlt } from 'react-icons/fa';
-import { motion } from 'framer-motion';
 
 type Review = {
   author_name: string;
@@ -57,18 +56,14 @@ export default function Testimonios() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8 text-center md:text-left">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
+          <div>
             <span className="inline-block px-4 py-1.5 mb-4 text-xs font-bold tracking-widest text-indigo-600 uppercase bg-indigo-50 rounded-full">
               Testimonios Reales
             </span>
             <h2 className="font-titulo text-4xl md:text-5xl font-extrabold text-gray-900 leading-[1.15] tracking-tight">
               Lo que opinan de <span className="text-indigo-600">nosotros</span>
             </h2>
-          </motion.div>
+          </div>
 
           <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 flex items-center gap-6 mx-auto md:mx-0 shadow-sm">
             <div className="text-center">
@@ -89,15 +84,11 @@ export default function Testimonios() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           {reviews.map((r, i) => (
-            <motion.a
+            <a
               key={r.author_name + i}
               href={r.google_maps_uri}
               target="_blank"
               rel="noopener noreferrer"
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.1 }}
               className="group flex flex-col justify-between p-8 bg-white rounded-[2.5rem] border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_25px_50px_rgba(79,70,229,0.12)] transition-all"
             >
               <div>
@@ -123,7 +114,7 @@ export default function Testimonios() {
                 </div>
                 <FaExternalLinkAlt className="text-gray-200 group-hover:text-indigo-400 transition-colors w-3 h-3" />
               </div>
-            </motion.a>
+            </a>
           ))}
         </div>
 
