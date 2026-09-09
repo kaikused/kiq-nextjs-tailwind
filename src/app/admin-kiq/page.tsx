@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { 
-  FaLock, FaSync, FaBriefcase, FaUserTie, FaSearch, FaArrowUp, 
+  FaLock, FaSync, FaBriefcase, FaUserTie, FaSearch, 
   FaUsers, FaMoneyBillWave, FaChartLine, FaCheckCircle, FaExclamationCircle, 
-  FaClock, FaToolbox, FaUser, FaTrash, FaGem, FaKey, FaSignOutAlt
+  FaClock, FaToolbox, FaUser, FaTrash, FaGem, FaKey, FaSignOutAlt,
+  FaPencilAlt, FaPaperPlane, FaInbox
 } from 'react-icons/fa';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
@@ -21,7 +22,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   
   // UI
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'trabajos' | 'usuarios'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inbox' | 'trabajos' | 'usuarios'>('inbox');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modal Gemas (Nuevo)
@@ -32,6 +33,9 @@ export default function AdminDashboard() {
   } | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [resetMessage, setResetMessage] = useState('');
+  const [jobModal, setJobModal] = useState<any | null>(null);
+  const [jobForm, setJobForm] = useState({ descripcion: '', direccion: '', precio: '', telefono: '' });
+  const [jobMessage, setJobMessage] = useState('');
 
   const adminHeaders = (token = adminToken) => ({
     'Content-Type': 'application/json',
@@ -171,6 +175,81 @@ export default function AdminDashboard() {
     } catch (e) { alert("Error de red"); }
   };
 
+  const openJobModal = (t: any) => {
+    setJobModal(t);
+    setJobMessage('');
+    setJobForm({
+      descripcion: t.descripcion || '',
+      direccion: t.direccion || '',
+      precio: String(t.precio ?? ''),
+      telefono: t.telefono_cliente || '',
+    });
+  };
+
+  const handleSaveJob = async () => {
+    if (!jobModal) return;
+    setJobMessage('');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/trabajo/${jobModal.id}`, {
+        method: 'PATCH',
+        headers: adminHeaders(),
+        body: JSON.stringify({
+          descripcion: jobForm.descripcion,
+          direccion: jobForm.direccion,
+          precio: Number(jobForm.precio),
+          telefono: jobForm.telefono,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setJobMessage(data.error || 'No se pudo guardar');
+        return;
+      }
+      setTrabajos((prev) => prev.map((j) => (j.id === data.id ? data : j)));
+      setJobModal(data);
+      setJobMessage('Guardado');
+    } catch {
+      setJobMessage('Error de red');
+    }
+  };
+
+  const handlePublishJob = async (id: number) => {
+    if (!confirm('¿Publicar en el tablero? El cliente y los montadores lo verán.')) return;
+    try {
+      if (jobModal?.id === id) {
+        const saveRes = await fetch(`${API_BASE_URL}/api/admin/trabajo/${id}`, {
+          method: 'PATCH',
+          headers: adminHeaders(),
+          body: JSON.stringify({
+            descripcion: jobForm.descripcion,
+            direccion: jobForm.direccion,
+            precio: Number(jobForm.precio),
+            telefono: jobForm.telefono,
+          }),
+        });
+        const saved = await saveRes.json();
+        if (!saveRes.ok) {
+          setJobMessage(saved.error || 'No se pudo guardar');
+          return;
+        }
+        setTrabajos((prev) => prev.map((j) => (j.id === saved.id ? saved : j)));
+      }
+      const res = await fetch(`${API_BASE_URL}/api/admin/trabajo/${id}/publicar`, {
+        method: 'POST',
+        headers: adminHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'No se pudo publicar. Revisa dirección y precio.');
+        return;
+      }
+      setTrabajos((prev) => prev.map((j) => (j.id === data.id ? data : j)));
+      if (jobModal?.id === id) setJobModal(null);
+    } catch {
+      alert('Error de red');
+    }
+  };
+
   const handleResetPassword = async () => {
     if (!resetModal) return;
     if (newPassword.length < 8) {
@@ -204,6 +283,7 @@ export default function AdminDashboard() {
   // --- CALCULATED METRICS ---
   const totalIngresos = trabajos.reduce((acc, t) => acc + (t.precio || 0), 0);
   const trabajosActivos = trabajos.filter(t => ['pendiente', 'aceptado', 'revision_cliente'].includes(t.estado)).length;
+  const inboxCount = trabajos.filter(t => t.estado === 'cotizacion').length;
   const montadoresCount = usuarios.filter(u => u.tipo === 'montador').length;
   const clientesCount = usuarios.filter(u => u.tipo === 'cliente').length;
 
@@ -213,6 +293,7 @@ export default function AdminDashboard() {
     t.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.id.toString().includes(searchTerm)
   );
+  const inboxTrabajos = filteredTrabajos.filter(t => t.estado === 'cotizacion');
 
   const filteredUsuarios = usuarios.filter(u => 
     u.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -282,11 +363,11 @@ export default function AdminDashboard() {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                     <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><FaBriefcase size={20}/></div>
-                    <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1"><FaArrowUp size={10}/> Activos</span>
+                    <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-full flex items-center gap-1"><FaInbox size={10}/> Inbox</span>
                 </div>
                 <div>
-                    <h3 className="text-3xl font-black text-slate-900">{trabajosActivos}</h3>
-                    <p className="text-slate-500 text-sm font-medium">Trabajos en curso</p>
+                    <h3 className="text-3xl font-black text-slate-900">{inboxCount}</h3>
+                    <p className="text-slate-500 text-sm font-medium">Por revisar</p>
                 </div>
             </div>
 
@@ -296,7 +377,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                     <h3 className="text-3xl font-black text-slate-900">{totalIngresos.toLocaleString()}€</h3>
-                    <p className="text-slate-500 text-sm font-medium">Volumen total cotizado</p>
+                    <p className="text-slate-500 text-sm font-medium">{trabajosActivos} en el tablero</p>
                 </div>
             </div>
 
@@ -330,6 +411,15 @@ export default function AdminDashboard() {
             <div className="w-full md:w-64 flex-shrink-0">
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 sticky top-24">
                     <button 
+                        onClick={() => setActiveTab('inbox')} 
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'inbox' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                    >
+                        <FaInbox /> Por revisar
+                        {inboxCount > 0 && (
+                          <span className="ml-auto text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">{inboxCount}</span>
+                        )}
+                    </button>
+                    <button 
                         onClick={() => setActiveTab('dashboard')} 
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'dashboard' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
                     >
@@ -339,7 +429,7 @@ export default function AdminDashboard() {
                         onClick={() => setActiveTab('trabajos')} 
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'trabajos' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
                     >
-                        <FaBriefcase /> Gestión de Trabajos
+                        <FaBriefcase /> Tablero
                     </button>
                     <button 
                         onClick={() => setActiveTab('usuarios')} 
@@ -366,10 +456,70 @@ export default function AdminDashboard() {
                         />
                     </div>
                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest hidden md:block">
-                        {activeTab === 'trabajos' ? `${filteredTrabajos.length} Resultados` : 
+                        {activeTab === 'inbox' ? `${inboxTrabajos.length} por revisar` :
+                         activeTab === 'trabajos' ? `${filteredTrabajos.length} Resultados` : 
                          activeTab === 'usuarios' ? `${filteredUsuarios.length} Resultados` : 'Vista General'}
                     </div>
                 </div>
+
+                {/* INBOX KIQ */}
+                {activeTab === 'inbox' && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-8">
+                        <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/50">
+                            <h2 className="font-bold text-slate-800">Cotizaciones por revisar</h2>
+                            <p className="text-xs text-slate-500 mt-1">Solo clientes con cuenta. Edita y publica cuando el precio y la zona estén cerrados.</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
+                                    <tr>
+                                        <th className="px-6 py-4">ID / Fecha</th>
+                                        <th className="px-6 py-4">Cliente</th>
+                                        <th className="px-6 py-4">Zona / Descripción</th>
+                                        <th className="px-6 py-4 text-right">Precio</th>
+                                        <th className="px-6 py-4 text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {inboxTrabajos.map((t) => (
+                                        <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="font-mono text-xs text-slate-400">#{t.id}</div>
+                                                <div className="text-xs font-medium text-slate-600">{new Date(t.fecha).toLocaleDateString()}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-slate-900">{t.cliente}</div>
+                                                <div className="text-xs text-slate-500">{t.telefono_cliente || 'Sin teléfono'}</div>
+                                                <div className="text-[10px] text-slate-400">{t.email_cliente}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-xs font-semibold text-slate-700">{t.direccion || 'Sin zona'}</div>
+                                                <div className="max-w-xs truncate text-slate-500" title={t.descripcion}>{t.descripcion}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <span className="font-black text-slate-900 bg-slate-100 px-2 py-1 rounded-lg">{t.precio}€</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex justify-center gap-1">
+                                                    <button onClick={() => openJobModal(t)} className="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Editar">
+                                                        <FaPencilAlt />
+                                                    </button>
+                                                    <button onClick={() => handlePublishJob(t.id)} className="p-2 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg" title="Publicar">
+                                                        <FaPaperPlane />
+                                                    </button>
+                                                    <button onClick={() => handleDeleteJob(t.id)} className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Descartar">
+                                                        <FaTrash />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {inboxTrabajos.length === 0 && <EmptyState text="No hay cotizaciones pendientes de revisar" />}
+                        </div>
+                    </div>
+                )}
 
                 {/* VISTA TRABAJOS */}
                 {(activeTab === 'trabajos' || activeTab === 'dashboard') && (
@@ -410,13 +560,31 @@ export default function AdminDashboard() {
                                                 <StatusBadge status={t.estado} />
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <button 
-                                                    onClick={() => handleDeleteJob(t.id)}
-                                                    className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                                                    title="Borrar Trabajo (Irreversible)"
-                                                >
-                                                    <FaTrash />
-                                                </button>
+                                                <div className="flex justify-center gap-1">
+                                                    <button
+                                                        onClick={() => openJobModal(t)}
+                                                        className="p-2 text-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                                        title="Editar"
+                                                    >
+                                                        <FaPencilAlt />
+                                                    </button>
+                                                    {t.estado === 'cotizacion' && (
+                                                        <button
+                                                            onClick={() => handlePublishJob(t.id)}
+                                                            className="p-2 text-emerald-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                                                            title="Publicar"
+                                                        >
+                                                            <FaPaperPlane />
+                                                        </button>
+                                                    )}
+                                                    <button 
+                                                        onClick={() => handleDeleteJob(t.id)}
+                                                        className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                        title="Borrar Trabajo (Irreversible)"
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -591,6 +759,66 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {jobModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white p-6 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+                <h3 className="text-lg font-bold text-slate-800 mb-1">Revisar cotización #{jobModal.id}</h3>
+                <p className="text-sm text-slate-500 mb-4">{jobModal.cliente} · {jobModal.email_cliente}</p>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Descripción</label>
+                <textarea
+                    value={jobForm.descripcion}
+                    onChange={(e) => setJobForm({ ...jobForm, descripcion: e.target.value })}
+                    rows={3}
+                    className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm"
+                />
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Dirección / zona</label>
+                <input
+                    type="text"
+                    value={jobForm.direccion}
+                    onChange={(e) => setJobForm({ ...jobForm, direccion: e.target.value })}
+                    className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm"
+                />
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Teléfono</label>
+                <input
+                    type="text"
+                    value={jobForm.telefono}
+                    onChange={(e) => setJobForm({ ...jobForm, telefono: e.target.value })}
+                    className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm"
+                />
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Precio (€)</label>
+                <input
+                    type="number"
+                    value={jobForm.precio}
+                    onChange={(e) => setJobForm({ ...jobForm, precio: e.target.value })}
+                    className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm font-bold"
+                />
+                {jobMessage && <p className="text-sm mb-3 text-indigo-600">{jobMessage}</p>}
+                <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={() => setJobModal(null)}
+                      className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition"
+                    >
+                      Cerrar
+                    </button>
+                    <button
+                      onClick={handleSaveJob}
+                      className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition"
+                    >
+                      Guardar
+                    </button>
+                    {jobModal.estado === 'cotizacion' && (
+                      <button
+                        onClick={() => handlePublishJob(jobModal.id)}
+                        className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition"
+                      >
+                        Publicar en el tablero
+                      </button>
+                    )}
+                </div>
+            </div>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -599,6 +827,7 @@ export default function AdminDashboard() {
 
 function StatusBadge({ status }: { status: string }) {
     const styles: any = {
+        cotizacion: 'bg-amber-100 text-amber-800 border-amber-200',
         completado: 'bg-green-100 text-green-700 border-green-200',
         pendiente: 'bg-yellow-100 text-yellow-700 border-yellow-200',
         aceptado: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -610,6 +839,7 @@ function StatusBadge({ status }: { status: string }) {
     
     return (
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${currentStyle}`}>
+            {status === 'cotizacion' && <FaInbox/>}
             {status === 'completado' && <FaCheckCircle/>}
             {status === 'pendiente' && <FaClock/>}
             {status === 'revision_cliente' && <FaExclamationCircle/>}

@@ -131,7 +131,7 @@ function ContenidoPanelCliente() {
     }
   };
 
-  const activosEstados = ['cotizacion', 'pendiente', 'aceptado', 'revision_cliente', 'aprobado_cliente_stripe'];
+  const activosEstados = ['pendiente', 'aceptado', 'revision_cliente', 'aprobado_cliente_stripe'];
   const hechosEstados = ['completado', 'cancelado', 'cancelado_incidencia'];
 
   const lista = trabajos.filter((t) => t.etiquetas?.tipo !== 'outlet');
@@ -142,7 +142,6 @@ function ContenidoPanelCliente() {
 
   const getStatusInfo = (estado: string) => {
     switch (estado) {
-      case 'cotizacion':
       case 'pendiente':
         return { label: 'En espera de montador', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
       case 'aceptado':
@@ -180,7 +179,7 @@ function ContenidoPanelCliente() {
 
   const emptyActivos = {
     title: 'Aún no hay montajes en el tablero',
-    body: 'Pedir precio no crea una ficha aquí: te enviamos el presupuesto por WhatsApp. Cuando publiquemos trabajos en el marketplace, los verás en esta lista.',
+    body: 'Cuando Kiq publique tu montaje, lo verás aquí hasta que un montador lo acepte.',
   };
 
   return (

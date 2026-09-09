@@ -882,9 +882,12 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         setIsTyping(true);
         setOptions([]);
         try {
+            const token = getToken();
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (token) headers.Authorization = `Bearer ${token}`;
             const response = await fetch(`${API_BASE_URL}/enviar_presupuesto`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     canal: 'whatsapp',
                     nombre: clientName || userProfile?.nombre || 'Cliente',
