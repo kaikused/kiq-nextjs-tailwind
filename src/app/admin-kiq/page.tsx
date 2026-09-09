@@ -3,15 +3,17 @@ import { useState, useEffect } from 'react';
 import { 
   FaLock, FaSync, FaBriefcase, FaUserTie, FaSearch, FaArrowUp, 
   FaUsers, FaMoneyBillWave, FaChartLine, FaCheckCircle, FaExclamationCircle, 
-  FaClock, FaToolbox, FaUser, FaTrash, FaGem 
+  FaClock, FaToolbox, FaUser, FaTrash, FaGem, FaKey, FaSignOutAlt
 } from 'react-icons/fa';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
-const ADMIN_TOKEN = 'kiq2025master'; 
+const ADMIN_SESSION_KEY = 'kiq_admin_jwt'; 
 
 export default function AdminDashboard() {
   const [isAuth, setIsAuth] = useState(false);
   const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [adminToken, setAdminToken] = useState('');
   
   // Datos
   const [trabajos, setTrabajos] = useState<any[]>([]);
@@ -25,18 +27,60 @@ export default function AdminDashboard() {
   // Modal Gemas (Nuevo)
   const [gemModal, setGemModal] = useState<{isOpen: boolean, userId: number, userName: string} | null>(null);
   const [gemAmount, setGemAmount] = useState(0);
+  const [resetModal, setResetModal] = useState<{
+    userId: number; tipo: string; nombre: string; email: string;
+  } | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetMessage, setResetMessage] = useState('');
 
-  // --- AUTH ---
-  const checkAuth = () => {
-    if (password === ADMIN_TOKEN) {
+  const adminHeaders = (token = adminToken) => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  });
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem(ADMIN_SESSION_KEY);
+    if (saved) {
+      setAdminToken(saved);
       setIsAuth(true);
-      fetchAllData();
-    } else {
-      alert('Contraseña incorrecta');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuth && adminToken) fetchAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuth, adminToken]);
+
+  const checkAuth = async () => {
+    setLoginError('');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (!res.ok) {
+        setLoginError('Contraseña incorrecta');
+        return;
+      }
+      const data = await res.json();
+      sessionStorage.setItem(ADMIN_SESSION_KEY, data.token);
+      setAdminToken(data.token);
+      setPassword('');
+      setIsAuth(true);
+    } catch {
+      setLoginError('No se pudo conectar con el servidor');
     }
   };
 
-  // --- DATA FETCHING (Con corrección de caché ?t=...) ---
+  const handleLogout = () => {
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    setAdminToken('');
+    setIsAuth(false);
+    setTrabajos([]);
+    setUsuarios([]);
+  };
+
   const fetchAllData = () => {
     fetchTrabajos();
     fetchUsuarios();
@@ -46,7 +90,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/todos-los-trabajos?t=${Date.now()}`, {
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ADMIN_TOKEN}` }
+        headers: adminHeaders(),
       });
       if (res.ok) setTrabajos(await res.json());
     } catch (err) { console.error(err); } 
@@ -57,7 +101,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/usuarios?t=${Date.now()}`, {
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ADMIN_TOKEN}` }
+        headers: adminHeaders(),
       });
       if (res.ok) setUsuarios(await res.json());
     } catch (err) { console.error(err); } 
@@ -71,7 +115,7 @@ export default function AdminDashboard() {
         const res = await fetch(`${API_BASE_URL}/api/admin/asignar-gemas`, {
             method: 'POST',
             headers: { 
-                'Authorization': `Bearer ${ADMIN_TOKEN}`,
+                'Authorization': `Bearer ${adminToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -96,7 +140,7 @@ export default function AdminDashboard() {
     try {
         const res = await fetch(`${API_BASE_URL}/api/admin/borrar-trabajo/${id}`, {
             method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }
+            headers: { 'Authorization': `Bearer ${adminToken}` }
         });
         if (res.ok) {
             setTrabajos(prev => prev.filter(t => t.id !== id));
@@ -114,7 +158,7 @@ export default function AdminDashboard() {
     try {
         const res = await fetch(`${API_BASE_URL}/api/admin/borrar-usuario/${id}/${tipo}`, {
             method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }
+            headers: { 'Authorization': `Bearer ${adminToken}` }
         });
         if (res.ok) {
             setUsuarios(prev => prev.filter(u => u.id !== id));
@@ -125,6 +169,36 @@ export default function AdminDashboard() {
             alert("Error: " + (data.error || "No se pudo borrar."));
         }
     } catch (e) { alert("Error de red"); }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetModal) return;
+    if (newPassword.length < 8) {
+      setResetMessage('Mínimo 8 caracteres');
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/reset-password`, {
+        method: 'POST',
+        headers: adminHeaders(),
+        body: JSON.stringify({
+          user_id: resetModal.userId,
+          tipo: resetModal.tipo,
+          new_password: newPassword,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Contraseña nueva para ${resetModal.email}`);
+        setResetModal(null);
+        setNewPassword('');
+        setResetMessage('');
+      } else {
+        setResetMessage(data.error || 'No se pudo cambiar');
+      }
+    } catch {
+      setResetMessage('Error de red');
+    }
   };
 
   // --- CALCULATED METRICS ---
@@ -165,6 +239,7 @@ export default function AdminDashboard() {
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && checkAuth()}
           />
+          {loginError && <p className="text-red-500 text-sm mb-3">{loginError}</p>}
           <button 
             onClick={checkAuth} 
             className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
@@ -192,6 +267,9 @@ export default function AdminDashboard() {
              <span className="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-500">GOD MODE</span>
              <button onClick={fetchAllData} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all" title="Refrescar datos">
                 <FaSync className={loading ? "animate-spin" : ""} />
+             </button>
+             <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all" title="Salir">
+                <FaSignOutAlt />
              </button>
           </div>
         </div>
@@ -407,6 +485,22 @@ export default function AdminDashboard() {
                                                 ) : <span className="text-slate-300">-</span>}
                                             </td>
                                             <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                                <button 
+                                                    onClick={() => {
+                                                      setResetModal({
+                                                        userId: u.id,
+                                                        tipo: u.tipo,
+                                                        nombre: u.nombre,
+                                                        email: u.email,
+                                                      });
+                                                      setNewPassword('');
+                                                      setResetMessage('');
+                                                    }}
+                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                                    title="Nueva contraseña"
+                                                >
+                                                    <FaKey />
+                                                </button>
                                                 {u.tipo === 'montador' && (
                                                     <button 
                                                         onClick={() => setGemModal({ isOpen: true, userId: u.id, userName: u.nombre })}
@@ -460,6 +554,38 @@ export default function AdminDashboard() {
                 <div className="flex gap-3">
                     <button onClick={() => setGemModal(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">Cancelar</button>
                     <button onClick={handleGiveGems} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition">Ejecutar</button>
+                </div>
+            </div>
+        </div>
+      )}
+
+      {resetModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-100">
+                <h3 className="text-lg font-bold text-slate-800 mb-1">Nueva contraseña</h3>
+                <p className="text-sm text-slate-500 mb-4">{resetModal.nombre} · {resetModal.email}</p>
+                <input
+                    type="text"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Mínimo 8 caracteres"
+                    className="w-full border border-slate-200 rounded-xl p-3 mb-3 font-mono"
+                    autoFocus
+                />
+                {resetMessage && <p className="text-red-500 text-sm mb-3">{resetMessage}</p>}
+                <div className="flex gap-3">
+                    <button
+                      onClick={() => { setResetModal(null); setNewPassword(''); }}
+                      className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleResetPassword}
+                      className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition"
+                    >
+                      Guardar
+                    </button>
                 </div>
             </div>
         </div>
