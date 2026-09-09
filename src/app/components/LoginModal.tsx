@@ -100,7 +100,7 @@ export default function LoginModal() {
 
     const switchToRegister = () => {
         closeModals();
-        openRegisterModal();
+        openRegisterModal('cliente');
     };
 
     const switchToRecovery = () => {

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { FaEnvelope, FaLock, FaArrowLeft, FaPaperPlane, FaCheck, FaTimes, FaPhone, FaShieldAlt } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaArrowLeft, FaPaperPlane, FaCheck, FaTimes, FaPhone, FaShieldAlt, FaUser } from 'react-icons/fa';
+import { nombreCompletoValido, telefonoValido } from '../lib/registro';
 import { useUI, UserProfile } from '../context/UIContext';
 import { useRouter } from 'next/navigation';
 
@@ -61,7 +62,8 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
 
   const [step, setStep] = useState(1); 
   const [email, setEmail] = useState(registrationData?.email || ''); 
-  const [telefono, setTelefono] = useState(''); // Estado para teléfono
+  const [nombre, setNombre] = useState(prefilledName || '');
+  const [telefono, setTelefono] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [password, setPassword] = useState('');
   
@@ -74,6 +76,17 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
     e.preventDefault();
     setIsLoading(true);
     setError('');
+
+    if (!nombreCompletoValido(nombre)) {
+      setError('Escribe nombre y apellidos.');
+      setIsLoading(false);
+      return;
+    }
+    if (!telefonoValido(telefono)) {
+      setError('El teléfono es obligatorio (mínimo 9 dígitos).');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/send-code`, {
@@ -106,12 +119,14 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
     try {
       // LOGICA CRÍTICA: Mantenemos el envío de datos tal cual
       const payload = {
-        nombre: prefilledName,
+        nombre,
         email,
         password,
         codigo: verificationCode,
-        telefono: telefono || registrationData.telefono, // Usamos el del state o el de props
-        ...registrationData 
+        telefono,
+        ...registrationData,
+        nombre,
+        telefono,
       };
 
       const res = await fetch(`${API_BASE_URL}/api/publicar-y-registrar`, {
@@ -189,6 +204,17 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
                 <form onSubmit={handleSendCode} className="space-y-4 animate-in slide-in-from-left-4 duration-300">
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-indigo-600 transition-colors">
+                            <FaUser />
+                        </div>
+                        <input 
+                            type="text" placeholder="Nombre y apellidos" 
+                            value={nombre} onChange={(e) => setNombre(e.target.value)} 
+                            required
+                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400" 
+                        />
+                    </div>
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-indigo-600 transition-colors">
                             <FaEnvelope />
                         </div>
                         <input 
@@ -205,14 +231,15 @@ export default function RegisterInChatModal({ isOpen, onClose, prefilledName, re
                             <FaPhone />
                         </div>
                         <input 
-                            type="tel" placeholder="Tu teléfono (Opcional)" 
+                            type="tel" placeholder="Teléfono" 
                             value={telefono} onChange={(e) => setTelefono(e.target.value)} 
+                            required
                             className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400" 
                         />
                     </div>
 
                     {error && (
-                        <div className="text-red-600 text-xs bg-red-50 p-3 rounded-lg border border-red-100 font-bold text-center animate-pulse">
+                        <div className="text-red-600 text-xs bg-red-50 p-3 rounded-lg border border-red-100 font-bold text-center">
                             {error}
                         </div>
                     )}

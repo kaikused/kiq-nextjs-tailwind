@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FaPaperclip, FaPaperPlane, FaImage } from "react-icons/fa";
 import { useRouter } from 'next/navigation';
 import RegisterInChatModal from './RegisterInChatModal';
+import { useUI } from '../context/UIContext';
 
 // --- Definiciones ---
 type Message = {
@@ -163,6 +164,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
     const [finalAddress, setFinalAddress] = useState('');
     const [finalPrice, setFinalPrice] = useState(0);
     const [userEmail, setUserEmail] = useState('');
+    const [clientPhone, setClientPhone] = useState('');
     const [verificationCode, setVerificationCode] = useState(''); 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [error, setError] = useState('');
@@ -173,6 +175,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
     const fileInputRef = useRef<HTMLInputElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
+    const { userProfile } = useUI();
     
     const hasInitialized = useRef(false); 
 
@@ -202,40 +205,31 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         hasInitialized.current = true;
 
         const initializeChat = async () => {
-            // CASO A: Venimos del Panel (Modo Lite) y tenemos Nombre (Usuario Logueado)
+            const token = getToken();
+            if (token) {
+                try {
+                    const res = await fetch(`${API_BASE_URL}/api/perfil`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.tipo === 'cliente') {
+                        setIsAuthenticated(true);
+                        setUserEmail(data.email || '');
+                        setClientPhone(data.telefono || '');
+                        startChat(data.nombre, initialPrompt);
+                        return;
+                    }
+                } catch {
+                    /* visitante */
+                }
+            }
+
             if (mode === 'lite' && initialUserName) {
                 setIsAuthenticated(true);
                 startChat(initialUserName, initialPrompt);
                 return;
             }
 
-            // CASO B: Modo Lite pero sin nombre (Reload de página)
-            if (mode === 'lite') {
-                const token = getToken(); // USAMOS LA FUNCIÓN SEGURA
-                if (!token) {
-                    startChat(null, initialPrompt);
-                    return;
-                }
-                try {
-                    const headers = { 'Authorization': `Bearer ${token}` };
-                    const res = await fetch(`${API_BASE_URL}/api/perfil`, { headers });
-                    const data = await res.json();
-                    if (res.ok && data.tipo === 'cliente') {
-                        setIsAuthenticated(true);
-                        startChat(data.nombre, initialPrompt);
-                    } else {
-                        // Token inválido, limpiamos
-                        localStorage.removeItem('accessToken');
-                        localStorage.removeItem('token');
-                        startChat(null, initialPrompt);
-                    }
-                } catch (error) {
-                    startChat(null, initialPrompt);
-                }
-                return;
-            }
-
-            // CASO C: Modo Público (Home)
             setIsAuthenticated(false);
             startChat(null, initialPrompt);
         };
@@ -273,11 +267,10 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         setNeedsClarity(null);
         setFinalAddress('');
         setFinalPrice(0);
-        setUserEmail('');
         setVerificationCode('');
         setError('');
 
-        if (nombreUsuario && mode === 'lite') {
+        if (nombreUsuario) {
             setIsAuthenticated(true);
             addBotMessage(T.welcomeBack.replace('{name}', nombreUsuario), 400);
             setStage('describe');
@@ -894,7 +887,9 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     canal: 'whatsapp',
-                    nombre: clientName || 'Cliente',
+                    nombre: clientName || userProfile?.nombre || 'Cliente',
+                    email: userEmail || userProfile?.email || '',
+                    telefono: clientPhone || userProfile?.telefono || '',
                     descripcion: currentTextDescription,
                     direccion: finalAddress,
                     precio_calculado: finalPrice,

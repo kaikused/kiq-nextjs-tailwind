@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUI, UserProfile } from '../context/UIContext';
-import { FaTimes, FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt, FaShieldAlt, FaArrowLeft, FaCheck } from 'react-icons/fa';
+import { nombreCompletoValido, telefonoValido } from '../lib/registro';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 
@@ -45,7 +45,7 @@ const getFullProfileAndLogin = async (token: string, tipoUsuario: 'cliente' | 'm
 };
 
 export default function RegisterModal() {
-    const { isRegisterModalOpen, closeModals, openLoginModal, handleSuccessfulLogin } = useUI();
+    const { isRegisterModalOpen, closeModals, openLoginModal, handleSuccessfulLogin, registerRole } = useUI();
     const router = useRouter();
     
     const [step, setStep] = useState(1); 
@@ -64,6 +64,16 @@ export default function RegisterModal() {
         setIsLoading(true);
         setError('');
         
+        if (!nombreCompletoValido(nombre)) {
+            setError("Escribe nombre y apellidos.");
+            setIsLoading(false);
+            return;
+        }
+        if (!telefonoValido(telefono)) {
+            setError("El teléfono es obligatorio (mínimo 9 dígitos).");
+            setIsLoading(false);
+            return;
+        }
         if (password.length < 8) {
             setError("La contraseña debe tener al menos 8 caracteres.");
             setIsLoading(false);
@@ -99,7 +109,8 @@ export default function RegisterModal() {
         setError('');
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/montador/registro`, {
+            const endpoint = registerRole === 'cliente' ? '/api/cliente/registro' : '/api/montador/registro';
+            const res = await fetch(`${API_BASE_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -119,7 +130,7 @@ export default function RegisterModal() {
             const token = data.access_token;
             if (!token) throw new Error("No se recibió token del servidor");
 
-            const redirectPath = await getFullProfileAndLogin(token, 'montador', handleSuccessfulLogin); 
+            const redirectPath = await getFullProfileAndLogin(token, registerRole, handleSuccessfulLogin); 
             
             closeModals();
             router.push(redirectPath);
@@ -159,10 +170,14 @@ export default function RegisterModal() {
                 )}
 
                 <h2 className="text-2xl font-extrabold text-white tracking-tight">
-                    {step === 1 ? "Únete al Equipo Kiq" : "Verifica tu Correo"}
+                    {step === 1 ? (registerRole === 'cliente' ? "Crea tu cuenta" : "Únete al equipo Kiq") : "Verifica tu correo"}
                 </h2>
                 <p className="text-indigo-100 text-sm mt-2 font-medium">
-                    {step === 1 ? "Empieza a ganar dinero montando muebles" : `Hemos enviado un código a ${email}`}
+                    {step === 1
+                      ? (registerRole === 'cliente'
+                        ? "Nombre, apellidos, teléfono y correo"
+                        : "Empieza a recibir montajes en tu zona")
+                      : `Hemos enviado un código a ${email}`}
                 </p>
                 
                 <button 
@@ -181,7 +196,7 @@ export default function RegisterModal() {
                     <form onSubmit={handleSendCode} className="space-y-4 animate-in slide-in-from-left-4 duration-300">
                         <div className="relative group">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-purple-600 transition-colors"><FaUser /></div>
-                            <input type="text" placeholder="Nombre completo" value={nombre} onChange={(e) => setNombre(e.target.value)} required
+                            <input type="text" placeholder="Nombre y apellidos" value={nombre} onChange={(e) => setNombre(e.target.value)} required
                             className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 outline-none transition-all placeholder-gray-400 text-gray-900 font-medium" />
                         </div>
 
@@ -197,17 +212,19 @@ export default function RegisterModal() {
                             className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 outline-none transition-all placeholder-gray-400 text-gray-900 font-medium" />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className={registerRole === 'montador' ? 'grid grid-cols-2 gap-4' : ''}>
                             <div className="relative group">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-purple-600 transition-colors"><FaPhone /></div>
-                                <input type="tel" placeholder="Teléfono" value={telefono} onChange={(e) => setTelefono(e.target.value)}
+                                <input type="tel" placeholder="Teléfono" value={telefono} onChange={(e) => setTelefono(e.target.value)} required
                                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 outline-none transition-all placeholder-gray-400 text-gray-900 font-medium" />
                             </div>
+                            {registerRole === 'montador' && (
                             <div className="relative group">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-purple-600 transition-colors"><FaMapMarkerAlt /></div>
                                 <input type="text" placeholder="Zona (ej: Málaga)" value={zonaServicio} onChange={(e) => setZonaServicio(e.target.value)}
                                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 outline-none transition-all placeholder-gray-400 text-gray-900 font-medium" />
                             </div>
+                            )}
                         </div>
 
                         {error && (

@@ -13,7 +13,7 @@ export default function SoyMontadorPage() {
       router.push('/panel-montador');
       return;
     }
-    openRegisterModal();
+    openRegisterModal('montador');
   };
 
   return (

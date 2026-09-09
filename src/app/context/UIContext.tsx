@@ -26,9 +26,10 @@ interface UIContextType {
     isCalculatorModalOpen: boolean;
     isRecoveryModalOpen: boolean; 
     calculatorMode: 'public' | 'lite';
+    registerRole: 'cliente' | 'montador';
     
     openLoginModal: () => void;
-    openRegisterModal: () => void;
+    openRegisterModal: (tipo?: 'cliente' | 'montador') => void;
     openCalculatorModal: (mode?: 'public' | 'lite') => void;
     openRecoveryModal: () => void;
     closeModals: () => void;
@@ -61,6 +62,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
     const [isCalculatorModalOpen, setIsCalculatorModalOpen] = useState(false);
     const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
     const [calculatorMode, setCalculatorMode] = useState<'public' | 'lite'>('public');
+    const [registerRole, setRegisterRole] = useState<'cliente' | 'montador'>('cliente');
 
     // --- ESTADOS DE USUARIO ---
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -125,8 +127,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
         setIsLoginModalOpen(true);
     };
 
-    const openRegisterModal = () => {
+    const openRegisterModal = (tipo: 'cliente' | 'montador' = 'cliente') => {
         closeModals();
+        setRegisterRole(tipo);
         setIsRegisterModalOpen(true);
     };
 
@@ -177,7 +180,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
             isRegisterModalOpen, 
             isCalculatorModalOpen,
             isRecoveryModalOpen, 
-            calculatorMode, 
+            calculatorMode,
+            registerRole, 
             openLoginModal, 
             openRegisterModal, 
             openCalculatorModal,
