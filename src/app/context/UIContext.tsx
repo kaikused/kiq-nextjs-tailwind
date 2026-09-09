@@ -26,11 +26,12 @@ interface UIContextType {
     isCalculatorModalOpen: boolean;
     isRecoveryModalOpen: boolean; 
     calculatorMode: 'public' | 'lite';
+    calculatorPrompt: string;
     registerRole: 'cliente' | 'montador';
     
     openLoginModal: () => void;
     openRegisterModal: (tipo?: 'cliente' | 'montador') => void;
-    openCalculatorModal: (mode?: 'public' | 'lite') => void;
+    openCalculatorModal: (mode?: 'public' | 'lite', prompt?: string) => void;
     openRecoveryModal: () => void;
     closeModals: () => void;
 
@@ -62,6 +63,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
     const [isCalculatorModalOpen, setIsCalculatorModalOpen] = useState(false);
     const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
     const [calculatorMode, setCalculatorMode] = useState<'public' | 'lite'>('public');
+    const [calculatorPrompt, setCalculatorPrompt] = useState('');
     const [registerRole, setRegisterRole] = useState<'cliente' | 'montador'>('cliente');
 
     // --- ESTADOS DE USUARIO ---
@@ -140,10 +142,14 @@ export function UIProvider({ children }: { children: ReactNode }) {
         fetch(`${API_BASE_URL}/health`).catch(() => {});
     };
 
-    const openCalculatorModal = (mode: 'public' | 'lite' = 'public') => {
+    const openCalculatorModal = (mode: 'public' | 'lite' = 'public', prompt: string = '') => {
         warmupCalculatorApi();
-        closeModals();
+        setIsLoginModalOpen(false);
+        setIsRegisterModalOpen(false);
+        setIsRecoveryModalOpen(false);
+        setIsGemStoreOpen(false);
         setCalculatorMode(mode);
+        setCalculatorPrompt(prompt.trim());
         setIsCalculatorModalOpen(true);
     };
 
@@ -157,7 +163,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
         setIsRegisterModalOpen(false);
         setIsCalculatorModalOpen(false);
         setIsRecoveryModalOpen(false);
-        setIsGemStoreOpen(false); 
+        setIsGemStoreOpen(false);
+        setCalculatorPrompt('');
         setTimeout(() => setCalculatorMode('public'), 300);
     };
 
@@ -177,6 +184,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
             isCalculatorModalOpen,
             isRecoveryModalOpen, 
             calculatorMode,
+            calculatorPrompt,
             registerRole, 
             openLoginModal, 
             openRegisterModal, 

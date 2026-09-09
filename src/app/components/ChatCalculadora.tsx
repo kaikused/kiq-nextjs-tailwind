@@ -270,24 +270,23 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         setVerificationCode('');
         setError('');
 
-        if (nombreUsuario) {
-            setIsAuthenticated(true);
+        setIsAuthenticated(Boolean(nombreUsuario));
+
+        if (promptInicial && !esSaludo) {
+            setMessages([{ type: 'user', text: promptInicial }]);
+            addBotMessage(`Vamos a cotizar: "${promptInicial}".`, 400);
+            setStage('describe');
+            setTimeout(() => {
+                sendDataToBackend(promptInicial, null).then((analysisData) => {
+                    if (analysisData) processInitialAnalysis(analysisData);
+                });
+            }, 500);
+        } else if (nombreUsuario) {
             addBotMessage(T.welcomeBack.replace('{name}', nombreUsuario), 400);
             setStage('describe');
         } else {
-            setIsAuthenticated(false);
-            if (promptInicial && !esSaludo) {
-                addBotMessage(`Vamos a cotizar: "${promptInicial}".`, 400);
-                setStage('describe');
-                setTimeout(() => {
-                    sendDataToBackend(promptInicial, null).then((analysisData) => {
-                        if (analysisData) processInitialAnalysis(analysisData);
-                    });
-                }, 500);
-            } else {
-                addBotMessage(T.welcomePublic, 400);
-                setStage('describe');
-            }
+            addBotMessage(T.welcomePublic, 400);
+            setStage('describe');
         }
     }
 

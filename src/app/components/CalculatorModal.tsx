@@ -14,7 +14,7 @@ const ChatCalculadora = dynamic(() => import('./ChatCalculadora'), {
 });
 
 export default function CalculatorModal() {
-  const { isCalculatorModalOpen, closeModals, calculatorMode, userProfile } = useUI();
+  const { isCalculatorModalOpen, closeModals, calculatorMode, calculatorPrompt, userProfile } = useUI();
 
   useEffect(() => {
     if (!isCalculatorModalOpen) return;
@@ -55,6 +55,7 @@ export default function CalculatorModal() {
           <ChatCalculadora
             onPublishSuccess={closeModals}
             mode={calculatorMode || 'lite'}
+            initialPrompt={calculatorPrompt}
             initialUserName={userProfile?.nombre}
           />
         </div>

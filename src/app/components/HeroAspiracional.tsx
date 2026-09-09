@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import Image from 'next/image';
 import { FaChevronRight } from 'react-icons/fa';
 import { useUI } from '../context/UIContext';
@@ -15,6 +15,7 @@ const images = [
 const HeroAspiracional = () => {
   const { openCalculatorModal } = useUI();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [heroPrompt, setHeroPrompt] = useState('');
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -29,6 +30,11 @@ const HeroAspiracional = () => {
     if (servicesSection) {
       servicesSection.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handlePedirPrecio = (event?: FormEvent) => {
+    event?.preventDefault();
+    openCalculatorModal('public', heroPrompt);
   };
 
   return (
@@ -55,24 +61,39 @@ const HeroAspiracional = () => {
           Foto o descripción, precio en minutos, lo cerramos por WhatsApp.
         </p>
 
-        <div className="mt-12 flex flex-col space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0">
-          <button
-            type="button"
-            onClick={() => openCalculatorModal('public')}
-            className="group flex items-center justify-center rounded-full bg-indigo-600 px-8 py-4 text-lg font-bold text-white transition-all hover:bg-indigo-500 hover:scale-105 shadow-lg hover:shadow-indigo-500/30"
-          >
-            Pedir precio
-            <FaChevronRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleScrollToServices}
-            className="flex items-center justify-center rounded-full bg-white/10 px-8 py-4 text-lg font-bold text-white backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105 border border-white/30"
-          >
-            Ver montajes
-          </button>
-        </div>
+        <form
+          onSubmit={handlePedirPrecio}
+          className="mt-12 w-full max-w-xl mx-auto text-left"
+        >
+          <label htmlFor="hero-cotizar" className="sr-only">
+            Qué necesitas montar
+          </label>
+          <input
+            id="hero-cotizar"
+            type="text"
+            value={heroPrompt}
+            onChange={(event) => setHeroPrompt(event.target.value)}
+            placeholder="Ej: armario PAX de 2 puertas"
+            autoComplete="off"
+            className="w-full min-h-12 rounded-full bg-white px-5 py-3.5 text-base text-slate-900 placeholder:text-slate-500 shadow-lg ring-1 ring-white/20 focus:outline-none focus-visible:ring-2 focus:ring-indigo-300"
+          />
+          <div className="mt-4 flex flex-col space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0">
+            <button
+              type="submit"
+              className="group flex min-h-12 flex-1 items-center justify-center rounded-full bg-indigo-600 px-8 py-4 text-lg font-bold text-white transition-all hover:bg-indigo-500 hover:scale-105 shadow-lg hover:shadow-indigo-500/30"
+            >
+              Pedir precio
+              <FaChevronRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </button>
+            <button
+              type="button"
+              onClick={handleScrollToServices}
+              className="flex min-h-12 flex-1 items-center justify-center rounded-full bg-white/10 px-8 py-4 text-lg font-bold text-white backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105 border border-white/30"
+            >
+              Ver montajes
+            </button>
+          </div>
+        </form>
       </div>
 
       <div className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2">
