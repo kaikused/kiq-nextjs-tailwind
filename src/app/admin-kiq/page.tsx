@@ -1088,7 +1088,7 @@ function EmptyState({ text }: { text: string }) {
 }
 
 function nuevaLinea() {
-  return { id: `${Date.now()}-${Math.random()}`, tipo: 'canape', cantidad: 1, tipo_puerta: 'batiente', num_puertas: 2, medida: '150' };
+  return { id: `${Date.now()}-${Math.random()}`, tipo: 'canape', cantidad: 1, tipo_puerta: 'batiente', num_puertas: 2, medida: '150', concepto: '', precio: '' as number | '' };
 }
 
 function CotizarManualPanel({
@@ -1137,6 +1137,8 @@ function CotizarManualPanel({
       tipo_puerta: l.tipo_puerta,
       num_puertas: l.num_puertas,
       medida: l.medida,
+      concepto: l.concepto,
+      precio: l.tipo === 'otros' ? Number(l.precio) || 0 : undefined,
     })),
   });
 
@@ -1186,7 +1188,7 @@ function CotizarManualPanel({
     <div className="grid lg:grid-cols-5 gap-6 mb-8">
       <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-100 p-6">
         <h2 className="font-bold text-slate-800 mb-1">Cotizar a mano</h2>
-        <p className="text-xs text-slate-500 mb-5">Para llamadas. Usa el tarifario, genera PDF y deja la ficha como visitante.</p>
+        <p className="text-xs text-slate-500 mb-5">Para llamadas. El tarifario pone el precio. Si no encaja, elige Otros y escribe el importe a mano.</p>
         <div className="grid sm:grid-cols-2 gap-3 mb-4">
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nombre</label>
@@ -1243,6 +1245,7 @@ function CotizarManualPanel({
                       {catalogo.map((c) => (
                         <option key={c.tipo} value={c.tipo}>{c.nombre} · desde {c.precio_desde}€</option>
                       ))}
+                      <option value="otros">Otros · precio a mano</option>
                     </select>
                   </div>
                   <div className="sm:col-span-3">
@@ -1252,6 +1255,24 @@ function CotizarManualPanel({
                     <button type="button" onClick={() => setLineas((prev) => prev.filter((l) => l.id !== linea.id || prev.length === 1))} className="w-full py-3 text-sm text-slate-500">Quitar</button>
                   </div>
                 </div>
+                {linea.tipo === 'otros' && (
+                  <div className="grid sm:grid-cols-2 gap-2 mt-2">
+                    <input
+                      className={inputCls}
+                      value={linea.concepto}
+                      onChange={(e) => setLineas((prev) => prev.map((l) => l.id === linea.id ? { ...l, concepto: e.target.value } : l))}
+                      placeholder="Qué es (cama nido, perchero…)"
+                    />
+                    <input
+                      type="number"
+                      min={1}
+                      className={inputCls}
+                      value={linea.precio}
+                      onChange={(e) => setLineas((prev) => prev.map((l) => l.id === linea.id ? { ...l, precio: e.target.value === '' ? '' : Number(e.target.value) } : l))}
+                      placeholder="Precio del montaje (€)"
+                    />
+                  </div>
+                )}
                 {linea.tipo === 'armario' && (
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     <select className={inputCls} value={linea.tipo_puerta} onChange={(e) => setLineas((prev) => prev.map((l) => l.id === linea.id ? { ...l, tipo_puerta: e.target.value } : l))}>
