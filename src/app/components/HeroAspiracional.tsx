@@ -49,7 +49,7 @@ const HeroAspiracional = () => {
   };
 
   return (
-    <section className="relative h-screen min-h-[700px] w-full overflow-hidden bg-gray-900 font-sans">
+    <section className="relative h-dvh min-h-[100svh] w-full overflow-hidden bg-gray-900 font-sans">
       <div className="absolute inset-0">
         <Image
           src={images[currentImageIndex]}
@@ -60,93 +60,80 @@ const HeroAspiracional = () => {
           quality={70}
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/85" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/45 to-black/80" />
       </div>
 
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center text-white sm:px-6 lg:px-8 max-w-5xl mx-auto">
-        <h1 className="font-titulo text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl leading-tight drop-shadow-md">
+      <div className="relative z-10 flex h-full flex-col items-center justify-center px-[clamp(1rem,4vw,2.5rem)] text-center text-white max-w-5xl mx-auto">
+        <h1 className="font-titulo text-[clamp(1.85rem,6vw,3.75rem)] font-extrabold tracking-tight leading-[1.15] drop-shadow-md">
           Montaje de muebles en <span className="text-indigo-100">Málaga</span>.
         </h1>
 
-        <p className="mt-6 max-w-2xl text-lg sm:text-xl text-gray-200 font-normal leading-relaxed">
+        <p className="mt-4 sm:mt-5 max-w-xl text-[clamp(0.95rem,2.4vw,1.25rem)] text-white/80 font-normal leading-relaxed">
           Foto o descripción, precio en minutos, lo cerramos por WhatsApp.
         </p>
 
-        <div className="mt-10 w-full max-w-lg mx-auto text-left">
-          <div className="overflow-hidden rounded-3xl bg-slate-50 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)] ring-1 ring-white/15">
-            <div className="flex items-start gap-2.5 px-4 pt-4 pb-2">
-              <div
-                className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-bold text-white"
-                aria-hidden
-              >
-                K
-              </div>
-              <div>
-                <p className="mb-1 text-[11px] font-semibold tracking-wide text-slate-500">Kiq</p>
-                <p className="rounded-2xl rounded-tl-none bg-white px-4 py-3 text-[15px] leading-relaxed text-slate-800 ring-1 ring-slate-100">
-                  ¿Qué necesitas montar? Escríbelo o adjunta una foto.
-                </p>
-              </div>
-            </div>
+        <div className="mt-8 sm:mt-10 w-full max-w-[min(100%,34rem)]">
+          <p className="mb-3 text-center text-sm sm:text-[15px] text-white/70">
+            ¿Qué necesitas montar?
+          </p>
 
-            <form
-              onSubmit={handlePedirPrecio}
-              className="mt-2 flex items-center gap-1 border-t border-slate-200 bg-white p-3"
+          <form
+            onSubmit={handlePedirPrecio}
+            className="flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_12px_40px_rgba(0,0,0,0.28)] ring-1 ring-inset ring-white/30 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/12"
+          >
+            <button
+              type="button"
+              onClick={() => abrirCotizador(heroPrompt)}
+              className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full text-white/75 hover:bg-white/15 hover:text-white transition-colors"
+              aria-label="Adjuntar foto en el cotizador"
             >
-              <button
-                type="button"
-                onClick={() => abrirCotizador(heroPrompt)}
-                className="flex h-12 w-12 shrink-0 items-center justify-center text-slate-400 hover:text-indigo-600 transition-colors"
-                aria-label="Adjuntar foto en el cotizador"
-              >
-                <FaPaperclip className="h-5 w-5" />
-              </button>
-              <label htmlFor="hero-cotizar" className="sr-only">
-                Mensaje para cotizar
-              </label>
-              <textarea
-                id="hero-cotizar"
-                rows={1}
-                value={heroPrompt}
-                onChange={(event) => setHeroPrompt(event.target.value)}
-                onKeyDown={handleComposerKeyDown}
-                placeholder="Un armario PAX de 2 puertas…"
-                autoComplete="off"
-                className="min-h-12 max-h-24 flex-1 resize-none bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 rounded-full border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-              <button
-                type="submit"
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
-                aria-label="Enviar y pedir precio"
-              >
-                <FaPaperPlane className="h-4 w-4" />
-              </button>
-            </form>
-          </div>
+              <FaPaperclip className="h-4 w-4" />
+            </button>
+            <label htmlFor="hero-cotizar" className="sr-only">
+              Mensaje para cotizar
+            </label>
+            <textarea
+              id="hero-cotizar"
+              rows={1}
+              value={heroPrompt}
+              onChange={(event) => setHeroPrompt(event.target.value)}
+              onKeyDown={handleComposerKeyDown}
+              placeholder="Un armario PAX de 2 puertas…"
+              autoComplete="off"
+              className="min-h-11 sm:min-h-12 max-h-24 flex-1 resize-none bg-transparent py-3 text-[16px] leading-snug text-white placeholder:text-white/45 focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-white/25 text-white ring-1 ring-white/35 hover:bg-white/35 transition-colors"
+              aria-label="Enviar y pedir precio"
+            >
+              <FaPaperPlane className="h-3.5 w-4" />
+            </button>
+          </form>
 
           <button
             type="button"
             onClick={handleScrollToServices}
-            className="mt-4 flex min-h-11 w-full items-center justify-center text-sm font-semibold text-white/80 hover:text-white underline-offset-4 hover:underline"
+            className="mt-5 flex min-h-11 w-full items-center justify-center text-sm font-medium text-white/55 hover:text-white/90"
           >
             Ver montajes
           </button>
         </div>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2">
+      <div className="absolute bottom-6 sm:bottom-10 left-1/2 z-20 flex -translate-x-1/2">
         {images.map((_, index) => (
           <button
             key={index}
             type="button"
             onClick={() => setCurrentImageIndex(index)}
-            className="flex h-12 w-12 items-center justify-center"
+            className="flex h-11 w-11 items-center justify-center"
             aria-label={`Ir a la imagen ${index + 1}`}
             aria-current={currentImageIndex === index ? 'true' : undefined}
           >
             <span
-              className={`block h-2 rounded-full transition-all duration-500 ${
-                currentImageIndex === index ? 'bg-indigo-400 w-8' : 'bg-white w-2'
+              className={`block h-1.5 rounded-full transition-all duration-500 ${
+                currentImageIndex === index ? 'bg-white/90 w-7' : 'bg-white/40 w-1.5'
               }`}
             />
           </button>
