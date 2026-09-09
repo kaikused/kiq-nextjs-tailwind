@@ -191,7 +191,7 @@ export default function AdminDashboard() {
     setJobMessage('');
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/trabajo/${jobModal.id}`, {
-        method: 'PATCH',
+        method: 'POST',
         headers: adminHeaders(),
         body: JSON.stringify({
           descripcion: jobForm.descripcion,
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
     try {
       if (jobModal?.id === id) {
         const saveRes = await fetch(`${API_BASE_URL}/api/admin/trabajo/${id}`, {
-          method: 'PATCH',
+          method: 'POST',
           headers: adminHeaders(),
           body: JSON.stringify({
             descripcion: jobForm.descripcion,
