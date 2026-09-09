@@ -4,8 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useUI } from '../context/UIContext';
-import { FaUserCircle, FaSignOutAlt, FaCog, FaChevronDown, FaBars, FaTimes, FaEnvelope, FaWhatsapp } from 'react-icons/fa'; 
-import { useInbox } from '../hooks/useInbox';
+import { FaUserCircle, FaSignOutAlt, FaCog, FaChevronDown, FaBars, FaTimes, FaWhatsapp } from 'react-icons/fa';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
 const WHATSAPP_LINK =
@@ -15,7 +14,6 @@ const WHATSAPP_LINK =
 export default function Cabecera() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-    const [isInboxOpen, setIsInboxOpen] = useState(false);
     
     // --- ESTADO SCROLL PARA EFECTO CAMALEÓN ---
     const [isScrolled, setIsScrolled] = useState(false);
@@ -26,15 +24,12 @@ export default function Cabecera() {
         isLoggedIn, accessToken, userProfile, handleLogout, handleSuccessfulLogin 
     } = useUI();
 
-    const { unreadTotal, conversations, refreshInbox } = useInbox(
-        userProfile?.id ? String(userProfile.id) : undefined,
-        userProfile?.tipo
-    );
-
     const router = useRouter();
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const inboxRef = useRef<HTMLDivElement>(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+    const esAdmin = pathname?.startsWith('/admin-kiq');
+    const esMontador = userProfile?.tipo === 'montador';
 
     // --- DETECCIÓN DE SCROLL ---
     useEffect(() => {
@@ -65,11 +60,10 @@ export default function Cabecera() {
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsUserDropdownOpen(false);
-            if (isInboxOpen && inboxRef.current && !inboxRef.current.contains(event.target as Node)) { setIsInboxOpen(false); refreshInbox(); }
         }
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isInboxOpen, refreshInbox]);
+    }, []);
 
     const localHandleLogout = () => { handleLogout(); router.push('/'); setIsUserDropdownOpen(false); };
     const handleOpenLogin = () => { setIsMenuOpen(false); openLoginModal(); };
@@ -78,21 +72,16 @@ export default function Cabecera() {
     const goToPanel = () => {
         setIsUserDropdownOpen(false);
         if (!userProfile) return;
-        router.push(userProfile.tipo === 'cliente' ? '/panel-cliente' : '/panel-montador');
+        router.push(esMontador ? '/panel-montador' : '/panel-cliente');
     };
 
     const goToConfig = () => {
         setIsUserDropdownOpen(false);
         if (!userProfile) return;
-        router.push(userProfile.tipo === 'cliente' ? '/panel-cliente/configuracion' : '/panel-montador/configuracion');
+        router.push(esMontador ? '/panel-montador/configuracion' : '/panel-cliente/configuracion');
     };
 
-    const goToChat = (jobId: number) => {
-        setIsInboxOpen(false);
-        if (!userProfile) return;
-        refreshInbox();
-        router.push(userProfile.tipo === 'cliente' ? `/panel-cliente?chat=${jobId}` : `/panel-montador?chat=${jobId}`);
-    };
+    if (esAdmin) return null;
 
     // --- ESTILOS DINÁMICOS ---
     const isHome = pathname === '/';
@@ -135,46 +124,34 @@ export default function Cabecera() {
                             <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={90} height={35} className="h-8 w-auto" priority />
                         </Link>
 
-                        <div className="flex items-center gap-3 sm:gap-5">
-                            {/* BUZÓN */}
-                            <div className="" ref={inboxRef}>
-                                <button 
-                                    onClick={() => setIsInboxOpen(!isInboxOpen)}
-                                    aria-label={`Buzón, ${unreadTotal} mensajes`}
-                                    className="p-2 rounded-full text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition relative"
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            {esMontador ? (
+                                <Link
+                                    href="/panel-montador"
+                                    className="hidden sm:inline-flex px-4 py-2 rounded-full text-sm font-bold text-slate-700 hover:bg-gray-50"
                                 >
-                                    <FaEnvelope size={20} />
-                                    {unreadTotal > 0 && (
-                                        <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">{unreadTotal > 9 ? '+9' : unreadTotal}</span>
-                                    )}
-                                </button>
-                                {/* Desplegable Buzón (Intacto) */}
-                                {isInboxOpen && (
-                                    <>
-                                        <div className="fixed inset-0 bg-black/20 z-[60] md:hidden" onClick={() => setIsInboxOpen(false)}></div>
-                                        <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-[70] overflow-hidden animate-in fade-in slide-in-from-top-2">
-                                            <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center">
-                                                <span className="font-bold text-gray-800 text-sm">Mensajes</span>
-                                                {unreadTotal > 0 && <span className="text-[10px] bg-indigo-100 text-indigo-600 font-bold px-2 py-0.5 rounded-full">{unreadTotal} nuevos</span>}
-                                            </div>
-                                            <div className="max-h-[300px] overflow-y-auto">
-                                                {conversations.length === 0 ? (
-                                                    <div className="p-8 text-center text-gray-400 text-xs flex flex-col items-center"><FaEnvelope size={24} className="opacity-20 mb-2"/><p>Sin mensajes</p></div>
-                                                ) : conversations.map((conv) => (
-                                                    <button key={conv.jobId} onClick={() => goToChat(conv.jobId)} className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 flex gap-3 items-center">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${conv.unreadCount > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}><FaEnvelope size={12}/></div>
-                                                        <div className="min-w-0 flex-1"><p className={`text-sm truncate ${conv.unreadCount > 0 ? 'font-bold' : 'font-medium'}`}>Trabajo #{conv.jobId}</p><p className="text-xs text-gray-500 truncate">{conv.lastMessage || 'Adjunto'}</p></div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                                    Montajes
+                                </Link>
+                            ) : (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={handleOpenCalculator}
+                                        className="hidden sm:inline-flex px-4 py-2 rounded-full text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700"
+                                    >
+                                        Pedir precio
+                                    </button>
+                                    <a
+                                        href={WHATSAPP_LINK}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-bold text-slate-700 hover:bg-gray-50"
+                                    >
+                                        <FaWhatsapp className="text-emerald-600" /> WhatsApp
+                                    </a>
+                                </>
+                            )}
 
-                            <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
-
-                            {/* AVATAR & MENU */}
                             <div className="relative" ref={dropdownRef}>
                                 <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} className="flex items-center gap-2 focus:outline-none group">
                                     {userProfile.foto_url ? (
@@ -188,12 +165,15 @@ export default function Cabecera() {
                                     <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 animate-in fade-in slide-in-from-top-2">
                                         <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
                                             <p className="text-sm font-bold text-gray-900 truncate capitalize">{userProfile.nombre}</p>
-                                            <p className="text-xs text-gray-500 truncate">{userProfile.email}</p>
+                                            <p className="text-xs text-gray-500 truncate">{esMontador ? 'Montador' : 'Cliente'}</p>
                                         </div>
-                                        <button onClick={goToPanel} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-2"><FaUserCircle/> Mi Panel</button>
-                                        <button onClick={goToConfig} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-2"><FaCog/> Configuración</button>
+                                        <button onClick={goToPanel} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-2"><FaUserCircle/> {esMontador ? 'Mis montajes' : 'Mis montajes'}</button>
+                                        <button onClick={goToConfig} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-indigo-600 flex items-center gap-2"><FaCog/> {esMontador ? 'Zona y datos' : 'Teléfono y datos'}</button>
+                                        {!esMontador && (
+                                            <button onClick={() => { setIsUserDropdownOpen(false); handleOpenCalculator(); }} className="sm:hidden w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Pedir precio</button>
+                                        )}
                                         <div className="border-t border-gray-100 my-1"></div>
-                                        <button onClick={localHandleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"><FaSignOutAlt/> Cerrar Sesión</button>
+                                        <button onClick={localHandleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"><FaSignOutAlt/> Cerrar sesión</button>
                                     </div>
                                 )}
                             </div>

@@ -425,11 +425,7 @@ function ContenidoPanelMontador() {
             Hola, {userProfile.nombre}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Aquí verás los montajes disponibles. Completa tu{' '}
-            <Link href="/panel-montador/configuracion" className="text-indigo-600 font-semibold hover:underline">
-              zona y teléfono
-            </Link>
-            .
+            Disponibles de tu zona, en curso y hechos. El cobro es Bizum o efectivo, fuera de la app.
           </p>
         </div>
 

@@ -133,17 +133,14 @@ export default function ConfiguracionMontadorPage() {
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans">
             
-            {/* Header simple con botón volver */}
-            <div className="bg-white border-b border-slate-200 sticky top-0 z-20">
-                <div className="max-w-2xl mx-auto px-6 h-16 flex items-center gap-4">
-                    <button onClick={() => router.back()} className="p-2 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors">
-                        <FaArrowLeft />
+            <div className="max-w-2xl mx-auto px-6 pt-6 pb-2">
+                    <button onClick={() => router.push('/panel-montador')} className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-800">
+                        <FaArrowLeft /> Mis montajes
                     </button>
-                    <h1 className="text-lg font-bold text-slate-800">Mi Perfil Profesional</h1>
-                </div>
+                    <h1 className="text-lg font-bold text-slate-800 mt-3">Zona y datos</h1>
             </div>
 
-            <div className="max-w-2xl mx-auto px-6 py-8">
+            <div className="max-w-2xl mx-auto px-6 py-6">
                 
                 {/* TOAST DE MENSAJES */}
                 {message.text && (
@@ -259,7 +256,7 @@ export default function ConfiguracionMontadorPage() {
                                 <div className="space-y-8">
                                     <div>
                                         <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2 text-lg">Zona de Servicio</h3>
-                                        <p className="text-sm text-slate-500 mb-4">La usamos para ordenar y mostrar si el trabajo encaja contigo. No oculta el tablero.</p>
+                                        <p className="text-sm text-slate-500 mb-4">Si pones tu zona, solo ves montajes publicados de esa zona. Si la dejas vacía, ves todos.</p>
                                         <div className="relative">
                                             <FaMapMarkerAlt className="absolute left-4 top-1/2 transform -translate-y-1/2 text-red-500" />
                                             <input 
@@ -273,7 +270,7 @@ export default function ConfiguracionMontadorPage() {
                                     </div>
 
                                     <p className="text-sm text-slate-500">
-                                        Ejemplo: Málaga o Marbella. Si lo dejas vacío, da igual: ves todos los publicados.
+                                        Ejemplo: Málaga o Marbella.
                                     </p>
                                 </div>
                             )}

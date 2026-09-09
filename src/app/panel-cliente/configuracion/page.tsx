@@ -128,17 +128,14 @@ export default function ConfiguracionClientePage() {
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans">
             
-            {/* Header simple con botón volver */}
-            <div className="bg-white border-b border-slate-200 sticky top-0 z-20">
-                <div className="max-w-2xl mx-auto px-6 h-16 flex items-center gap-4">
-                    <button onClick={() => router.back()} className="p-2 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors">
-                        <FaArrowLeft />
+            <div className="max-w-2xl mx-auto px-6 pt-6 pb-2">
+                    <button onClick={() => router.push('/panel-cliente')} className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-800">
+                        <FaArrowLeft /> Mis montajes
                     </button>
-                    <h1 className="text-lg font-bold text-slate-800">Ajustes de Cuenta</h1>
-                </div>
+                    <h1 className="text-lg font-bold text-slate-800 mt-3">Teléfono y datos</h1>
             </div>
 
-            <div className="max-w-2xl mx-auto px-6 py-8">
+            <div className="max-w-2xl mx-auto px-6 py-6">
                 
                 {/* TOAST DE MENSAJES (FLOTANTE) */}
                 {message.text && (

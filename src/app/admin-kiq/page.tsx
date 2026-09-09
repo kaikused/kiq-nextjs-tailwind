@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { 
   FaLock, FaSync, FaBriefcase, FaUserTie, FaSearch, 
   FaUsers, FaMoneyBillWave, FaCheckCircle, FaExclamationCircle, 
-  FaClock, FaToolbox, FaUser, FaTrash, FaGem, FaKey, FaSignOutAlt,
+  FaClock, FaToolbox, FaUser, FaTrash, FaKey, FaSignOutAlt,
   FaPencilAlt, FaPaperPlane, FaInbox, FaFilePdf, FaPlus, FaCalculator
 } from 'react-icons/fa';
 
@@ -33,10 +33,6 @@ export default function AdminDashboard() {
   // UI
   const [activeTab, setActiveTab] = useState<'inbox' | 'trabajos' | 'usuarios' | 'cotizar'>('inbox');
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Modal Gemas (Nuevo)
-  const [gemModal, setGemModal] = useState<{isOpen: boolean, userId: number, userName: string} | null>(null);
-  const [gemAmount, setGemAmount] = useState(0);
   const [resetModal, setResetModal] = useState<{
     userId: number; tipo: string; nombre: string; email: string;
   } | null>(null);
@@ -126,33 +122,6 @@ export default function AdminDashboard() {
       if (res.ok) setUsuarios(await res.json());
     } catch (err) { console.error(err); } 
     finally { setLoading(false); }
-  };
-
-  // --- ACCIONES DE DIOS (GOD MODE) ---
-  const handleGiveGems = async () => {
-    if (!gemModal) return;
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/admin/asignar-gemas`, {
-            method: 'POST',
-            headers: { 
-                'Authorization': `Bearer ${adminToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                montador_id: gemModal.userId,
-                cantidad: gemAmount
-            })
-        });
-        if (res.ok) {
-            const data = await res.json();
-            alert(`💎 ¡Hecho! Nuevo saldo de ${gemModal.userName}: ${data.nuevo_saldo} Gemas.`);
-            setGemModal(null);
-            setGemAmount(0);
-            fetchUsuarios(); // Recargar tabla
-        } else {
-            alert("Error al asignar gemas.");
-        }
-    } catch (e) { alert("Error de red"); }
   };
 
   const handleDeleteJob = async (id: number) => {
@@ -372,7 +341,7 @@ export default function AdminDashboard() {
             <FaLock className="text-slate-400 text-3xl" />
           </div>
           <h1 className="text-2xl font-black mb-2 text-slate-900 tracking-tight">Kiq Admin</h1>
-          <p className="text-slate-400 text-sm mb-8">Panel de Control Maestro</p>
+          <p className="text-slate-400 text-sm mb-8">Cotizaciones, tablero y cotizar a mano</p>
           
           <input 
             type="password" 
@@ -406,7 +375,7 @@ export default function AdminDashboard() {
             <span className="font-bold text-lg tracking-tight">Kiq Admin</span>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
              <button
                type="button"
                onClick={() => setActiveTab('cotizar')}
@@ -414,11 +383,10 @@ export default function AdminDashboard() {
              >
                Cotizar a mano
              </button>
-             <span className="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-500">GOD MODE</span>
              <button onClick={fetchAllData} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all" title="Refrescar datos">
                 <FaSync className={loading ? "animate-spin" : ""} />
              </button>
-             <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all" title="Salir">
+             <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all" title="Salir del admin">
                 <FaSignOutAlt />
              </button>
           </div>
@@ -446,7 +414,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                     <h3 className="text-3xl font-black text-slate-900">{totalIngresos.toLocaleString()}€</h3>
-                    <p className="text-slate-500 text-sm font-medium">{trabajosActivos} en el tablero</p>
+                    <p className="text-slate-500 text-sm font-medium">Suma de precios · {trabajosActivos} en tablero</p>
                 </div>
             </div>
 
@@ -457,7 +425,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                     <h3 className="text-3xl font-black text-slate-900">{montadoresCount}</h3>
-                    <p className="text-slate-500 text-sm font-medium">Montadores Registrados</p>
+                    <p className="text-slate-500 text-sm font-medium">Montadores</p>
                 </div>
             </div>
 
@@ -468,7 +436,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                     <h3 className="text-3xl font-black text-slate-900">{clientesCount}</h3>
-                    <p className="text-slate-500 text-sm font-medium">Clientes Registrados</p>
+                    <p className="text-slate-500 text-sm font-medium">Clientes con cuenta</p>
                 </div>
             </div>
         </div>
@@ -478,7 +446,7 @@ export default function AdminDashboard() {
             
             {/* SIDEBAR NAVIGATION */}
             <div className="w-full md:w-64 flex-shrink-0">
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 sticky top-24">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 sticky top-20">
                     <button 
                         onClick={() => setActiveTab('inbox')} 
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'inbox' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
@@ -504,7 +472,7 @@ export default function AdminDashboard() {
                         onClick={() => setActiveTab('usuarios')} 
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'usuarios' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
                     >
-                        <FaUserTie /> Gestión de Usuarios
+                        <FaUserTie /> Usuarios
                     </button>
                 </div>
             </div>
@@ -700,7 +668,7 @@ export default function AdminDashboard() {
                 {(activeTab === 'usuarios') && (
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/50">
-                            <h2 className="font-bold text-slate-800">Directorio de Usuarios</h2>
+                            <h2 className="font-bold text-slate-800">Usuarios</h2>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
@@ -710,7 +678,6 @@ export default function AdminDashboard() {
                                         <th className="px-6 py-4">Contacto</th>
                                         <th className="px-6 py-4">Rol</th>
                                         <th className="px-6 py-4">Zona</th>
-                                        <th className="px-6 py-4 text-center">Gemas</th>
                                         <th className="px-6 py-4 text-right">Acciones</th>
                                     </tr>
                                 </thead>
@@ -746,13 +713,6 @@ export default function AdminDashboard() {
                                             <td className="px-6 py-4">
                                                 <span className="text-slate-500 font-medium text-xs bg-slate-100 px-2 py-1 rounded">{u.zona || 'N/A'}</span>
                                             </td>
-                                            <td className="px-6 py-4 text-center">
-                                                {u.tipo === 'montador' ? (
-                                                    <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100 flex items-center justify-center gap-1 w-fit mx-auto">
-                                                        <FaGem size={10}/> {u.saldo || 0}
-                                                    </span>
-                                                ) : <span className="text-slate-300">-</span>}
-                                            </td>
                                             <td className="px-6 py-4 text-right flex justify-end gap-2">
                                                 <button 
                                                     onClick={() => {
@@ -770,15 +730,6 @@ export default function AdminDashboard() {
                                                 >
                                                     <FaKey />
                                                 </button>
-                                                {u.tipo === 'montador' && (
-                                                    <button 
-                                                        onClick={() => setGemModal({ isOpen: true, userId: u.id, userName: u.nombre })}
-                                                        className="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                                                        title="Gestionar Gemas"
-                                                    >
-                                                        <FaGem />
-                                                    </button>
-                                                )}
                                                 <button 
                                                     onClick={() => handleDeleteUser(u.id, u.tipo)}
                                                     className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
@@ -799,34 +750,6 @@ export default function AdminDashboard() {
             </div>
         </div>
       </div>
-
-      {/* MODAL GEMAS (DISEÑO LIGHT) */}
-      {gemModal && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-100">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-slate-800">💎 Asignar Gemas</h3>
-                    <div className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold">{gemModal.userName}</div>
-                </div>
-                
-                <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2 text-center">Cantidad (+ Añadir, - Quitar)</label>
-                    <input 
-                        type="number" 
-                        value={gemAmount} 
-                        onChange={e => setGemAmount(parseInt(e.target.value))}
-                        className="w-full bg-white border border-slate-200 rounded-xl p-3 text-3xl font-black text-slate-800 focus:border-indigo-500 focus:outline-none text-center"
-                        autoFocus
-                    />
-                </div>
-
-                <div className="flex gap-3">
-                    <button onClick={() => setGemModal(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">Cancelar</button>
-                    <button onClick={handleGiveGems} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition">Ejecutar</button>
-                </div>
-            </div>
-        </div>
-      )}
 
       {resetModal && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
