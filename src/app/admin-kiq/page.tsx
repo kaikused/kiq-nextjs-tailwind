@@ -2,13 +2,22 @@
 import { useState, useEffect } from 'react';
 import { 
   FaLock, FaSync, FaBriefcase, FaUserTie, FaSearch, 
-  FaUsers, FaMoneyBillWave, FaChartLine, FaCheckCircle, FaExclamationCircle, 
+  FaUsers, FaMoneyBillWave, FaCheckCircle, FaExclamationCircle, 
   FaClock, FaToolbox, FaUser, FaTrash, FaGem, FaKey, FaSignOutAlt,
-  FaPencilAlt, FaPaperPlane, FaInbox
+  FaPencilAlt, FaPaperPlane, FaInbox, FaFilePdf
 } from 'react-icons/fa';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
-const ADMIN_SESSION_KEY = 'kiq_admin_jwt'; 
+const ADMIN_SESSION_KEY = 'kiq_admin_jwt';
+const ESTADOS_ADMIN = [
+  { id: 'cotizacion', label: 'Kiq revisando' },
+  { id: 'pendiente', label: 'Esperando montador' },
+  { id: 'aceptado', label: 'Montador asignado' },
+  { id: 'revision_cliente', label: 'Foto enviada' },
+  { id: 'completado', label: 'Hecho' },
+  { id: 'cancelado', label: 'Cancelado' },
+  { id: 'cancelado_incidencia', label: 'Incidencia' },
+]; 
 
 export default function AdminDashboard() {
   const [isAuth, setIsAuth] = useState(false);
@@ -22,7 +31,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   
   // UI
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inbox' | 'trabajos' | 'usuarios'>('inbox');
+  const [activeTab, setActiveTab] = useState<'inbox' | 'trabajos' | 'usuarios'>('inbox');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modal Gemas (Nuevo)
@@ -35,7 +44,7 @@ export default function AdminDashboard() {
   const [resetMessage, setResetMessage] = useState('');
   const [jobModal, setJobModal] = useState<any | null>(null);
   const [jobForm, setJobForm] = useState({
-    descripcion: '', direccion: '', precio: '', telefono: '', metodo_pago: 'efectivo', cobrado: false, zona: '', fecha_visita: '',
+    descripcion: '', direccion: '', precio: '', telefono: '', metodo_pago: 'efectivo', cobrado: false, zona: '', fecha_visita: '', estado: 'cotizacion',
   });
   const [jobMessage, setJobMessage] = useState('');
 
@@ -189,6 +198,7 @@ export default function AdminDashboard() {
       cobrado: Boolean(t.cobrado),
       zona: t.zona || '',
       fecha_visita: t.fecha_visita ? String(t.fecha_visita).slice(0, 16) : '',
+      estado: t.estado || 'cotizacion',
     });
   };
 
@@ -208,6 +218,7 @@ export default function AdminDashboard() {
           cobrado: jobForm.cobrado,
           zona: jobForm.zona,
           fecha_visita: jobForm.fecha_visita || null,
+          estado: jobForm.estado,
         }),
       });
       const data = await res.json();
@@ -238,8 +249,9 @@ export default function AdminDashboard() {
             metodo_pago: jobForm.metodo_pago,
             cobrado: jobForm.cobrado,
             zona: jobForm.zona,
-            fecha_visita: jobForm.fecha_visita || null,
-          }),
+          fecha_visita: jobForm.fecha_visita || null,
+          estado: jobForm.estado,
+        }),
         });
         const saved = await saveRes.json();
         if (!saveRes.ok) {
@@ -434,12 +446,6 @@ export default function AdminDashboard() {
                         )}
                     </button>
                     <button 
-                        onClick={() => setActiveTab('dashboard')} 
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'dashboard' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
-                    >
-                        <FaChartLine /> Dashboard
-                    </button>
-                    <button 
                         onClick={() => setActiveTab('trabajos')} 
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'trabajos' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
                     >
@@ -463,7 +469,7 @@ export default function AdminDashboard() {
                         <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input 
                             type="text" 
-                            placeholder={`Buscar en ${activeTab === 'dashboard' ? 'todo' : activeTab}...`}
+                            placeholder="Buscar..."
                             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -536,10 +542,10 @@ export default function AdminDashboard() {
                 )}
 
                 {/* VISTA TRABAJOS */}
-                {(activeTab === 'trabajos' || activeTab === 'dashboard') && (
+                {activeTab === 'trabajos' && (
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-8">
                         <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                            <h2 className="font-bold text-slate-800">Últimos Trabajos</h2>
+                            <h2 className="font-bold text-slate-800">Todos los trabajos</h2>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
@@ -554,7 +560,7 @@ export default function AdminDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
-                                    {(activeTab === 'dashboard' ? filteredTrabajos.slice(0, 5) : filteredTrabajos).map((t) => (
+                                    {filteredTrabajos.map((t) => (
                                         <tr key={t.id} className="hover:bg-slate-50/80 transition-colors group">
                                             <td className="px-6 py-4">
                                                 <div className="font-mono text-xs text-slate-400">#{t.id}</div>
@@ -582,6 +588,17 @@ export default function AdminDashboard() {
                                                     >
                                                         <FaPencilAlt />
                                                     </button>
+                                                    {t.pdf_code && (
+                                                        <a
+                                                            href={`${API_BASE_URL}/p/${t.pdf_code}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                            title="Ver PDF"
+                                                        >
+                                                            <FaFilePdf />
+                                                        </a>
+                                                    )}
                                                     {t.estado === 'cotizacion' && (
                                                         <button
                                                             onClick={() => handlePublishJob(t.id)}
@@ -846,6 +863,48 @@ export default function AdminDashboard() {
                     />
                     Cobrado
                 </label>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Estado del pedido</label>
+                <select
+                    value={jobForm.estado}
+                    onChange={(e) => setJobForm({ ...jobForm, estado: e.target.value })}
+                    className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm font-bold bg-white"
+                >
+                  {ESTADOS_ADMIN.map((e) => (
+                    <option key={e.id} value={e.id}>{e.label}</option>
+                  ))}
+                </select>
+                {jobModal.foto_finalizacion && (
+                  <div className="mb-3">
+                    <p className="text-xs font-bold text-slate-400 uppercase mb-1">Foto del montador</p>
+                    <a href={jobModal.foto_finalizacion} target="_blank" rel="noopener noreferrer">
+                      <img src={jobModal.foto_finalizacion} alt="Evidencia" className="w-full max-h-48 object-cover rounded-xl border border-slate-200" />
+                    </a>
+                  </div>
+                )}
+                {Array.isArray(jobModal.imagenes_urls) && jobModal.imagenes_urls.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-xs font-bold text-slate-400 uppercase mb-1">Fotos de la cotización</p>
+                    <div className="flex gap-2 overflow-x-auto">
+                      {jobModal.imagenes_urls.map((url: string) => (
+                        <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+                          <img src={url} alt="" className="h-20 w-20 object-cover rounded-lg border border-slate-200" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {jobModal.pdf_code ? (
+                  <a
+                    href={`${API_BASE_URL}/p/${jobModal.pdf_code}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mb-3 w-full py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm flex items-center justify-center gap-2 text-slate-800"
+                  >
+                    <FaFilePdf /> Ver PDF
+                  </a>
+                ) : (
+                  <p className="text-xs text-slate-400 mb-3">PDF: solo en cotizaciones nuevas (con cuenta) a partir de ahora.</p>
+                )}
                 {jobMessage && <p className="text-sm mb-3 text-indigo-600">{jobMessage}</p>}
                 <div className="flex flex-wrap gap-3">
                     <button
@@ -886,7 +945,8 @@ function StatusBadge({ status }: { status: string }) {
         pendiente: 'bg-yellow-100 text-yellow-700 border-yellow-200',
         aceptado: 'bg-blue-100 text-blue-700 border-blue-200',
         cancelado: 'bg-red-50 text-red-600 border-red-100',
-        revision_cliente: 'bg-purple-100 text-purple-700 border-purple-200'
+        revision_cliente: 'bg-purple-100 text-purple-700 border-purple-200',
+        cancelado_incidencia: 'bg-red-50 text-red-600 border-red-100',
     };
     
     const currentStyle = styles[status] || 'bg-slate-100 text-slate-600 border-slate-200';
@@ -896,6 +956,7 @@ function StatusBadge({ status }: { status: string }) {
             {status === 'cotizacion' && <FaInbox/>}
             {status === 'completado' && <FaCheckCircle/>}
             {status === 'pendiente' && <FaClock/>}
+            {status === 'aceptado' && <FaClock/>}
             {status === 'revision_cliente' && <FaExclamationCircle/>}
             {status}
         </span>
