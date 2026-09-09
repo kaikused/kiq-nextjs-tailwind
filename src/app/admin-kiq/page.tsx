@@ -4,7 +4,7 @@ import {
   FaLock, FaSync, FaBriefcase, FaUserTie, FaSearch, 
   FaUsers, FaMoneyBillWave, FaCheckCircle, FaExclamationCircle, 
   FaClock, FaToolbox, FaUser, FaTrash, FaKey, FaSignOutAlt,
-  FaPencilAlt, FaPaperPlane, FaInbox, FaFilePdf, FaPlus, FaCalculator
+  FaPencilAlt, FaPaperPlane, FaInbox, FaFilePdf, FaPlus, FaCalculator, FaHistory
 } from 'react-icons/fa';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   
   // UI
-  const [activeTab, setActiveTab] = useState<'inbox' | 'trabajos' | 'usuarios' | 'cotizar'>('inbox');
+  const [activeTab, setActiveTab] = useState<'inbox' | 'trabajos' | 'historial' | 'usuarios' | 'cotizar'>('inbox');
   const [searchTerm, setSearchTerm] = useState('');
   const [resetModal, setResetModal] = useState<{
     userId: number; tipo: string; nombre: string; email: string;
@@ -281,6 +281,40 @@ export default function AdminDashboard() {
     }
   };
 
+  const puedeTerminar = (t: any) =>
+    t && ['aceptado', 'revision_cliente', 'en_progreso'].includes(t.estado);
+
+  const handleCompleteJob = async (id: number) => {
+    const ficha = trabajos.find((j) => j.id === id) || jobModal;
+    const cobrado = jobModal?.id === id ? jobForm.cobrado : Boolean(ficha?.cobrado);
+    const ok = confirm(
+      cobrado
+        ? `¿Marcar el trabajo #${id} como terminado? Pasará al historial.`
+        : `¿Marcar el trabajo #${id} como terminado? Puedes marcar cobrado después en la ficha.`
+    );
+    if (!ok) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/trabajo/${id}/completar`, {
+        method: 'POST',
+        headers: adminHeaders(),
+        body: JSON.stringify({ cobrado }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'No se pudo marcar como terminado');
+        return;
+      }
+      setTrabajos((prev) => prev.map((j) => (j.id === data.id ? data : j)));
+      if (jobModal?.id === id) {
+        setJobModal(data);
+        setJobForm((prev) => ({ ...prev, estado: data.estado, cobrado: Boolean(data.cobrado) }));
+        setJobMessage('Terminado. Está en Historial.');
+      }
+    } catch {
+      alert('Error de red');
+    }
+  };
+
   const handleResetPassword = async () => {
     if (!resetModal) return;
     if (newPassword.length < 8) {
@@ -315,16 +349,24 @@ export default function AdminDashboard() {
   const totalIngresos = trabajos.reduce((acc, t) => acc + (t.precio || 0), 0);
   const trabajosActivos = trabajos.filter(t => ['pendiente', 'aceptado', 'revision_cliente'].includes(t.estado)).length;
   const inboxCount = trabajos.filter(t => t.estado === 'cotizacion').length;
+  const hechosCount = trabajos.filter(t => t.estado === 'completado').length;
   const montadoresCount = usuarios.filter(u => u.tipo === 'montador').length;
   const clientesCount = usuarios.filter(u => u.tipo === 'cliente').length;
 
   // --- FILTRADO ---
+  const q = searchTerm.toLowerCase();
   const filteredTrabajos = trabajos.filter(t => 
-    t.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.descripcion?.toLowerCase().includes(q) || 
+    t.cliente?.toLowerCase().includes(q) ||
+    t.telefono_cliente?.toLowerCase().includes(q) ||
+    t.montador?.toLowerCase().includes(q) ||
+    t.zona?.toLowerCase().includes(q) ||
+    String(t.pdf_code || '').toLowerCase().includes(q) ||
     t.id.toString().includes(searchTerm)
   );
   const inboxTrabajos = filteredTrabajos.filter(t => t.estado === 'cotizacion');
+  const tableroTrabajos = filteredTrabajos.filter(t => t.estado !== 'completado' && t.estado !== 'cotizacion');
+  const historialTrabajos = filteredTrabajos.filter(t => t.estado === 'completado');
 
   const filteredUsuarios = usuarios.filter(u => 
     u.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -414,7 +456,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                     <h3 className="text-3xl font-black text-slate-900">{totalIngresos.toLocaleString()}€</h3>
-                    <p className="text-slate-500 text-sm font-medium">Suma de precios · {trabajosActivos} en tablero</p>
+                    <p className="text-slate-500 text-sm font-medium">Suma de precios · {trabajosActivos} en tablero · {hechosCount} hechos</p>
                 </div>
             </div>
 
@@ -469,6 +511,15 @@ export default function AdminDashboard() {
                         <FaBriefcase /> Tablero
                     </button>
                     <button 
+                        onClick={() => setActiveTab('historial')} 
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'historial' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                    >
+                        <FaHistory /> Historial
+                        {hechosCount > 0 && (
+                          <span className="ml-auto text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">{hechosCount}</span>
+                        )}
+                    </button>
+                    <button 
                         onClick={() => setActiveTab('usuarios')} 
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'usuarios' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
                     >
@@ -486,7 +537,7 @@ export default function AdminDashboard() {
                         <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
                         <input 
                             type="text" 
-                            placeholder="Buscar..."
+                            placeholder="Nº, cliente, teléfono, montador..."
                             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -495,7 +546,8 @@ export default function AdminDashboard() {
                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest hidden md:block">
                         {activeTab === 'inbox' ? `${inboxTrabajos.length} por revisar` :
                          activeTab === 'cotizar' ? 'Llamada / tarifario' :
-                         activeTab === 'trabajos' ? `${filteredTrabajos.length} Resultados` : 
+                         activeTab === 'trabajos' ? `${tableroTrabajos.length} en curso` :
+                         activeTab === 'historial' ? `${historialTrabajos.length} terminados` :
                          activeTab === 'usuarios' ? `${filteredUsuarios.length} Resultados` : 'Vista General'}
                     </div>
                 </div>
@@ -516,7 +568,7 @@ export default function AdminDashboard() {
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-8">
                         <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/50">
                             <h2 className="font-bold text-slate-800">Cotizaciones por revisar</h2>
-                            <p className="text-xs text-slate-500 mt-1">Cuentas y visitantes. El visitante se afina aquí y se cierra por WhatsApp; no sale al tablero.</p>
+                            <p className="text-xs text-slate-500 mt-1">Cuentas y visitantes. El visitante se confirma aquí, se cierra por WhatsApp y se marca como terminado en Historial. No sale al tablero de montadores.</p>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
@@ -582,23 +634,25 @@ export default function AdminDashboard() {
                 {/* VISTA TRABAJOS */}
                 {activeTab === 'trabajos' && (
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-8">
-                        <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                            <h2 className="font-bold text-slate-800">Todos los trabajos</h2>
+                        <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/50">
+                            <h2 className="font-bold text-slate-800">Tablero</h2>
+                            <p className="text-xs text-slate-500 mt-1">Confirmados, en curso y cancelados. Los terminados están en Historial.</p>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
                                     <tr>
-                                        <th className="px-6 py-4">ID / Fecha</th>
+                                        <th className="px-6 py-4">Nº</th>
                                         <th className="px-6 py-4">Cliente</th>
-                                        <th className="px-6 py-4">Descripción</th>
+                                        <th className="px-6 py-4">Montaje</th>
+                                        <th className="px-6 py-4">Montador</th>
                                         <th className="px-6 py-4 text-right">Precio</th>
                                         <th className="px-6 py-4 text-center">Estado</th>
                                         <th className="px-6 py-4 text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
-                                    {filteredTrabajos.map((t) => (
+                                    {tableroTrabajos.map((t) => (
                                         <tr key={t.id} className="hover:bg-slate-50/80 transition-colors group">
                                             <td className="px-6 py-4">
                                                 <div className="font-mono text-xs text-slate-400">#{t.id}</div>
@@ -610,6 +664,15 @@ export default function AdminDashboard() {
                                                 {t.registrado === false && (
                                                     <span className="mt-1 inline-block text-[10px] font-bold uppercase tracking-wide text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">Visitante</span>
                                                 )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-xs font-semibold text-slate-700">{t.zona || t.direccion || '—'}</div>
+                                                <div className="max-w-xs truncate text-slate-500" title={t.descripcion}>{t.descripcion}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-xs text-slate-600">
+                                                {t.registrado === false
+                                                  ? (t.montador && t.montador !== 'Sin asignar' ? t.montador : 'Kiq · WhatsApp')
+                                                  : t.montador}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <span className="font-black text-slate-900 bg-slate-100 px-2 py-1 rounded-lg">{t.precio}€</span>
@@ -637,13 +700,13 @@ export default function AdminDashboard() {
                                                             <FaFilePdf />
                                                         </a>
                                                     )}
-                                                    {t.estado === 'cotizacion' && (
+                                                    {puedeTerminar(t) && (
                                                         <button
-                                                            onClick={() => handlePublishJob(t.id)}
-                                                            className="p-2 text-emerald-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
-                                                            title={t.registrado === false ? 'Confirmar montaje' : 'Publicar'}
+                                                            onClick={() => handleCompleteJob(t.id)}
+                                                            className="p-2 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                                                            title="Marcar como terminado"
                                                         >
-                                                            {t.registrado === false ? <FaCheckCircle /> : <FaPaperPlane />}
+                                                            <FaCheckCircle />
                                                         </button>
                                                     )}
                                                     <button 
@@ -659,7 +722,100 @@ export default function AdminDashboard() {
                                     ))}
                                 </tbody>
                             </table>
-                            {filteredTrabajos.length === 0 && <EmptyState text="No se encontraron trabajos" />}
+                            {tableroTrabajos.length === 0 && <EmptyState text="No hay trabajos en curso" />}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'historial' && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-8">
+                        <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/50">
+                            <h2 className="font-bold text-slate-800">Historial de terminados</h2>
+                            <p className="text-xs text-slate-500 mt-1">Consulta nº de trabajo, origen, montador, cobro y PDF.</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
+                                    <tr>
+                                        <th className="px-6 py-4">Nº / fechas</th>
+                                        <th className="px-6 py-4">Origen</th>
+                                        <th className="px-6 py-4">Cliente</th>
+                                        <th className="px-6 py-4">Montador</th>
+                                        <th className="px-6 py-4">Montaje</th>
+                                        <th className="px-6 py-4 text-right">Cobro</th>
+                                        <th className="px-6 py-4 text-center">PDF</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {historialTrabajos.map((t) => (
+                                        <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="font-mono text-sm font-bold text-slate-900">#{t.id}</div>
+                                                <div className="text-[11px] text-slate-500">Alta {new Date(t.fecha).toLocaleDateString()}</div>
+                                                {t.fecha_completado && (
+                                                    <div className="text-[11px] text-emerald-700">Hecho {new Date(String(t.fecha_completado).replace(' ', 'T')).toLocaleDateString()}</div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {t.registrado === false ? (
+                                                    <span className="inline-block text-[10px] font-bold uppercase tracking-wide text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">Visitante</span>
+                                                ) : (
+                                                    <span className="inline-block text-[10px] font-bold uppercase tracking-wide text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">Cuenta</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-slate-900">{t.cliente}</div>
+                                                <div className="text-xs text-slate-500">{t.telefono_cliente || 'Sin teléfono'}</div>
+                                                {t.email_cliente && <div className="text-[11px] text-slate-400">{t.email_cliente}</div>}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-slate-800">
+                                                    {t.registrado === false && (!t.montador || t.montador === 'Sin asignar')
+                                                      ? 'Kiq · WhatsApp'
+                                                      : t.montador}
+                                                </div>
+                                                {t.montador_telefono && (
+                                                    <div className="text-xs text-slate-500">{t.montador_telefono}</div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-xs font-semibold text-slate-700">{t.zona || t.direccion || '—'}</div>
+                                                <div className="max-w-xs text-slate-500" title={t.descripcion}>{t.descripcion}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="font-black text-slate-900">{t.precio}€</div>
+                                                <div className="text-[11px] text-slate-500">{t.metodo_pago === 'bizum' ? 'Bizum' : 'Efectivo'}</div>
+                                                <div className={`text-[10px] font-bold uppercase ${t.cobrado ? 'text-emerald-700' : 'text-amber-700'}`}>
+                                                    {t.cobrado ? 'Cobrado' : 'Pendiente cobro'}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex justify-center gap-1">
+                                                    <button
+                                                        onClick={() => openJobModal(t)}
+                                                        className="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                                                        title="Ver ficha"
+                                                    >
+                                                        <FaPencilAlt />
+                                                    </button>
+                                                    {t.pdf_code && (
+                                                        <a
+                                                            href={pdfHref(t.pdf_code)}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                                                            title={`PDF ${t.pdf_code}`}
+                                                        >
+                                                            <FaFilePdf />
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {historialTrabajos.length === 0 && <EmptyState text="Aún no hay trabajos terminados" />}
                         </div>
                     </div>
                 )}
@@ -786,13 +942,16 @@ export default function AdminDashboard() {
       {jobModal && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white p-6 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
-                <h3 className="text-lg font-bold text-slate-800 mb-1">Revisar cotización #{jobModal.id}</h3>
+                <h3 className="text-lg font-bold text-slate-800 mb-1">Trabajo #{jobModal.id}</h3>
                 {jobModal.registrado === false ? (
                   <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4">
-                    Visitante, sin cuenta. Afina el PDF, confírmalo y ciérralo por WhatsApp. No va al tablero de montadores.
+                    Visitante, sin cuenta. Confírmalo, envía el PDF por WhatsApp y márcalo como terminado cuando el montaje esté hecho.
                   </p>
                 ) : (
                   <p className="text-sm text-slate-500 mb-4">{jobModal.cliente} · {jobModal.email_cliente}</p>
+                )}
+                {jobModal.montador && jobModal.montador !== 'Sin asignar' && (
+                  <p className="text-xs text-slate-500 mb-4">Montador: {jobModal.montador}{jobModal.montador_telefono ? ` · ${jobModal.montador_telefono}` : ''}</p>
                 )}
                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nombre</label>
                 <input
@@ -953,6 +1112,15 @@ export default function AdminDashboard() {
                         className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition"
                       >
                         {jobModal.registrado === false ? 'Confirmar montaje' : 'Publicar en el tablero'}
+                      </button>
+                    )}
+                    {puedeTerminar(jobModal) && (
+                      <button
+                        type="button"
+                        onClick={() => handleCompleteJob(jobModal.id)}
+                        className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition"
+                      >
+                        Marcar como terminado
                       </button>
                     )}
                 </div>
