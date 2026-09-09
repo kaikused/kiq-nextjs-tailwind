@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, KeyboardEvent } from 'react';
 import Image from 'next/image';
-import { FaChevronRight } from 'react-icons/fa';
+import { FaPaperclip, FaPaperPlane } from 'react-icons/fa';
 import { useUI } from '../context/UIContext';
 
 const images = [
@@ -32,9 +32,20 @@ const HeroAspiracional = () => {
     }
   };
 
+  const abrirCotizador = (prompt: string) => {
+    openCalculatorModal('public', prompt);
+  };
+
   const handlePedirPrecio = (event?: FormEvent) => {
     event?.preventDefault();
-    openCalculatorModal('public', heroPrompt);
+    abrirCotizador(heroPrompt);
+  };
+
+  const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      abrirCotizador(heroPrompt);
+    }
   };
 
   return (
@@ -61,39 +72,66 @@ const HeroAspiracional = () => {
           Foto o descripción, precio en minutos, lo cerramos por WhatsApp.
         </p>
 
-        <form
-          onSubmit={handlePedirPrecio}
-          className="mt-12 w-full max-w-xl mx-auto text-left"
-        >
-          <label htmlFor="hero-cotizar" className="sr-only">
-            Qué necesitas montar
-          </label>
-          <input
-            id="hero-cotizar"
-            type="text"
-            value={heroPrompt}
-            onChange={(event) => setHeroPrompt(event.target.value)}
-            placeholder="Ej: armario PAX de 2 puertas"
-            autoComplete="off"
-            className="w-full min-h-12 rounded-full bg-white px-5 py-3.5 text-base text-slate-900 placeholder:text-slate-500 shadow-lg ring-1 ring-white/20 focus:outline-none focus-visible:ring-2 focus:ring-indigo-300"
-          />
-          <div className="mt-4 flex flex-col space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0">
-            <button
-              type="submit"
-              className="group flex min-h-12 flex-1 items-center justify-center rounded-full bg-indigo-600 px-8 py-4 text-lg font-bold text-white transition-all hover:bg-indigo-500 hover:scale-105 shadow-lg hover:shadow-indigo-500/30"
+        <div className="mt-10 w-full max-w-lg mx-auto text-left">
+          <div className="overflow-hidden rounded-3xl bg-slate-50 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)] ring-1 ring-white/15">
+            <div className="flex items-start gap-2.5 px-4 pt-4 pb-2">
+              <div
+                className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-bold text-white"
+                aria-hidden
+              >
+                K
+              </div>
+              <div>
+                <p className="mb-1 text-[11px] font-semibold tracking-wide text-slate-500">Kiq</p>
+                <p className="rounded-2xl rounded-tl-none bg-white px-4 py-3 text-[15px] leading-relaxed text-slate-800 ring-1 ring-slate-100">
+                  ¿Qué necesitas montar? Escríbelo o adjunta una foto.
+                </p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={handlePedirPrecio}
+              className="mt-2 flex items-center gap-1 border-t border-slate-200 bg-white p-3"
             >
-              Pedir precio
-              <FaChevronRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </button>
-            <button
-              type="button"
-              onClick={handleScrollToServices}
-              className="flex min-h-12 flex-1 items-center justify-center rounded-full bg-white/10 px-8 py-4 text-lg font-bold text-white backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105 border border-white/30"
-            >
-              Ver montajes
-            </button>
+              <button
+                type="button"
+                onClick={() => abrirCotizador(heroPrompt)}
+                className="flex h-12 w-12 shrink-0 items-center justify-center text-slate-400 hover:text-indigo-600 transition-colors"
+                aria-label="Adjuntar foto en el cotizador"
+              >
+                <FaPaperclip className="h-5 w-5" />
+              </button>
+              <label htmlFor="hero-cotizar" className="sr-only">
+                Mensaje para cotizar
+              </label>
+              <textarea
+                id="hero-cotizar"
+                rows={1}
+                value={heroPrompt}
+                onChange={(event) => setHeroPrompt(event.target.value)}
+                onKeyDown={handleComposerKeyDown}
+                placeholder="Un armario PAX de 2 puertas…"
+                autoComplete="off"
+                className="min-h-12 max-h-24 flex-1 resize-none bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 rounded-full border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+              <button
+                type="submit"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
+                aria-label="Enviar y pedir precio"
+              >
+                <FaPaperPlane className="h-4 w-4" />
+              </button>
+            </form>
           </div>
-        </form>
+
+          <button
+            type="button"
+            onClick={handleScrollToServices}
+            className="mt-4 flex min-h-11 w-full items-center justify-center text-sm font-semibold text-white/80 hover:text-white underline-offset-4 hover:underline"
+          >
+            Ver montajes
+          </button>
+        </div>
       </div>
 
       <div className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2">
@@ -104,11 +142,11 @@ const HeroAspiracional = () => {
             onClick={() => setCurrentImageIndex(index)}
             className="flex h-12 w-12 items-center justify-center"
             aria-label={`Ir a la imagen ${index + 1}`}
-            aria-current={index === currentImageIndex ? 'true' : undefined}
+            aria-current={currentImageIndex === index ? 'true' : undefined}
           >
             <span
               className={`block h-2 rounded-full transition-all duration-500 ${
-                index === currentImageIndex ? 'bg-indigo-400 w-8' : 'bg-white w-2'
+                currentImageIndex === index ? 'bg-indigo-400 w-8' : 'bg-white w-2'
               }`}
             />
           </button>
