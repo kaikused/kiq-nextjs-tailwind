@@ -42,6 +42,8 @@ interface TrabajoCliente {
   imagenes_urls?: string[];
   desglose?: DesgloseDetallado;
   etiquetas?: { tipo?: string; [key: string]: unknown };
+  metodo_pago?: string;
+  cobrado?: boolean;
 }
 
 function waMontador(phone?: string) {
@@ -286,6 +288,13 @@ function ContenidoPanelCliente() {
                     />
                   )}
                   <div className="mt-4 flex flex-col gap-3">
+                    <p className="text-sm text-slate-600">
+                      {trabajo.cobrado
+                        ? 'Pagado al montador.'
+                        : trabajo.metodo_pago === 'bizum'
+                          ? 'Pago: Bizum al montador (fuera de la app).'
+                          : 'Pago: efectivo al montador (fuera de la app).'}
+                    </p>
                     {wa && trabajo.estado === 'aceptado' && (
                       <a
                         href={wa}

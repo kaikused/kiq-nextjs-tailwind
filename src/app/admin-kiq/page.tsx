@@ -34,7 +34,9 @@ export default function AdminDashboard() {
   const [newPassword, setNewPassword] = useState('');
   const [resetMessage, setResetMessage] = useState('');
   const [jobModal, setJobModal] = useState<any | null>(null);
-  const [jobForm, setJobForm] = useState({ descripcion: '', direccion: '', precio: '', telefono: '' });
+  const [jobForm, setJobForm] = useState({
+    descripcion: '', direccion: '', precio: '', telefono: '', metodo_pago: 'efectivo', cobrado: false,
+  });
   const [jobMessage, setJobMessage] = useState('');
 
   const adminHeaders = (token = adminToken) => ({
@@ -183,6 +185,8 @@ export default function AdminDashboard() {
       direccion: t.direccion || '',
       precio: String(t.precio ?? ''),
       telefono: t.telefono_cliente || '',
+      metodo_pago: t.metodo_pago === 'bizum' ? 'bizum' : 'efectivo',
+      cobrado: Boolean(t.cobrado),
     });
   };
 
@@ -198,6 +202,8 @@ export default function AdminDashboard() {
           direccion: jobForm.direccion,
           precio: Number(jobForm.precio),
           telefono: jobForm.telefono,
+          metodo_pago: jobForm.metodo_pago,
+          cobrado: jobForm.cobrado,
         }),
       });
       const data = await res.json();
@@ -225,6 +231,8 @@ export default function AdminDashboard() {
             direccion: jobForm.direccion,
             precio: Number(jobForm.precio),
             telefono: jobForm.telefono,
+            metodo_pago: jobForm.metodo_pago,
+            cobrado: jobForm.cobrado,
           }),
         });
         const saved = await saveRes.json();
@@ -792,6 +800,31 @@ export default function AdminDashboard() {
                     onChange={(e) => setJobForm({ ...jobForm, precio: e.target.value })}
                     className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm font-bold"
                 />
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Cobro</label>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setJobForm({ ...jobForm, metodo_pago: 'bizum' })}
+                      className={`py-2.5 rounded-xl text-sm font-bold border ${jobForm.metodo_pago === 'bizum' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200'}`}
+                    >
+                      Bizum
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setJobForm({ ...jobForm, metodo_pago: 'efectivo' })}
+                      className={`py-2.5 rounded-xl text-sm font-bold border ${jobForm.metodo_pago === 'efectivo' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200'}`}
+                    >
+                      Efectivo
+                    </button>
+                </div>
+                <label className="flex items-center gap-2 text-sm text-slate-700 mb-3">
+                    <input
+                      type="checkbox"
+                      checked={jobForm.cobrado}
+                      onChange={(e) => setJobForm({ ...jobForm, cobrado: e.target.checked })}
+                    />
+                    Cobrado
+                </label>
                 {jobMessage && <p className="text-sm mb-3 text-indigo-600">{jobMessage}</p>}
                 <div className="flex flex-wrap gap-3">
                     <button

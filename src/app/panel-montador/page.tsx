@@ -44,6 +44,8 @@ interface TrabajoMontador {
   estado?: string;
   imagenes_urls?: string[];
   desglose?: DesgloseDetallado;
+  metodo_pago?: string;
+  cobrado?: boolean;
 }
 
 function waLink(phone?: string) {
@@ -150,15 +152,6 @@ function ContenidoPanelMontador() {
           },
         });
         fetchData();
-      } else if (res.status === 402 || res.status === 428) {
-        setModalInfo({
-          isOpen: true,
-          type: 'info',
-          title: 'Aún no se cobra desde aquí',
-          message: 'Este trabajo pedía cobro en la app. Por ahora avísanos por WhatsApp y lo gestionamos a mano.',
-          confirmText: 'Entendido',
-          onConfirm: undefined,
-        });
       } else {
         setModalInfo({
           isOpen: true,
@@ -296,6 +289,54 @@ function ContenidoPanelMontador() {
         }
       },
     });
+  };
+
+  const ejecutarCobro = async (
+    trabajoId: number,
+    payload: { metodo_pago?: string; cobrado?: boolean }
+  ) => {
+    if (!accessToken) return;
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/montador/trabajo/${trabajoId}/cobro`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setModalInfo({
+          isOpen: true,
+          type: 'danger',
+          title: 'No se pudo guardar el cobro',
+          message: typeof data.error === 'string' ? data.error : 'Inténtalo de nuevo.',
+          confirmText: 'Cerrar',
+          onConfirm: undefined,
+        });
+        return;
+      }
+      const patch = {
+        metodo_pago: data.metodo_pago,
+        cobrado: data.cobrado,
+      };
+      setMisTrabajosAsignados((prev) =>
+        prev.map((t) => (t.trabajo_id === trabajoId ? { ...t, ...patch } : t))
+      );
+    } catch {
+      setModalInfo({
+        isOpen: true,
+        type: 'danger',
+        title: 'Error de red',
+        message: 'Comprueba tu conexión.',
+        confirmText: 'Cerrar',
+        onConfirm: undefined,
+      });
+    }
   };
 
   const activosEstados = ['aceptado', 'revision_cliente', 'aprobado_cliente_stripe'];
@@ -473,6 +514,41 @@ function ContenidoPanelMontador() {
                             <FaWhatsapp /> WhatsApp al cliente
                           </a>
                         )}
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => ejecutarCobro(trabajo.trabajo_id, { metodo_pago: 'bizum' })}
+                            className={`py-2.5 rounded-xl text-sm font-bold border ${
+                              trabajo.metodo_pago === 'bizum'
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            Bizum
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => ejecutarCobro(trabajo.trabajo_id, { metodo_pago: 'efectivo' })}
+                            className={`py-2.5 rounded-xl text-sm font-bold border ${
+                              trabajo.metodo_pago === 'efectivo'
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            Efectivo
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => ejecutarCobro(trabajo.trabajo_id, { cobrado: !trabajo.cobrado })}
+                          className={`w-full py-3 font-bold rounded-xl border ${
+                            trabajo.cobrado
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : 'bg-white text-slate-800 border-slate-200'
+                          }`}
+                        >
+                          {trabajo.cobrado ? 'Cobrado' : 'Marcar cobrado'}
+                        </button>
                         <button
                           type="button"
                           onClick={() => triggerFileUpload(trabajo.trabajo_id)}
@@ -492,8 +568,21 @@ function ContenidoPanelMontador() {
                     )}
 
                     {activeTab === 'activos' && trabajo.estado === 'revision_cliente' && (
-                      <div className="bg-slate-50 text-slate-600 p-4 rounded-xl text-center text-sm border border-slate-100">
-                        Foto enviada. Esperamos confirmación.
+                      <div className="space-y-3">
+                        <div className="bg-slate-50 text-slate-600 p-4 rounded-xl text-center text-sm border border-slate-100">
+                          Foto enviada. Esperamos confirmación.
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => ejecutarCobro(trabajo.trabajo_id, { cobrado: !trabajo.cobrado })}
+                          className={`w-full py-3 font-bold rounded-xl border ${
+                            trabajo.cobrado
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : 'bg-white text-slate-800 border-slate-200'
+                          }`}
+                        >
+                          {trabajo.cobrado ? 'Cobrado' : 'Marcar cobrado'}
+                        </button>
                       </div>
                     )}
                   </div>
