@@ -190,7 +190,7 @@ export default function Cabecera() {
             <nav className={`fixed top-0 z-50 w-full transition-all duration-300 ${navClass}`}>
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
                     {/* LOGO */}
-                    <Link href="/" aria-label="Ir al inicio" className="group">
+                    <Link href="/" aria-label="Ir al inicio" className="group inline-flex min-h-12 items-center">
                         <div className={`transition-all duration-300 ${logoClass}`}>
                              <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={100} height={40} className="h-8 w-auto" priority />
                         </div>
@@ -209,14 +209,14 @@ export default function Cabecera() {
                         >
                             <FaWhatsapp /> WhatsApp
                         </a>
-                        <button onClick={handleOpenLogin} className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${buttonGhostClass} opacity-80`}>
+                        <button onClick={handleOpenLogin} className={`min-h-11 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${buttonGhostClass}`}>
                             Entrar
                         </button>
                     </div>
 
                     {/* HAMBURGUESA MÓVIL */}
                     <button 
-                        className={`md:hidden p-2 rounded-lg transition-colors ${isTransparent ? 'text-white' : 'text-slate-800'}`}
+                        className={`md:hidden inline-flex items-center justify-center w-12 h-12 rounded-lg transition-colors ${isTransparent ? 'text-white' : 'text-slate-800'}`}
                         onClick={() => setIsMenuOpen(true)}
                         aria-label="Menú"
                     >
@@ -232,7 +232,7 @@ export default function Cabecera() {
                     
                     <div className="flex items-center justify-between mb-8">
                         <Image src="/images/logo-kiq.svg" alt="Logo KIQ" width={90} height={35} className="h-7 w-auto"/>
-                        <button onClick={() => setIsMenuOpen(false)} className="text-gray-400 hover:text-gray-600 p-2"><FaTimes size={24}/></button>
+                        <button onClick={() => setIsMenuOpen(false)} className="inline-flex items-center justify-center w-12 h-12 text-slate-700 hover:text-slate-900" aria-label="Cerrar menú"><FaTimes size={22}/></button>
                     </div>
 
                     <div className="space-y-4 flex-1">
@@ -248,7 +248,7 @@ export default function Cabecera() {
                         >
                             <FaWhatsapp className="text-green-600" /> WhatsApp
                         </a>
-                        <button onClick={handleOpenLogin} className="w-full text-left p-3 text-sm font-medium text-gray-500 hover:bg-gray-50 rounded-xl">
+                        <button onClick={handleOpenLogin} className="w-full text-left p-4 text-base font-medium text-slate-700 hover:bg-gray-50 rounded-xl">
                             Entrar
                         </button>
                     </div>

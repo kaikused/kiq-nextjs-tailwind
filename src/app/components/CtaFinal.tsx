@@ -38,7 +38,7 @@ export default function CtaFinal() {
           </a>
         </div>
 
-        <p className="mt-8 text-sm text-slate-500">
+        <p className="mt-8 text-sm text-slate-300">
           Respondemos en horario de lunes a viernes.
         </p>
       </div>

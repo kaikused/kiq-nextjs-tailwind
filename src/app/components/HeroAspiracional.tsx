@@ -54,15 +54,15 @@ const HeroAspiracional = ({ onOpenCalculator }: HeroAspiracionalProps) => {
             priority={index === 0}
           />
           {/* Gradiente oscuro para legibilidad */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/85"></div>
         </div>
       ))}
 
       {/* --- Contenido Principal --- */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center text-white sm:px-6 lg:px-8 max-w-5xl mx-auto">
         
-        <h1 className="font-titulo text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl leading-tight animate-in fade-in slide-in-from-bottom-4 duration-700">
-          Montaje de muebles en <span className="text-indigo-300">Málaga</span>.
+        <h1 className="font-titulo text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl leading-tight animate-in fade-in slide-in-from-bottom-4 duration-700 drop-shadow-md">
+          Montaje de muebles en <span className="text-indigo-100">Málaga</span>.
         </h1>
         
         <p className="mt-6 max-w-2xl text-lg sm:text-xl text-gray-200 font-normal animate-in fade-in slide-in-from-bottom-5 duration-700 delay-200 leading-relaxed">
@@ -88,16 +88,22 @@ const HeroAspiracional = ({ onOpenCalculator }: HeroAspiracionalProps) => {
       </div>
 
       {/* --- Indicadores del Carrusel --- */}
-      <div className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2 space-x-3">
+      <div className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2">
         {images.map((_, index) => (
           <button
             key={index}
+            type="button"
             onClick={() => setCurrentImageIndex(index)}
-            className={`h-2 rounded-full transition-all duration-500 ${
-              index === currentImageIndex ? 'bg-indigo-500 w-8' : 'bg-white/40 w-2 hover:bg-white/70'
-            }`}
+            className="flex h-12 w-12 items-center justify-center"
             aria-label={`Ir a la imagen ${index + 1}`}
-          />
+            aria-current={index === currentImageIndex ? 'true' : undefined}
+          >
+            <span
+              className={`block h-2 rounded-full transition-all duration-500 ${
+                index === currentImageIndex ? 'bg-indigo-400 w-8' : 'bg-white w-2'
+              }`}
+            />
+          </button>
         ))}
       </div>
     </section>

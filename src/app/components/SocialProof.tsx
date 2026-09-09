@@ -84,7 +84,7 @@ export default function SocialProof() {
 
         {/* 3. LOGOS DE MARCAS - CORREGIDO A 6 COLUMNAS */}
         <div className="border-t border-gray-100 pt-20">
-            <p className="text-center text-[10px] font-black text-gray-400 tracking-[0.3em] uppercase mb-12">
+            <p className="text-center text-xs font-bold text-slate-600 tracking-[0.2em] uppercase mb-12">
                 Especialistas en montaje multi-marca
             </p>
             

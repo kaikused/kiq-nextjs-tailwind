@@ -12,7 +12,7 @@ export default function FooterMinimal() {
   const { openCalculatorModal } = useUI();
 
   return (
-    <footer className="bg-slate-950 text-slate-400 py-16 border-t border-slate-800">
+    <footer className="bg-slate-950 text-slate-300 py-16 border-t border-slate-800">
       <div className="max-w-6xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           <div>
@@ -28,65 +28,65 @@ export default function FooterMinimal() {
             </p>
             <a
               href="tel:+34664497889"
-              className="text-white font-medium text-sm hover:text-indigo-300 transition-colors"
+              className="inline-flex min-h-11 items-center text-white font-medium text-sm hover:text-indigo-200 transition-colors"
             >
               664 497 889
             </a>
-            <div className="flex gap-5 items-center mt-5">
+            <div className="flex gap-1 items-center mt-5">
               <a
                 href="https://search.google.com/local/reviews?placeid=ChIJ1XtcHYfyly4Re1sFUXqtre8"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Opiniones en Google"
-                className="hover:text-white transition-colors"
+                className="inline-flex items-center justify-center w-12 h-12 text-slate-300 hover:text-white transition-colors"
               >
-                <FaGoogle size={16} />
+                <FaGoogle size={20} />
               </a>
               <a
                 href="https://www.instagram.com/kaikused/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="hover:text-white transition-colors"
+                className="inline-flex items-center justify-center w-12 h-12 text-slate-300 hover:text-white transition-colors"
               >
-                <FaInstagram size={18} />
+                <FaInstagram size={20} />
               </a>
               <a
                 href="https://www.tiktok.com/@kaikused"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="TikTok"
-                className="hover:text-white transition-colors"
+                className="inline-flex items-center justify-center w-12 h-12 text-slate-300 hover:text-white transition-colors"
               >
-                <FaTiktok size={16} />
+                <FaTiktok size={20} />
               </a>
               <a
                 href={WHATSAPP_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
-                className="hover:text-white transition-colors"
+                className="inline-flex items-center justify-center w-12 h-12 text-slate-300 hover:text-white transition-colors"
               >
-                <FaWhatsapp size={18} />
+                <FaWhatsapp size={20} />
               </a>
             </div>
           </div>
 
           <div>
-            <h4 className="font-titulo text-white font-semibold mb-5 text-sm">En esta página</h4>
+            <h3 className="font-titulo text-white font-semibold mb-5 text-sm">En esta página</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <a href="#como-funciona" className="hover:text-white transition-colors">
+                <a href="#como-funciona" className="inline-flex min-h-11 items-center hover:text-white transition-colors">
                   Cómo funciona
                 </a>
               </li>
               <li>
-                <a href="#servicios-section" className="hover:text-white transition-colors">
+                <a href="#servicios-section" className="inline-flex min-h-11 items-center hover:text-white transition-colors">
                   Trabajos
                 </a>
               </li>
               <li>
-                <a href="#testimonios" className="hover:text-white transition-colors">
+                <a href="#testimonios" className="inline-flex min-h-11 items-center hover:text-white transition-colors">
                   Reseñas
                 </a>
               </li>
@@ -94,25 +94,25 @@ export default function FooterMinimal() {
           </div>
 
           <div>
-            <h4 className="font-titulo text-white font-semibold mb-5 text-sm">Pedir presupuesto</h4>
+            <h3 className="font-titulo text-white font-semibold mb-5 text-sm">Pedir presupuesto</h3>
             <ul className="space-y-3 text-sm">
               <li>
                 <button
                   type="button"
                   onClick={() => openCalculatorModal('public')}
-                  className="hover:text-white transition-colors"
+                  className="inline-flex min-h-11 items-center hover:text-white transition-colors"
                 >
                   Pedir precio
                 </button>
               </li>
               <li>
-                <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center hover:text-white transition-colors">
                   WhatsApp
                 </a>
               </li>
-              <li className="text-slate-500">Málaga y Costa del Sol</li>
+              <li className="text-slate-400">Málaga y Costa del Sol</li>
               <li>
-                <Link href="/soy-montador" className="hover:text-white transition-colors">
+                <Link href="/soy-montador" className="inline-flex min-h-11 items-center hover:text-white transition-colors">
                   Soy montador
                 </Link>
               </li>
@@ -120,7 +120,7 @@ export default function FooterMinimal() {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between gap-3 text-xs text-slate-600">
+        <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between gap-3 text-xs text-slate-400">
           <p>© {new Date().getFullYear()} Kiq Montajes. Málaga.</p>
         </div>
       </div>

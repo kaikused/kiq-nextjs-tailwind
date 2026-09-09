@@ -82,7 +82,7 @@ export default function Testimonios() {
               <div className="flex items-center gap-2 font-bold text-gray-900 text-sm">
                 <FaGoogle className="text-[#4285F4]" /> Google Maps
               </div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1 font-bold">Verificado</p>
+              <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mt-1">Verificado</p>
             </div>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function Testimonios() {
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900 text-sm leading-tight">{r.author_name}</h3>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">{r.relative_time_description}</p>
+                    <p className="text-xs font-bold text-slate-600 uppercase mt-0.5">{r.relative_time_description}</p>
                   </div>
                 </div>
                 <p className="text-gray-600 leading-relaxed text-[15px] italic line-clamp-4 group-hover:text-gray-900 transition-colors">
@@ -141,7 +141,7 @@ export default function Testimonios() {
             href={WRITE_REVIEW_URL}
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-gray-400 font-bold hover:text-indigo-600 transition-colors underline underline-offset-8 decoration-gray-200 hover:decoration-indigo-200 text-sm"
+            className="text-slate-700 font-bold hover:text-indigo-700 transition-colors underline underline-offset-8 decoration-slate-300 hover:decoration-indigo-300 text-sm min-h-12 inline-flex items-center"
           >
             ¿Has trabajado con nosotros? Deja tu reseña aquí
           </a>
