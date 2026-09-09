@@ -174,12 +174,13 @@ export default function Cabecera() {
                                 )}
                             </div>
 
-                            {/* GEMAS */}
+                            {userProfile.tipo !== 'montador' && (
                             <button onClick={openGemStore} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full border border-indigo-100 shadow-sm hover:bg-indigo-100 transition group">
                                 <FaGem className="text-sm group-hover:scale-110 transition-transform" />
                                 <span className="font-bold text-sm">{userGems}</span> 
                                 <FaPlusCircle className="text-indigo-400 text-xs ml-1" />
                             </button>
+                            )}
 
                             <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
 

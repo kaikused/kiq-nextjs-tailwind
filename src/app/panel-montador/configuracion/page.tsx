@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { FaUser, FaMapMarkerAlt, FaPhone, FaSave, FaTruck, FaClock, FaCamera, FaEnvelope, FaCheckCircle, FaExclamationTriangle, FaToggleOn, FaArrowLeft, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { useUI, UserProfile } from '../../context/UIContext'; // Ajusta la ruta si es necesario
+import { FaUser, FaMapMarkerAlt, FaPhone, FaSave, FaCamera, FaEnvelope, FaCheckCircle, FaExclamationTriangle, FaArrowLeft, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useUI } from '../../context/UIContext';
 import { useRouter } from 'next/navigation';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
@@ -180,7 +180,7 @@ export default function ConfiguracionMontadorPage() {
                             </button>
                         </div>
                         <h2 className="mt-4 text-xl font-bold text-slate-900">{userProfile.nombre}</h2>
-                        <p className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mt-2 uppercase tracking-wide">Montador Verificado</p>
+                        <p className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mt-2 uppercase tracking-wide">Cuenta de montador</p>
                     </div>
 
                     {/* TABS DE NAVEGACIÓN */}
@@ -272,19 +272,9 @@ export default function ConfiguracionMontadorPage() {
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-lg">Preferencias</h3>
-                                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                            <div>
-                                                <p className="font-bold text-sm text-slate-800">Alertas de Trabajo</p>
-                                                <p className="text-xs text-slate-500">Recibir email cuando haya un cliente en tu zona.</p>
-                                            </div>
-                                            <FaToggleOn size={32} className="text-green-500 cursor-pointer"/>
-                                        </div>
-                                        <div className="mt-2 p-3 bg-indigo-50 rounded-xl border border-indigo-100 text-sm text-indigo-700 flex items-center gap-2">
-                                            <FaClock /> Próximamente podrás gestionar tu calendario.
-                                        </div>
-                                    </div>
+                                    <p className="text-sm text-slate-500">
+                                        De momento los trabajos se publican a mano. Cuando filtremos por zona, usaremos este campo.
+                                    </p>
                                 </div>
                             )}
 
