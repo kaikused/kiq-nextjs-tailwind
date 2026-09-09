@@ -1,15 +1,33 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { FaMoneyBillWave, FaCalendarAlt, FaShieldAlt, FaArrowRight } from 'react-icons/fa';
 import { useUI } from '../context/UIContext';
+import FooterMinimal from '../components/FooterMinimal';
+
+const pasos = [
+  {
+    titulo: 'Kiq publica el montaje',
+    texto: 'El cliente pide precio. Kiq revisa la ficha y la suelta al tablero. Tú no ves cotizaciones a medias.',
+  },
+  {
+    titulo: 'Aceptas los de tu zona',
+    texto: 'Indicas zona y teléfono. Aparecen los montajes que coinciden. Aceptas el que puedas hacer.',
+  },
+  {
+    titulo: 'WhatsApp y cobro fuera',
+    texto: 'Escribes al cliente, concreta el día y cobras Bizum o efectivo. Kiq no retiene el dinero.',
+  },
+];
 
 export default function SoyMontadorPage() {
   const { openRegisterModal, openLoginModal, isLoggedIn, userProfile } = useUI();
   const router = useRouter();
 
+  const yaEsMontador = isLoggedIn && userProfile?.tipo === 'montador';
+
   const handleStart = () => {
-    if (isLoggedIn && userProfile?.tipo === 'montador') {
+    if (yaEsMontador) {
       router.push('/panel-montador');
       return;
     }
@@ -17,114 +35,100 @@ export default function SoyMontadorPage() {
   };
 
   return (
-    <div className="bg-white font-sans text-gray-900">
-      <section className="relative pt-20 pb-32 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-100 via-white to-white opacity-70"></div>
+    <div className="min-h-screen bg-white">
+      <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-slate-950">
+        <Image
+          src="/images/montadoresWeb.png"
+          alt="Montadores de Kiq"
+          fill
+          className="object-cover object-center"
+          priority
+          quality={70}
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/55 to-black/80" />
 
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <span className="inline-block py-1 px-3 rounded-full bg-indigo-50 text-indigo-600 text-sm font-bold mb-6 border border-indigo-100">
-              Para profesionales del montaje
-            </span>
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-slate-900">
-              Trabajos cerrados. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500">
-                Precio y zona ya acordados.
-              </span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Kiq filtra cada montaje. Tú ves los de tu zona, aceptas, hablas por WhatsApp y cobras en Bizum o efectivo. Sin cuotas mensuales y sin pagar para entrar.
-            </p>
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-[clamp(1rem,4vw,2.5rem)] py-28 text-center text-white">
+          <p className="text-sm font-medium text-white/70">Para montadores · Málaga y Costa del Sol</p>
+          <h1 className="font-titulo mt-4 text-[clamp(1.85rem,6vw,3.5rem)] font-extrabold leading-[1.15] tracking-tight">
+            Montajes con precio y zona ya cerrados.
+          </h1>
+          <p className="mx-auto mt-5 max-w-xl text-[clamp(1rem,2.4vw,1.2rem)] leading-relaxed text-white/80">
+            Kiq filtra cada trabajo. Tú ves los de tu zona, aceptas, hablas por WhatsApp y cobras al terminar. Sin cuotas y sin pagar para entrar.
+          </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button
-                type="button"
-                onClick={handleStart}
-                className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-slate-800 transition shadow-xl shadow-indigo-200/50 flex items-center justify-center gap-2"
-              >
-                {isLoggedIn && userProfile?.tipo === 'montador' ? 'Ir a mi panel' : 'Crear cuenta de montador'}
-                <FaArrowRight size={14}/>
-              </button>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleStart}
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white px-8 text-base font-semibold text-slate-950 hover:bg-slate-100 sm:w-auto"
+            >
+              {yaEsMontador ? 'Ir a mi panel' : 'Crear cuenta de montador'}
+            </button>
+            {!yaEsMontador && (
               <button
                 type="button"
                 onClick={() => openLoginModal()}
-                className="text-slate-600 font-medium hover:text-indigo-600 transition"
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-full px-8 text-base font-medium text-white/80 ring-1 ring-white/25 hover:bg-white/10 sm:w-auto"
               >
                 Ya tengo cuenta
               </button>
-            </div>
-            <p className="mt-6">
-              <Link href="/" className="text-slate-500 text-sm hover:text-indigo-600 transition">
-                ¿Buscas montaje para tu casa? Pedir precio
-              </Link>
+            )}
+          </div>
+
+          <p className="mt-6">
+            <Link href="/" className="text-sm text-white/55 hover:text-white">
+              ¿Buscas montaje para tu casa? Pedir precio
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      <section className="bg-slate-50 px-4 py-20 md:py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto mb-14 max-w-2xl text-center">
+            <h2 className="font-titulo text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
+              Así es el tablero ahora
+            </h2>
+            <p className="mt-4 text-lg leading-relaxed text-slate-600">
+              MVP en Málaga: pocos montajes, bien filtrados. Cuando crezca, el mismo flujo sirve para más zona y más gente.
             </p>
           </div>
-        </div>
-      </section>
 
-      <section className="py-24 bg-gray-50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Cómo funciona</h2>
-            <p className="text-gray-500">El mismo ciclo que ya usamos en el tablero.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            <div className="md:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition">
-              <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 mb-6">
-                <FaMoneyBillWave size={24} />
-              </div>
-              <h3 className="text-2xl font-bold mb-3">Cobras tú, en mano o Bizum</h3>
-              <p className="text-gray-500 mb-6">
-                El cliente paga al terminar, como en un montaje normal. En la ficha marcas cómo cobraste y si está cobrado. Kiq no retiene el dinero en la app.
-              </p>
-              <div className="flex gap-3">
-                <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-lg">Bizum</span>
-                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg">Efectivo</span>
-              </div>
-            </div>
-
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
-                <FaShieldAlt size={24} />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Filtro de Kiq</h3>
-              <p className="text-gray-500 text-sm">
-                No ves cotizaciones a medias. Solo trabajos que Kiq ha revisado: precio, zona y teléfono del cliente.
-              </p>
-            </div>
-
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 mb-6">
-                <FaCalendarAlt size={24} />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Tu zona</h3>
-              <p className="text-gray-500 text-sm">
-                Indica tu zona en el panel. Te saldrán los montajes que coincidan. Sin jefes ni horario fijo.
-              </p>
-            </div>
-
-            <div className="md:col-span-2 bg-slate-900 p-8 rounded-3xl shadow-xl text-white flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-              <div className="relative z-10">
-                <h3 className="text-2xl font-bold mb-2">¿Listo para empezar?</h3>
-                <p className="text-slate-400">Crea la cuenta, completa zona y teléfono, y espera el primer trabajo publicado.</p>
-              </div>
-              <button
-                 type="button"
-                 onClick={handleStart}
-                 className="relative z-10 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition whitespace-nowrap"
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+            {pasos.map((paso, i) => (
+              <article
+                key={paso.titulo}
+                className="rounded-2xl bg-white p-8 ring-1 ring-slate-200/80 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.18)]"
               >
-                {isLoggedIn && userProfile?.tipo === 'montador' ? 'Ir a mi panel' : 'Crear cuenta'}
-              </button>
-            </div>
+                <p className="mb-3 text-sm font-semibold tabular-nums text-slate-400">0{i + 1}</p>
+                <h3 className="font-titulo mb-3 text-xl font-bold text-slate-900">{paso.titulo}</h3>
+                <p className="text-[15px] leading-relaxed text-slate-600">{paso.texto}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
-      <footer className="bg-white border-t border-gray-100 py-12 text-center">
-        <p className="text-gray-400 text-sm">© {new Date().getFullYear()} Kiq Montajes. Hecho para profesionales.</p>
-      </footer>
+      <section className="bg-slate-950 px-6 py-24">
+        <div className="mx-auto max-w-xl text-center">
+          <h2 className="font-titulo text-3xl font-extrabold tracking-tight text-white md:text-4xl">
+            Completa zona y teléfono
+          </h2>
+          <p className="mt-5 text-lg leading-relaxed text-slate-300">
+            Sin eso no te llega el WhatsApp del cliente. El cobro sigue siendo Bizum o efectivo, fuera de la app.
+          </p>
+          <button
+            type="button"
+            onClick={handleStart}
+            className="mt-10 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white px-8 text-base font-semibold text-slate-950 hover:bg-slate-100 sm:w-auto"
+          >
+            {yaEsMontador ? 'Ir a mi panel' : 'Crear cuenta de montador'}
+          </button>
+        </div>
+      </section>
+
+      <FooterMinimal />
     </div>
   );
 }

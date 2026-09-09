@@ -85,8 +85,8 @@ export default function Cabecera() {
 
     // --- ESTILOS DINÁMICOS ---
     const isHome = pathname === '/';
-    // Es transparente SOLO si estamos en Home, arriba del todo, y el menú móvil está cerrado
-    const isTransparent = isHome && !isScrolled && !isMenuOpen;
+    const isSoyMontador = pathname === '/soy-montador';
+    const isTransparent = (isHome || isSoyMontador) && !isScrolled && !isMenuOpen;
 
     const navClass = isTransparent 
         ? 'bg-transparent border-transparent py-4' 
