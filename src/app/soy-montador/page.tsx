@@ -1,8 +1,21 @@
 'use client';
 import Link from 'next/link';
-import { FaCheckCircle, FaMoneyBillWave, FaCalendarAlt, FaShieldAlt, FaArrowRight } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
+import { FaMoneyBillWave, FaCalendarAlt, FaShieldAlt, FaArrowRight } from 'react-icons/fa';
+import { useUI } from '../context/UIContext';
 
 export default function SoyMontadorPage() {
+  const { openRegisterModal, openLoginModal, isLoggedIn, userProfile } = useUI();
+  const router = useRouter();
+
+  const handleStart = () => {
+    if (isLoggedIn && userProfile?.tipo === 'montador') {
+      router.push('/panel-montador');
+      return;
+    }
+    openRegisterModal();
+  };
+
   return (
     <div className="bg-white font-sans text-gray-900">
       
@@ -27,15 +40,26 @@ export default function SoyMontadorPage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <button 
-                onClick={() => alert("Aquí abrirías el Registro de Montador")}
+                type="button"
+                onClick={handleStart}
                 className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-slate-800 transition shadow-xl shadow-indigo-200/50 flex items-center justify-center gap-2"
               >
-                Empezar a ganar dinero <FaArrowRight size={14}/>
+                {isLoggedIn && userProfile?.tipo === 'montador' ? 'Ir a mi panel' : 'Crear cuenta de montador'}
+                <FaArrowRight size={14}/>
               </button>
-              <Link href="/" className="text-slate-600 font-medium hover:text-indigo-600 transition">
-                ¿Buscas un montador? Clic aquí
-              </Link>
+              <button
+                type="button"
+                onClick={() => openLoginModal()}
+                className="text-slate-600 font-medium hover:text-indigo-600 transition"
+              >
+                Ya tengo cuenta
+              </button>
             </div>
+            <p className="mt-6">
+              <Link href="/" className="text-slate-500 text-sm hover:text-indigo-600 transition">
+                ¿Buscas montaje para tu casa? Pedir precio
+              </Link>
+            </p>
           </div>
         </div>
       </section>
@@ -97,10 +121,11 @@ export default function SoyMontadorPage() {
                 <p className="text-slate-400">Tus primeros trabajos tienen 0% de comisión.</p>
               </div>
               <button 
-                 onClick={() => alert("Registro")}
+                 type="button"
+                 onClick={handleStart}
                  className="relative z-10 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition whitespace-nowrap"
               >
-                Crear Cuenta Gratis
+                {isLoggedIn && userProfile?.tipo === 'montador' ? 'Ir a mi panel' : 'Crear cuenta gratis'}
               </button>
             </div>
 
@@ -110,7 +135,7 @@ export default function SoyMontadorPage() {
 
       {/* --- FOOTER SIMPLE --- */}
       <footer className="bg-white border-t border-gray-100 py-12 text-center">
-        <p className="text-gray-400 text-sm">© 2025 Kiq Montajes. Hecho para profesionales.</p>
+        <p className="text-gray-400 text-sm">© {new Date().getFullYear()} Kiq Montajes. Hecho para profesionales.</p>
       </footer>
     </div>
   );

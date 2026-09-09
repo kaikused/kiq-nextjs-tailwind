@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import Link from 'next/link';
 import { FaInstagram, FaWhatsapp, FaGoogle, FaTiktok } from 'react-icons/fa';
 import { useUI } from '../context/UIContext';
 
@@ -110,6 +111,11 @@ export default function FooterMinimal() {
                 </a>
               </li>
               <li className="text-slate-500">Málaga y Costa del Sol</li>
+              <li>
+                <Link href="/soy-montador" className="hover:text-white transition-colors">
+                  Soy montador
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
