@@ -47,6 +47,11 @@ export default function AdminDashboard() {
     descripcion: '', direccion: '', precio: '', telefono: '', metodo_pago: 'efectivo', cobrado: false, zona: '', fecha_visita: '', estado: 'cotizacion',
   });
   const [jobMessage, setJobMessage] = useState('');
+  const [pdfStamp, setPdfStamp] = useState(0);
+
+  const pdfHref = (code?: string | null) =>
+    code ? `${API_BASE_URL}/p/${code}?t=${pdfStamp}` : '';
+
 
   const adminHeaders = (token = adminToken) => ({
     'Content-Type': 'application/json',
@@ -189,6 +194,7 @@ export default function AdminDashboard() {
   const openJobModal = (t: any) => {
     setJobModal(t);
     setJobMessage('');
+    setPdfStamp(Date.now());
     setJobForm({
       descripcion: t.descripcion || '',
       direccion: t.direccion || '',
@@ -228,7 +234,14 @@ export default function AdminDashboard() {
       }
       setTrabajos((prev) => prev.map((j) => (j.id === data.id ? data : j)));
       setJobModal(data);
-      setJobMessage('Guardado');
+      setPdfStamp(Date.now());
+      if (data.pdf_error) {
+        setJobMessage('Guardado, pero el PDF no se pudo actualizar. Revisa GCS.');
+      } else if (data.pdf_code) {
+        setJobMessage('Guardado. PDF actualizado, listo para descargar y enviar.');
+      } else {
+        setJobMessage('Guardado');
+      }
     } catch {
       setJobMessage('Error de red');
     }
@@ -590,7 +603,7 @@ export default function AdminDashboard() {
                                                     </button>
                                                     {t.pdf_code && (
                                                         <a
-                                                            href={`${API_BASE_URL}/p/${t.pdf_code}`}
+                                                            href={pdfHref(t.pdf_code)}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
@@ -895,15 +908,15 @@ export default function AdminDashboard() {
                 )}
                 {jobModal.pdf_code ? (
                   <a
-                    href={`${API_BASE_URL}/p/${jobModal.pdf_code}`}
+                    href={pdfHref(jobModal.pdf_code)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mb-3 w-full py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm flex items-center justify-center gap-2 text-slate-800"
                   >
-                    <FaFilePdf /> Ver PDF
+                    <FaFilePdf /> Descargar PDF
                   </a>
                 ) : (
-                  <p className="text-xs text-slate-400 mb-3">PDF: solo en cotizaciones nuevas (con cuenta) a partir de ahora.</p>
+                  <p className="text-xs text-slate-400 mb-3">Al guardar se genera el PDF para enviárselo al cliente.</p>
                 )}
                 {jobMessage && <p className="text-sm mb-3 text-indigo-600">{jobMessage}</p>}
                 <div className="flex flex-wrap gap-3">
