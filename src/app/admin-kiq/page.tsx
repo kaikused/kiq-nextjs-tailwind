@@ -44,7 +44,7 @@ export default function AdminDashboard() {
   const [resetMessage, setResetMessage] = useState('');
   const [jobModal, setJobModal] = useState<any | null>(null);
   const [jobForm, setJobForm] = useState({
-    descripcion: '', direccion: '', precio: '', telefono: '', metodo_pago: 'efectivo', cobrado: false, zona: '', fecha_visita: '', estado: 'cotizacion',
+    nombre: '', email: '', descripcion: '', direccion: '', precio: '', telefono: '', metodo_pago: 'efectivo', cobrado: false, zona: '', fecha_visita: '', estado: 'cotizacion',
   });
   const [jobMessage, setJobMessage] = useState('');
   const [pdfStamp, setPdfStamp] = useState(0);
@@ -196,6 +196,8 @@ export default function AdminDashboard() {
     setJobMessage('');
     setPdfStamp(Date.now());
     setJobForm({
+      nombre: t.cliente || '',
+      email: t.email_cliente || '',
       descripcion: t.descripcion || '',
       direccion: t.direccion || '',
       precio: String(t.precio ?? ''),
@@ -216,6 +218,8 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: adminHeaders(),
         body: JSON.stringify({
+          nombre: jobForm.nombre,
+          email: jobForm.email,
           descripcion: jobForm.descripcion,
           direccion: jobForm.direccion,
           precio: Number(jobForm.precio),
@@ -255,6 +259,8 @@ export default function AdminDashboard() {
           method: 'POST',
           headers: adminHeaders(),
           body: JSON.stringify({
+            nombre: jobForm.nombre,
+            email: jobForm.email,
             descripcion: jobForm.descripcion,
             direccion: jobForm.direccion,
             precio: Number(jobForm.precio),
@@ -500,7 +506,7 @@ export default function AdminDashboard() {
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-8">
                         <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/50">
                             <h2 className="font-bold text-slate-800">Cotizaciones por revisar</h2>
-                            <p className="text-xs text-slate-500 mt-1">Solo clientes con cuenta. Edita y publica cuando el precio y la zona estén cerrados.</p>
+                            <p className="text-xs text-slate-500 mt-1">Cuentas y visitantes. El visitante se afina aquí y se cierra por WhatsApp; no sale al tablero.</p>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
@@ -524,6 +530,9 @@ export default function AdminDashboard() {
                                                 <div className="font-bold text-slate-900">{t.cliente}</div>
                                                 <div className="text-xs text-slate-500">{t.telefono_cliente || 'Sin teléfono'}</div>
                                                 <div className="text-[10px] text-slate-400">{t.email_cliente}</div>
+                                                {t.registrado === false && (
+                                                    <span className="mt-1 inline-block text-[10px] font-bold uppercase tracking-wide text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">Visitante</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="text-xs font-semibold text-slate-700">{t.direccion || 'Sin zona'}</div>
@@ -537,9 +546,11 @@ export default function AdminDashboard() {
                                                     <button onClick={() => openJobModal(t)} className="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Editar">
                                                         <FaPencilAlt />
                                                     </button>
+                                                    {t.registrado !== false && (
                                                     <button onClick={() => handlePublishJob(t.id)} className="p-2 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg" title="Publicar">
                                                         <FaPaperPlane />
                                                     </button>
+                                                    )}
                                                     <button onClick={() => handleDeleteJob(t.id)} className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Descartar">
                                                         <FaTrash />
                                                     </button>
@@ -582,9 +593,9 @@ export default function AdminDashboard() {
                                             <td className="px-6 py-4">
                                                 <div className="font-bold text-slate-900">{t.cliente}</div>
                                                 <div className="text-xs text-slate-500">{t.telefono_cliente || 'Sin teléfono'}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="max-w-xs truncate text-slate-600 font-medium" title={t.descripcion}>{t.descripcion}</div>
+                                                {t.registrado === false && (
+                                                    <span className="mt-1 inline-block text-[10px] font-bold uppercase tracking-wide text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">Visitante</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <span className="font-black text-slate-900 bg-slate-100 px-2 py-1 rounded-lg">{t.precio}€</span>
@@ -612,7 +623,7 @@ export default function AdminDashboard() {
                                                             <FaFilePdf />
                                                         </a>
                                                     )}
-                                                    {t.estado === 'cotizacion' && (
+                                                    {t.estado === 'cotizacion' && t.registrado !== false && (
                                                         <button
                                                             onClick={() => handlePublishJob(t.id)}
                                                             className="p-2 text-emerald-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
@@ -807,7 +818,28 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white p-6 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
                 <h3 className="text-lg font-bold text-slate-800 mb-1">Revisar cotización #{jobModal.id}</h3>
-                <p className="text-sm text-slate-500 mb-4">{jobModal.cliente} · {jobModal.email_cliente}</p>
+                {jobModal.registrado === false ? (
+                  <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4">
+                    Visitante, sin cuenta. Completa nombre y teléfono, guarda el PDF y envíaselo por WhatsApp. No se publica al tablero.
+                  </p>
+                ) : (
+                  <p className="text-sm text-slate-500 mb-4">{jobModal.cliente} · {jobModal.email_cliente}</p>
+                )}
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nombre</label>
+                <input
+                    type="text"
+                    value={jobForm.nombre}
+                    onChange={(e) => setJobForm({ ...jobForm, nombre: e.target.value })}
+                    className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm"
+                />
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Email</label>
+                <input
+                    type="email"
+                    value={jobForm.email}
+                    onChange={(e) => setJobForm({ ...jobForm, email: e.target.value })}
+                    placeholder="Si lo tienes"
+                    className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm"
+                />
                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Descripción</label>
                 <textarea
                     value={jobForm.descripcion}
@@ -932,7 +964,7 @@ export default function AdminDashboard() {
                     >
                       Guardar
                     </button>
-                    {jobModal.estado === 'cotizacion' && (
+                    {jobModal.estado === 'cotizacion' && jobModal.registrado !== false && (
                       <button
                         onClick={() => handlePublishJob(jobModal.id)}
                         className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition"
