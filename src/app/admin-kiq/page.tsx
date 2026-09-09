@@ -1105,6 +1105,7 @@ function CotizarManualPanel({
   const [zona, setZona] = useState('');
   const [fechaVisita, setFechaVisita] = useState('');
   const [metodoPago, setMetodoPago] = useState('efectivo');
+  const [cobrado, setCobrado] = useState(false);
   const [descripcion, setDescripcion] = useState('');
   const [anclaje, setAnclaje] = useState<boolean | null>(null);
   const [lineas, setLineas] = useState([nuevaLinea()]);
@@ -1127,6 +1128,7 @@ function CotizarManualPanel({
     zona,
     descripcion,
     metodo_pago: metodoPago,
+    cobrado,
     fecha_visita: fechaVisita || null,
     anclaje,
     items: lineas.map((l) => ({
@@ -1154,7 +1156,7 @@ function CotizarManualPanel({
     }, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nombre, telefono, email, zona, descripcion, metodoPago, fechaVisita, anclaje, JSON.stringify(lineas)]);
+  }, [nombre, telefono, email, zona, descripcion, metodoPago, cobrado, fechaVisita, anclaje, JSON.stringify(lineas)]);
 
   const guardar = async () => {
     setMensaje('');
@@ -1212,6 +1214,10 @@ function CotizarManualPanel({
               <button type="button" onClick={() => setMetodoPago('bizum')} className={`py-2.5 rounded-xl text-sm font-bold border ${metodoPago === 'bizum' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white border-slate-200'}`}>Bizum</button>
               <button type="button" onClick={() => setMetodoPago('efectivo')} className={`py-2.5 rounded-xl text-sm font-bold border ${metodoPago === 'efectivo' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white border-slate-200'}`}>Efectivo</button>
             </div>
+            <label className="flex items-center gap-2 text-sm text-slate-700 mt-2">
+              <input type="checkbox" checked={cobrado} onChange={(e) => setCobrado(e.target.checked)} />
+              Ya cobrado (anticipado)
+            </label>
           </div>
         </div>
         <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Qué hay que montar</label>
