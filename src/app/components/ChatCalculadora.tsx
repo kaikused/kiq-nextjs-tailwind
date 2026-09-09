@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { FaPaperclip, FaPaperPlane, FaImage } from "react-icons/fa";
+import { FaImage } from "react-icons/fa";
 import { useRouter } from 'next/navigation';
 import RegisterInChatModal from './RegisterInChatModal';
 import { useUI } from '../context/UIContext';
+import { PlusIcon, SendArrowIcon } from './ChatComposerIcons';
 
 // --- Definiciones ---
 type Message = {
@@ -135,9 +136,9 @@ const getToken = () => {
 
 const TypingIndicator = () => (
     <div className="flex space-x-1 p-2">
-        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        <div className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+        <div className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+        <div className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
     </div>
 );
 
@@ -941,21 +942,21 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
 
     return (
-        <div className="bg-white flex flex-col h-full min-h-0 relative font-sans">
+        <div className="bg-transparent flex flex-col h-full min-h-0 relative font-sans">
 
             <div
                 ref={messagesContainerRef}
                 id="kiq-chat-messages-full"
-                className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 bg-slate-50"
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4"
             >
                 {messages.map((msg, index) => {
                     if (msg.type === 'ia-analysis') {
                         return (
                             <div key={index} className="flex justify-start w-full mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <div className="bg-white rounded-2xl ring-1 ring-slate-200/80 p-4 w-full max-w-sm">
-                                    <div className="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2">
-                                        <FaImage className="text-indigo-600 w-4 h-5" />
-                                        <span className="font-titulo font-semibold text-slate-800 text-sm">Foto de referencia</span>
+                                <div className="rounded-2xl bg-white/10 ring-1 ring-white/12 p-4 w-full max-w-sm backdrop-blur-xl">
+                                    <div className="flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
+                                        <FaImage className="text-indigo-300 w-4 h-5" />
+                                        <span className="font-titulo font-semibold text-white text-sm">Foto de referencia</span>
                                     </div>
 
                                     <div className="flex gap-4">
@@ -994,8 +995,8 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                             <div
                                 className={`rounded-2xl px-4 py-3 max-w-[85%] md:max-w-[min(100%,20rem)] ${
                                     msg.type === 'user'
-                                        ? 'bg-indigo-600 text-white rounded-tr-none'
-                                        : 'bg-white text-slate-800 rounded-tl-none ring-1 ring-slate-100'
+                                        ? 'bg-indigo-500 text-white rounded-tr-none'
+                                        : 'bg-white/10 text-white/90 rounded-tl-none ring-1 ring-white/10 backdrop-blur-xl'
                                 }`}
                             >
                                 {msg.text}
@@ -1006,7 +1007,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
 
                 {isTyping && (
                     <div className="flex justify-start animate-in fade-in zoom-in duration-200">
-                        <div className="rounded-2xl rounded-tl-none px-4 py-3 bg-white ring-1 ring-slate-100">
+                        <div className="rounded-2xl rounded-tl-none px-4 py-3 bg-white/10 ring-1 ring-white/10 backdrop-blur-xl">
                             <TypingIndicator />
                         </div>
                     </div>
@@ -1038,7 +1039,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             </div>
 
             {options.length > 0 && (
-            <div id="kiq-chat-options-full" className="shrink-0 p-3 md:p-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
+            <div id="kiq-chat-options-full" className="shrink-0 p-3 md:p-4 bg-transparent flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
                 {options.map((opt) => {
                     if (opt.href) {
                         return (<a key={opt.value} href={opt.href} target={opt.isExternal ? '_blank' : '_self'} rel="noopener noreferrer" className="w-full sm:w-auto bg-green-600 text-white font-semibold py-3 sm:py-2.5 px-5 rounded-full inline-flex items-center justify-center gap-2 min-h-[44px]"> {opt.text} </a>)
@@ -1048,7 +1049,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                             key={opt.value}
                             className={`w-full sm:w-auto font-semibold py-3 sm:py-2.5 px-5 rounded-full transition-colors min-h-[44px] touch-manipulation ${
                                 opt.value === 'send_by_whatsapp' ? 'bg-green-600 text-white hover:bg-green-500' :
-                                opt.value === 'confirm_yes' || opt.value === 'open_register_modal' ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                opt.value === 'confirm_yes' || opt.value === 'open_register_modal' ? 'bg-indigo-500 text-white hover:bg-indigo-400' : 'bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/20'
                             }`}
                             onClick={() => handleOptionClick(opt)}
                         >
@@ -1059,14 +1060,16 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             </div>
             )}
 
-            <div className="shrink-0 p-3 md:p-4 bg-white border-t border-slate-200 flex items-center gap-1 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <div className="shrink-0 p-3 md:p-4 bg-transparent pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                <div className="flex items-center gap-1 rounded-full bg-white/10 px-1.5 py-1 ring-1 ring-inset ring-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-2xl">
                 <button
                     id="kiq-attach-button"
-                    className="p-2.5 text-slate-400 hover:text-indigo-600 transition-colors shrink-0 touch-manipulation"
-                    style={{ display: (stage === 'describe' || stage === 'awaiting_photo_option' || stage === 'awaiting_description_after_photo' || (stage === 'describe' && isAuthenticated)) ? 'block' : 'none' }}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white transition-colors touch-manipulation"
+                    style={{ display: (stage === 'describe' || stage === 'awaiting_photo_option' || stage === 'awaiting_description_after_photo' || (stage === 'describe' && isAuthenticated)) ? 'flex' : 'none' }}
                     onClick={() => fileInputRef.current?.click()}
+                    aria-label="Adjuntar foto"
                 >
-                    <FaPaperclip className="w-5 h-5" />
+                    <PlusIcon className="h-5 w-5" />
                 </button>
                 <input type="file" ref={fileInputRef} multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
 
@@ -1078,18 +1081,20 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                     placeholder={inputPlaceholder}
-                    className="flex-grow min-w-0 px-4 py-3 mx-1 bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-sans text-base"
+                    className="flex-grow min-w-0 min-h-11 px-3 py-3 bg-transparent text-white placeholder:text-white/40 focus:outline-none font-sans text-base"
                     disabled={isInputDisabled}
                 />
 
                 <button
                     id="kiq-send-button"
-                    className="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 touch-manipulation"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-white hover:bg-indigo-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
                     onClick={handleSend}
                     disabled={isSendButtonDisabled}
+                    aria-label="Enviar"
                 >
-                    <FaPaperPlane className="w-5 h-5" />
+                    <SendArrowIcon className="h-4 w-4" />
                 </button>
+                </div>
             </div>
         </div>
     );

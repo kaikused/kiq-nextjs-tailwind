@@ -2,8 +2,8 @@
 
 import { useState, useEffect, FormEvent, KeyboardEvent } from 'react';
 import Image from 'next/image';
-import { FaPaperclip, FaPaperPlane } from 'react-icons/fa';
 import { useUI } from '../context/UIContext';
+import { PlusIcon, SendArrowIcon } from './ChatComposerIcons';
 
 const images = [
   '/images/sofasWeb.png',
@@ -87,7 +87,7 @@ const HeroAspiracional = () => {
               className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full text-white/75 hover:bg-white/15 hover:text-white transition-colors"
               aria-label="Adjuntar foto en el cotizador"
             >
-              <FaPaperclip className="h-4 w-4" />
+              <PlusIcon className="h-5 w-5" />
             </button>
             <label htmlFor="hero-cotizar" className="sr-only">
               Mensaje para cotizar
@@ -104,10 +104,10 @@ const HeroAspiracional = () => {
             />
             <button
               type="submit"
-              className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-white/25 text-white ring-1 ring-white/35 hover:bg-white/35 transition-colors"
+              className="flex h-10 w-11 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-white hover:bg-indigo-400 transition-colors"
               aria-label="Enviar y pedir precio"
             >
-              <FaPaperPlane className="h-3.5 w-4" />
+              <SendArrowIcon className="h-4 w-4" />
             </button>
           </form>
 
