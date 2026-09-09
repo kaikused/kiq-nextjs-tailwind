@@ -407,6 +407,13 @@ export default function AdminDashboard() {
           </div>
           
           <div className="flex items-center gap-4">
+             <button
+               type="button"
+               onClick={() => setActiveTab('cotizar')}
+               className="px-3 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-black"
+             >
+               Cotizar a mano
+             </button>
              <span className="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-500">GOD MODE</span>
              <button onClick={fetchAllData} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all" title="Refrescar datos">
                 <FaSync className={loading ? "animate-spin" : ""} />
@@ -1302,6 +1309,4 @@ function CotizarManualPanel({
       </div>
     </div>
   );
-}
-    );
 }
