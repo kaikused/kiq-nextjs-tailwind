@@ -264,7 +264,12 @@ export default function AdminDashboard() {
   };
 
   const handlePublishJob = async (id: number) => {
-    if (!confirm('¿Publicar en el tablero? El cliente y los montadores lo verán.')) return;
+    const ficha = trabajos.find((j) => j.id === id) || jobModal;
+    const esVisitante = ficha?.registrado === false;
+    const ok = esVisitante
+      ? confirm('¿Confirmar este montaje? Sale de por revisar. Lo cierras tú por WhatsApp; no va al tablero de montadores.')
+      : confirm('¿Publicar en el tablero? El cliente y los montadores lo verán.');
+    if (!ok) return;
     try {
       if (jobModal?.id === id) {
         const saveRes = await fetch(`${API_BASE_URL}/api/admin/trabajo/${id}`, {
@@ -558,9 +563,13 @@ export default function AdminDashboard() {
                                                     <button onClick={() => openJobModal(t)} className="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Editar">
                                                         <FaPencilAlt />
                                                     </button>
-                                                    {t.registrado !== false && (
+                                                    {t.registrado !== false ? (
                                                     <button onClick={() => handlePublishJob(t.id)} className="p-2 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg" title="Publicar">
                                                         <FaPaperPlane />
+                                                    </button>
+                                                    ) : (
+                                                    <button onClick={() => handlePublishJob(t.id)} className="p-2 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg" title="Confirmar montaje">
+                                                        <FaCheckCircle />
                                                     </button>
                                                     )}
                                                     <button onClick={() => handleDeleteJob(t.id)} className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Descartar">
@@ -613,7 +622,7 @@ export default function AdminDashboard() {
                                                 <span className="font-black text-slate-900 bg-slate-100 px-2 py-1 rounded-lg">{t.precio}€</span>
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <StatusBadge status={t.estado} />
+                                                <StatusBadge status={t.estado} visitante={t.registrado === false} />
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <div className="flex justify-center gap-1">
@@ -635,13 +644,13 @@ export default function AdminDashboard() {
                                                             <FaFilePdf />
                                                         </a>
                                                     )}
-                                                    {t.estado === 'cotizacion' && t.registrado !== false && (
+                                                    {t.estado === 'cotizacion' && (
                                                         <button
                                                             onClick={() => handlePublishJob(t.id)}
                                                             className="p-2 text-emerald-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
-                                                            title="Publicar"
+                                                            title={t.registrado === false ? 'Confirmar montaje' : 'Publicar'}
                                                         >
-                                                            <FaPaperPlane />
+                                                            {t.registrado === false ? <FaCheckCircle /> : <FaPaperPlane />}
                                                         </button>
                                                     )}
                                                     <button 
@@ -832,7 +841,7 @@ export default function AdminDashboard() {
                 <h3 className="text-lg font-bold text-slate-800 mb-1">Revisar cotización #{jobModal.id}</h3>
                 {jobModal.registrado === false ? (
                   <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4">
-                    Visitante, sin cuenta. Completa nombre y teléfono, guarda el PDF y envíaselo por WhatsApp. No se publica al tablero.
+                    Visitante, sin cuenta. Afina el PDF, confírmalo y ciérralo por WhatsApp. No va al tablero de montadores.
                   </p>
                 ) : (
                   <p className="text-sm text-slate-500 mb-4">{jobModal.cliente} · {jobModal.email_cliente}</p>
@@ -926,7 +935,12 @@ export default function AdminDashboard() {
                     onChange={(e) => setJobForm({ ...jobForm, estado: e.target.value })}
                     className="w-full border border-slate-200 rounded-xl p-3 mb-3 text-sm font-bold bg-white"
                 >
-                  {ESTADOS_ADMIN.map((e) => (
+                  {(jobModal.registrado === false
+                    ? ESTADOS_ADMIN.filter((e) => e.id !== 'pendiente').map((e) =>
+                        e.id === 'aceptado' ? { ...e, label: 'Confirmado por Kiq' } : e
+                      )
+                    : ESTADOS_ADMIN
+                  ).map((e) => (
                     <option key={e.id} value={e.id}>{e.label}</option>
                   ))}
                 </select>
@@ -985,12 +999,12 @@ export default function AdminDashboard() {
                     >
                       Guardar
                     </button>
-                    {jobModal.estado === 'cotizacion' && jobModal.registrado !== false && (
+                    {jobModal.estado === 'cotizacion' && (
                       <button
                         onClick={() => handlePublishJob(jobModal.id)}
                         className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition"
                       >
-                        Publicar en el tablero
+                        {jobModal.registrado === false ? 'Confirmar montaje' : 'Publicar en el tablero'}
                       </button>
                     )}
                 </div>
@@ -1004,7 +1018,7 @@ export default function AdminDashboard() {
 
 // --- SUBCOMPONENTES ---
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, visitante }: { status: string; visitante?: boolean }) {
     const styles: any = {
         cotizacion: 'bg-amber-100 text-amber-800 border-amber-200',
         completado: 'bg-green-100 text-green-700 border-green-200',
@@ -1014,8 +1028,18 @@ function StatusBadge({ status }: { status: string }) {
         revision_cliente: 'bg-purple-100 text-purple-700 border-purple-200',
         cancelado_incidencia: 'bg-red-50 text-red-600 border-red-100',
     };
+    const labels: Record<string, string> = {
+        cotizacion: 'Kiq revisando',
+        pendiente: 'Esperando montador',
+        aceptado: visitante ? 'Confirmado por Kiq' : 'Montador asignado',
+        revision_cliente: 'Foto enviada',
+        completado: 'Hecho',
+        cancelado: 'Cancelado',
+        cancelado_incidencia: 'Incidencia',
+    };
     
     const currentStyle = styles[status] || 'bg-slate-100 text-slate-600 border-slate-200';
+    const label = labels[status] || status;
     
     return (
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${currentStyle}`}>
@@ -1024,7 +1048,7 @@ function StatusBadge({ status }: { status: string }) {
             {status === 'pendiente' && <FaClock/>}
             {status === 'aceptado' && <FaClock/>}
             {status === 'revision_cliente' && <FaExclamationCircle/>}
-            {status}
+            {label}
         </span>
     );
 }
