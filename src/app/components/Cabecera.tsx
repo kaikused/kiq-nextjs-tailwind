@@ -4,8 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useUI } from '../context/UIContext';
-import { FaUserCircle, FaSignOutAlt, FaCog, FaChevronDown, FaGem, FaPlusCircle, FaBars, FaTimes, FaEnvelope, FaWhatsapp } from 'react-icons/fa';
-import GemStoreModal from './GemStoreModal'; 
+import { FaUserCircle, FaSignOutAlt, FaCog, FaChevronDown, FaBars, FaTimes, FaEnvelope, FaWhatsapp } from 'react-icons/fa'; 
 import { useInbox } from '../hooks/useInbox';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
@@ -24,7 +23,6 @@ export default function Cabecera() {
 
     const { 
         openLoginModal, openCalculatorModal, 
-        userGems, isGemStoreOpen, openGemStore, closeGemStore,
         isLoggedIn, accessToken, userProfile, handleLogout, handleSuccessfulLogin 
     } = useUI();
 
@@ -174,14 +172,6 @@ export default function Cabecera() {
                                 )}
                             </div>
 
-                            {userProfile.tipo !== 'montador' && (
-                            <button onClick={openGemStore} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full border border-indigo-100 shadow-sm hover:bg-indigo-100 transition group">
-                                <FaGem className="text-sm group-hover:scale-110 transition-transform" />
-                                <span className="font-bold text-sm">{userGems}</span> 
-                                <FaPlusCircle className="text-indigo-400 text-xs ml-1" />
-                            </button>
-                            )}
-
                             <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
 
                             {/* AVATAR & MENU */}
@@ -210,7 +200,6 @@ export default function Cabecera() {
                         </div>
                     </div>
                 </header>
-                <GemStoreModal isOpen={isGemStoreOpen} onClose={closeGemStore} onBuyPack={() => {}} onWatchAd={() => {}} />
             </>
         );
     }

@@ -645,13 +645,6 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             if (typeof window !== 'undefined') {
                 window.location.reload();
             }
-
-        } else if (stage === 'confirm_publish_loggedin') {
-            if (option.value === 'confirm_yes') {
-                await handlePublishLite();
-            } else {
-                startChat(clientName);
-            }
         }
     };
 
@@ -876,23 +869,14 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
             const esConsulta = Boolean(data.consulta_manual);
             const priceText = esConsulta ? 'a confirmar' : `${data.total_presupuesto}€`;
 
-            if (isAuthenticated) {
-                addBotMessage(T.confirmPublish.replace('{priceText}', priceText));
-                showOptions([
-                    { text: "Guardar en mi Panel", value: 'confirm_yes' },
-                    { text: "Cancelar", value: 'restart' }
-                ]);
-                setStage('confirm_publish_loggedin');
-            } else {
-                addBotMessage(
-                    (esConsulta ? T.preRegisterConsulta : T.preRegister)
-                    .replace('{priceText}', priceText)
-                );
-                showOptions([
-                    { text: T.sendByWhatsapp, value: 'send_by_whatsapp' },
-                ]);
-                setStage('ask_delivery');
-            }
+            addBotMessage(
+                (esConsulta ? T.preRegisterConsulta : T.preRegister)
+                .replace('{priceText}', priceText)
+            );
+            showOptions([
+                { text: T.sendByWhatsapp, value: 'send_by_whatsapp' },
+            ]);
+            setStage('ask_delivery');
         } catch (error) {
             console.error("Error en sendQuoteToBackend:", error);
             setIsTyping(false);
@@ -949,7 +933,7 @@ export default function ChatCalculadora({ onPublishSuccess, mode = 'public', ini
         }
     }
 
-    const isInputDisabled = isTyping || options.length > 0 || stage === 'done' || stage === 'confirm_publish_loggedin' || stage === 'quote_sent';
+    const isInputDisabled = isTyping || options.length > 0 || stage === 'done' || stage === 'quote_sent';
     
     const inputPlaceholder = 
         stage === 'ask_name' ? T.inputPlaceholderName :

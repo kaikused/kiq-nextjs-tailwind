@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { FaUser, FaLock, FaSave, FaCamera, FaEnvelope, FaCheckCircle, FaExclamationTriangle, FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { useUI, UserProfile } from '../../context/UIContext'; // Ajusta la ruta si es necesario (../../context...)
+import { FaUser, FaLock, FaSave, FaCamera, FaEnvelope, FaCheckCircle, FaExclamationTriangle, FaArrowLeft, FaEye, FaEyeSlash, FaPhone } from 'react-icons/fa';
+import { useUI } from '../../context/UIContext';
 import { useRouter } from 'next/navigation';
 
 const API_BASE_URL = 'https://kiq-calculadora.onrender.com';
@@ -23,6 +23,7 @@ export default function ConfiguracionClientePage() {
 
     const [formData, setFormData] = useState({
         nombre: '',
+        telefono: '',
     });
 
     // --- 1. SINCRONIZAR CON EL CONTEXTO ---
@@ -30,6 +31,7 @@ export default function ConfiguracionClientePage() {
         if (userProfile && userProfile.tipo === 'cliente') {
             setFormData({ 
                 nombre: userProfile.nombre || '',
+                telefono: userProfile.telefono || '',
             });
             setLoading(false);
         } else if (!accessToken) {
@@ -80,6 +82,7 @@ export default function ConfiguracionClientePage() {
         // Preparamos los datos a enviar
         const payload: any = {
             nombre: formData.nombre,
+            telefono: formData.telefono,
         };
 
         // Si el usuario escribió una contraseña nueva, la añadimos al envío
@@ -99,7 +102,7 @@ export default function ConfiguracionClientePage() {
 
             if (res.ok) {
                 // Actualizamos el contexto (solo el nombre, la pass es interna)
-                updateProfileData({ nombre: formData.nombre }); 
+                updateProfileData({ nombre: formData.nombre, telefono: formData.telefono }); 
                 
                 // Limpiamos el campo de contraseña
                 setNewPassword('');
@@ -203,6 +206,20 @@ export default function ConfiguracionClientePage() {
                                             onChange={e => setFormData({...formData, nombre: e.target.value})}
                                             className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none font-medium text-slate-800 transition-all" 
                                             placeholder="Tu nombre"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Teléfono</label>
+                                    <div className="relative">
+                                        <FaPhone className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                                        <input 
+                                            type="tel" 
+                                            value={formData.telefono} 
+                                            onChange={e => setFormData({...formData, telefono: e.target.value})}
+                                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none font-medium text-slate-800 transition-all" 
+                                            placeholder="+34 600..."
                                         />
                                     </div>
                                 </div>
