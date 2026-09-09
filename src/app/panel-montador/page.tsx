@@ -372,7 +372,7 @@ function ContenidoPanelMontador() {
   const emptyCopy = {
     disponibles: {
       title: 'Aún no hay montajes publicados',
-      body: 'Si no hay nada, o no coincide con tu zona. Pon la zona en ajustes (ej. Málaga) para ver los montajes de ahí.',
+      body: 'Cuando Kiq publique un montaje, te aparece aquí con zona y precio. Completa teléfono para el WhatsApp.',
     },
     activos: {
       title: 'Nada en curso',

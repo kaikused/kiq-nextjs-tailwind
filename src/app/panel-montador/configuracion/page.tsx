@@ -259,7 +259,7 @@ export default function ConfiguracionMontadorPage() {
                                 <div className="space-y-8">
                                     <div>
                                         <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2 text-lg">Zona de Servicio</h3>
-                                        <p className="text-sm text-slate-500 mb-4">Los disponibles se filtran con este texto (debe coincidir con la zona del trabajo).</p>
+                                        <p className="text-sm text-slate-500 mb-4">La usamos para ordenar y mostrar si el trabajo encaja contigo. No oculta el tablero.</p>
                                         <div className="relative">
                                             <FaMapMarkerAlt className="absolute left-4 top-1/2 transform -translate-y-1/2 text-red-500" />
                                             <input 
@@ -273,7 +273,7 @@ export default function ConfiguracionMontadorPage() {
                                     </div>
 
                                     <p className="text-sm text-slate-500">
-                                        Ejemplo: Málaga. Si lo dejas vacío, ves todos los trabajos publicados.
+                                        Ejemplo: Málaga o Marbella. Si lo dejas vacío, da igual: ves todos los publicados.
                                     </p>
                                 </div>
                             )}
